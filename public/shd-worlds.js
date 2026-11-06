@@ -174,7 +174,7 @@
       if (!list.length) { fill(ops, [msg('No agents yet. Forge your first one — it appears here and in the 3D world.', 'dim'),
         h('div', { class: 'sw-actions' }, [btn('Open the Forge', function () { window.showView && showView('forge'); })])]); return; }
       fill(ops, list.map(function (o) {
-        return h('div', { class: 'sw-card slim' }, [h('div', { class: 'sw-row' }, [h('b', { text: o.name || o.id }), chip((o.skills || []).length + ' skills', '')]), h('div', { class: 'sw-sub', text: o.role || o.kind || '' })]);
+        return h('div', { class: 'sw-card slim' }, [h('div', { class: 'sw-row' }, [h('b', { text: o.name || o.id }), chip((o.skills || []).length + ' skills', '')]), h('div', { class: 'sw-sub', text: o.role || o.kind || '' }), taskRow(o)]);
       }));
     }).catch(function () { fill(ops, [msg('Agent service unreachable.', 'dim')]); });
 
@@ -183,6 +183,47 @@
       h('div', { class: 'sw-row' }, [h('b', { text: 'Navi' }), chip(ns.activeBot ? 'bot linked' : 'idle', '')]),
       h('div', { class: 'sw-sub', text: ns.waypoint ? 'Waypoint set: ' + (ns.waypoint.name || ns.waypoint.label || 'saved place') : 'No waypoint. Open Navi in the world to set one.' })
     ])]);
+  }
+
+  /* ── run a task as a forged agent (same server-side workflows an outside bot can start) ── */
+  var WF_CACHE = null;
+  var PARAM_HINT = { 'research.topic': 'topic to research', 'market.snapshot': 'coins, comma separated (optional)' };
+  function wfList() { return WF_CACHE ? Promise.resolve(WF_CACHE) : api('GET', '/api/bridge/workflows').then(function (d) { WF_CACHE = ((d && d.workflows) || []).filter(function (w) { return w.workflow_id !== 'tool.run' && w.workflow_id.indexOf('demo.') !== 0; }); return WF_CACHE; }).catch(function () { return []; }); }
+  function summarize(outputs) {
+    if (!outputs) return '';
+    return Object.keys(outputs).map(function (k) { var v = String(outputs[k]); return k + ': ' + (v.length > 160 ? v.slice(0, 160) + '…' : v); }).join('\n');
+  }
+  function taskRow(agent) {
+    var row = h('div', { class: 'sw-actions' }), result = h('div', { class: 'sw-sub', style: 'white-space:pre-wrap' });
+    var sel = h('select', { class: 'sw-sel', 'aria-label': 'Task' }), param = h('input', { class: 'sw-sel', placeholder: '', 'aria-label': 'Task input', style: 'display:none;min-width:0;flex:1' });
+    wfList().then(function (list) {
+      if (!list.length) { row.appendChild(h('span', { class: 'sw-sub', text: 'Tasks unavailable on this server.' })); return; }
+      list.forEach(function (w) { sel.appendChild(h('option', { value: w.workflow_id, text: w.title.split(':')[0] })); });
+      function hint() { var ph = PARAM_HINT[sel.value]; param.style.display = ph ? '' : 'none'; param.placeholder = ph || ''; }
+      sel.addEventListener('change', hint); hint();
+      row.appendChild(sel); row.appendChild(param);
+      row.appendChild(btn('Run task', function () {
+        if (!signedIn()) { toast('Sign in first'); return; }
+        var v = sel.value, t = param.value.trim(), params = {};
+        if (v === 'research.topic') { if (!t) { toast('Enter a topic'); return; } params.query = t; }
+        if (v === 'market.snapshot' && t) params.symbols = t.split(',').map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean);
+        result.textContent = 'Starting…';
+        api('POST', '/api/bridge/agents/' + encodeURIComponent(agent.id) + '/run', { workflow_id: v, params: params, idempotency_key: 'ui-' + Date.now() }).then(function (d) {
+          if (!d.ok) { result.textContent = d.error || 'Could not start'; return; }
+          var id = d.run.run_id, tries = 0;
+          (function poll() {
+            api('GET', '/api/bridge/runs').then(function (r) {
+              var run = ((r && r.runs) || []).filter(function (x) { return x.run_id === id; })[0];
+              if (!run) { result.textContent = 'Run not found'; return; }
+              if (run.status === 'succeeded') { result.textContent = summarize(run.outputs) || 'Done'; return; }
+              if (run.status === 'failed' || run.status === 'expired' || run.status === 'cancelled') { result.textContent = run.status + (run.error ? ': ' + run.error : ''); return; }
+              result.textContent = run.status.replace('_', ' ') + '…'; if (++tries < 40) setTimeout(poll, 1200); else result.textContent += ' (still running; see Outside bots → activity)';
+            });
+          })();
+        });
+      }));
+    });
+    return h('div', null, [row, result]);
   }
 
   /* ── ARENA ─────────────────────────────────────────────────────────────── */

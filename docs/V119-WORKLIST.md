@@ -112,3 +112,11 @@ first, audit-log entry per connection.
 - Test: NODE_PATH=<node_modules> node backend/tests/platform-bridge.test.js (acceptance items 1-3, 5-8 and secret rejection pass).
 - Not built yet: OAuth 2.1 + PKCE (AddMcpServer consent), durable DB store (JSON file now), 3D client subscription to /api/bridge/world-state, real workflows, plots:maintain (waits for ASIMOV garden state + thresholds), hosted URL decision.
 - /api/school (Athenaeum) mounted; its /xagent bot surface is still off.
+
+### Bridge update: real workflows (forged agents OR outside bots)
+- Same runner for both actors. Bots start via token (MCP start_workflow); forged agents are started by the owner in My Space (POST /api/bridge/agents/:id/run). Both get receipts, outputs, approvals and avatar presence.
+- Workflows: tool.run (one allowlisted read-only tool), market.snapshot, news.digest, research.topic, dashboard.report (agents, plots, Sparks balance, classes). Demo workflows kept for tests.
+- Extra MCP tools: list_tools, list_my_agents, get_balance, list_classes. New grantable scopes: tools:run, economy:read, school:read. There is NO spend/pay/trade tool.
+- Tool allowlist: backend/lib/safe-tools.js (default deny). get_rss_feed (SSRF) and regex_test (ReDoS) excluded.
+- Unverified: tool argument shapes against the live agent-engine (fetch_price{symbol}, search_web{query}, wikipedia_search{query} assumed from source); get_crypto_news/get_hackernews called with no args.
+- Next: dashboard WRITE actions (e.g. create a note, schedule a post, forge/run an agent) each as its own scoped workflow with approval; user-defined workflows from the Workflow tab; step output chaining.

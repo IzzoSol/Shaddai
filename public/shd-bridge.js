@@ -77,7 +77,8 @@
           var wait = r.status === 'awaiting_approval';
           runsEl.appendChild(h('div', { class: 'sw-card slim' }, [
             h('div', { class: 'sw-row' }, [h('b', { text: r.workflow_id }), h('i', { class: 'sw-chip ' + (wait ? 'warn' : (r.status === 'succeeded' ? 'ok' : '')), text: r.status.replace('_', ' ') })]),
-            h('div', { class: 'sw-sub', text: r.error ? r.error : r.progress.map(function (s) { return s.name + ':' + s.status; }).join('  ') }),
+            h('div', { class: 'sw-sub', text: (r.actor && r.actor.kind === 'forged' ? 'forged agent · ' : 'outside bot · ') + (r.error ? r.error : r.progress.map(function (s) { return s.name + ':' + s.status; }).join('  ')) }),
+            r.outputs ? h('details', { class: 'sw-sub' }, [h('summary', { text: 'Result' }), h('pre', { style: 'white-space:pre-wrap;word-break:break-word;max-height:180px;overflow:auto;margin:4px 0', text: Object.keys(r.outputs).map(function (k) { return k + ': ' + r.outputs[k]; }).join('\n\n') })]) : null,
             wait ? h('div', { class: 'sw-actions' }, [
               h('button', { type: 'button', class: 'sw-btn', text: 'Approve', onclick: function () { decide(r.run_id, 'approve'); } }),
               h('button', { type: 'button', class: 'sw-btn ghost', text: 'Deny', onclick: function () { decide(r.run_id, 'deny'); } })]) : null

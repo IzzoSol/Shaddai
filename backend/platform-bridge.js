@@ -21,15 +21,30 @@ const fs = require('fs');
 const path = require('path');
 const express = require('express');
 
-const SCOPES = ['workflows:read', 'workflows:run', 'runs:read', 'runs:cancel', 'agents:read', 'plots:read'];
+const SCOPES = ['workflows:read', 'workflows:run', 'runs:read', 'runs:cancel', 'agents:read', 'plots:read', 'tools:run', 'economy:read', 'school:read'];
 const DEFAULT_SCOPES = ['workflows:read', 'runs:read', 'agents:read', 'plots:read'];
+const SAFE_TOOLS = require('./lib/safe-tools');
+const TOOL_TIMEOUT_MS = 20000, OUT_CAP = 6000;
 const MAX_TOKENS_PER_OWNER = 10;
 const MAX_TTL_DAYS = 90, DEFAULT_TTL_DAYS = 30;
 const RUN_TTL_MS = 10 * 60 * 1000;            // approvals and runs expire; an expired approval never auto-approves
 const RATE_MAX = 60, RATE_WINDOW = 60 * 1000;
 const SECRET_KEY = /(api[_-]?key|secret|password|passwd|private[_-]?key|mnemonic|seed[_ -]?phrase|bearer|authorization|refresh[_-]?token|access[_-]?token|vault)/i;
 
+const str = (v, d, n) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, n || 120) : d);
 const WORKFLOWS = {
+  // Real work. Each step runs a vetted read-only tool on the server; the bot or agent never executes anything itself.
+  'tool.run': { version: '1', title: 'Run one read-only data tool (see list_tools)', money_class: 'none', required_scopes: ['workflows:run', 'tools:run'],
+    build: (p) => { if (!p || !safeId(p.tool) || !SAFE_TOOLS.has(p.tool)) throw new Error('tool is not on the read-only allowlist'); return [{ name: p.tool, tool: p.tool, args: p.args || {} }]; } },
+  'market.snapshot': { version: '1', title: 'Market snapshot: prices, fear & greed, trending', money_class: 'none', required_scopes: ['workflows:run', 'tools:run'],
+    build: (p) => { const coins = (Array.isArray(p && p.symbols) ? p.symbols : ['bitcoin', 'ethereum', 'solana']).slice(0, 5).map((c) => str(c, '', 40)).filter(Boolean);
+      return coins.map((c) => ({ name: 'price:' + c, tool: 'fetch_price', args: { symbol: c } })).concat([{ name: 'fear_greed', tool: 'get_fear_greed', args: {} }, { name: 'trending', tool: 'get_trending', args: {} }]); } },
+  'news.digest': { version: '1', title: 'News digest: crypto news + Hacker News', money_class: 'none', required_scopes: ['workflows:run', 'tools:run'],
+    build: () => [{ name: 'crypto_news', tool: 'get_crypto_news', args: {} }, { name: 'hackernews', tool: 'get_hackernews', args: {} }] },
+  'research.topic': { version: '1', title: 'Research a topic: web search + Wikipedia', money_class: 'none', required_scopes: ['workflows:run', 'tools:run'],
+    build: (p) => { const q = str(p && p.query, '', 200); if (!q) throw new Error('params.query required'); return [{ name: 'web', tool: 'search_web', args: { query: q } }, { name: 'wikipedia', tool: 'wikipedia_search', args: { query: q } }]; } },
+  'dashboard.report': { version: '1', title: 'Report on your account: agents, plots, Sparks balance, open classes', money_class: 'none', required_scopes: ['workflows:run', 'agents:read', 'plots:read', 'economy:read', 'school:read'],
+    build: () => [{ name: 'agents', internal: 'agents' }, { name: 'plots', internal: 'plots' }, { name: 'balance', internal: 'balance' }, { name: 'classes', internal: 'classes' }] },
   'demo.ping': { version: '1', title: 'Demo: harmless ping', steps: ['plan', 'act', 'verify'], money_class: 'none', required_scopes: ['workflows:run'] },
   'demo.needs-approval': { version: '1', title: 'Demo: stops for owner approval (no money moves)', steps: ['prepare', 'act', 'verify'], money_class: 'sparks', approve_before: 'act', required_scopes: ['workflows:run'] }
 };
@@ -106,6 +121,13 @@ function createBridge(opts) {
       return;
     }
     run.status = 'running'; next.status = 'running'; next.started_at = iso(now()); run.updated_at = iso(now()); persist();
+    if (next.tool || next.internal) {
+      Promise.resolve().then(() => (next.tool ? execTool(next.tool, next.args) : internalStep(next.internal, run.owner))).then((out) => {
+        if (TERMINAL.includes(run.status)) return;
+        next.status = 'done'; next.ended_at = iso(now()); run.outputs = run.outputs || {}; run.outputs[next.name] = capOut(out); advance(run);
+      }).catch((e) => { if (!TERMINAL.includes(run.status)) { next.status = 'failed'; next.ended_at = iso(now()); finish(run, 'failed', String((e && e.message) || e).slice(0, 200)); } });
+      return;
+    }
     timers[run.run_id] = setTimeout(() => {
       if (TERMINAL.includes(run.status) || run.status === 'awaiting_approval') return;
       next.status = 'done'; next.ended_at = iso(now()); advance(run);
@@ -113,7 +135,7 @@ function createBridge(opts) {
     if (timers[run.run_id].unref) timers[run.run_id].unref();
   }
   const publicRun = (r) => ({ run_id: r.run_id, workflow_id: r.workflow_id, agent_id: r.agent_id || null, plot_id: r.plot_id || null, status: r.status, progress: r.steps.map((s) => ({ name: s.name, status: s.status })),
-    approvals_pending: r.approvals_pending || [], receipt: r.receipt || null, error: r.error || null, created_at: r.created_at, updated_at: r.updated_at });
+    approvals_pending: r.approvals_pending || [], outputs: r.outputs || null, actor: r.actor || null, receipt: r.receipt || null, error: r.error || null, created_at: r.created_at, updated_at: r.updated_at });
 
   // Runs that were in flight when the server stopped cannot be resumed by a worker that no longer exists.
   Object.values(db.runs).forEach((r) => { if (!['succeeded', 'failed', 'cancelled', 'expired'].includes(r.status)) finish(r, 'expired', 'server restarted'); });
@@ -131,6 +153,49 @@ function createBridge(opts) {
   }
   function readPlots() { try { const j = JSON.parse(fs.readFileSync(plotsFile, 'utf8')); return (j && j.plots) || {}; } catch (_) { return {}; } }
 
+  /* ── executing steps: vetted read-only tools + the owner's own dashboard data ───────────── */
+  function toolTable() { if (opts.tools) return opts.tools; try { return require('./agent-engine').TOOLS; } catch (_) { return {}; } }
+  function redactOut(v) { return String(v).replace(/\b(sk-[A-Za-z0-9]{16,}|xai-[A-Za-z0-9]{16,}|gsk_[A-Za-z0-9]{16,}|shdb_[A-Za-z0-9_-]{20,}|AIza[0-9A-Za-z_-]{30,})\b/g, '[redacted]'); }
+  function capOut(v) { let t; try { t = typeof v === 'string' ? v : JSON.stringify(v); } catch (_) { t = String(v); } t = redactOut(t || ''); return t.length > OUT_CAP ? t.slice(0, OUT_CAP) + '…[truncated]' : t; }
+  function execTool(name, args) {
+    if (!SAFE_TOOLS.has(name)) return Promise.reject(new Error('tool not allowed: ' + name));
+    const t = toolTable()[name]; if (!t || typeof t.execute !== 'function') return Promise.reject(new Error('tool unavailable on this server: ' + name));
+    let tm; const timeout = new Promise((_, rej) => { tm = setTimeout(() => rej(new Error('tool timed out: ' + name)), opts.toolTimeoutMs || TOOL_TIMEOUT_MS); if (tm.unref) tm.unref(); });
+    return Promise.race([Promise.resolve().then(() => t.execute(args || {})), timeout]).finally(() => clearTimeout(tm));
+  }
+  function internalStep(kind, owner) {
+    if (opts.internal && opts.internal[kind]) return opts.internal[kind](owner);
+    if (kind === 'agents') return (operatives && operatives.listByOwner ? operatives.listByOwner(owner) : []).map((o) => ({ agent_id: o.id, name: o.name, skills: (o.skills || []).length, presence: presenceOf(o.id, owner).presence }));
+    if (kind === 'plots') { const all = readPlots(); return Object.keys(all).map((i) => all[i]).filter((p) => p.owner === owner).map((p) => ({ plot_id: p.id, name: p.name, status: p.status })); }
+    if (kind === 'balance') { try { return require('./economy-service').getDefault().getBalance(owner).then((b) => ({ sparks: b && typeof b === 'object' ? (b.balance != null ? b.balance : b.sparks) : b })); } catch (e) { return Promise.reject(new Error('economy unavailable')); } }
+    if (kind === 'classes') { try { const a = require('./lib/academy/academy-instance').getAcademy(); const l = a.classes.list(); return (Array.isArray(l) ? l : Object.values(l || {})).slice(0, 20).map((c) => ({ id: c.id, name: c.name, kind: c.kind, track: c.track })); } catch (e) { return Promise.reject(new Error('school unavailable')); } }
+    return Promise.reject(new Error('unknown internal step'));
+  }
+
+  // One runner for both kinds of actor: an outside bot (via its token) or one of YOUR forged agents (started by you in the dashboard).
+  function startRun(ctx, a) {
+    const wf = WORKFLOWS[a.workflow_id]; if (!wf) throw new ToolError(404, 'unknown workflow');
+    if (!safeId(a.idempotency_key)) throw new ToolError(400, 'idempotency_key required (1-128 chars: letters, digits, _ . : @ -)');
+    if (ctx.scopes) for (const sc of wf.required_scopes) if (!ctx.scopes.includes(sc)) throw new ToolError(403, 'scope_missing:' + sc);
+    let agentId = a.agent_id || ctx.boundAgent || null;
+    if (ctx.boundAgent && a.agent_id && a.agent_id !== ctx.boundAgent) throw new ToolError(403, 'this token is bound to a different agent');
+    if (agentId) { if (!safeId(agentId)) throw new ToolError(400, 'invalid agent_id'); if (agentOwner(agentId) !== ctx.owner) throw new ToolError(403, 'not your agent'); }
+    if (a.plot_id != null && !safeId(a.plot_id)) throw new ToolError(400, 'invalid plot_id');
+    const params = a.params && typeof a.params === 'object' ? a.params : {};
+    if (JSON.stringify(params).length > 2000) throw new ToolError(400, 'params too large');
+    let steps; try { steps = wf.build ? wf.build(params) : wf.steps.map((n) => ({ name: n })); } catch (e) { throw new ToolError(400, e.message); }
+    if (!steps.length || steps.length > 12) throw new ToolError(400, 'bad step count');
+    for (const st of steps) if (st.tool && (!SAFE_TOOLS.has(st.tool) || JSON.stringify(st.args || {}).length > 1000)) throw new ToolError(400, 'tool not allowed: ' + st.tool);
+    const paramsHash = sha(JSON.stringify([a.workflow_id, agentId, a.plot_id || null, params]));
+    const ik = ctx.owner + ':' + a.idempotency_key, prior = db.idem[ik];
+    if (prior) { if (prior.hash !== paramsHash) throw new ToolError(409, 'idempotency_key already used with different parameters'); return Object.assign(publicRun(db.runs[prior.run_id]), { replay: true }); }
+    const run = { run_id: rid('run'), workflow_id: a.workflow_id, workflow_version: wf.version, agent_id: agentId, plot_id: a.plot_id || null, owner: ctx.owner, token_id: ctx.token_id || null, actor: { kind: ctx.kind },
+      status: 'queued', steps: steps.map((st) => ({ name: st.name, status: 'pending', tool: st.tool, args: st.args, internal: st.internal })), approvals: [], approvals_pending: [], approved: false, created_at: iso(now()), updated_at: iso(now()), created_ms: now() };
+    db.runs[run.run_id] = run; db.idem[ik] = { hash: paramsHash, run_id: run.run_id }; persist();
+    setImmediate(() => advance(run));
+    return publicRun(run);
+  }
+
   /* ── MCP tools ───────────────────────────────────────────────────────── */
   const TOOLS = [
     { name: 'list_workflows', scope: 'workflows:read', description: 'List the workflows you may start, with required scopes and whether they need owner approval.', inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
@@ -138,6 +203,10 @@ function createBridge(opts) {
     { name: 'get_run_status', scope: 'runs:read', description: 'Status, step progress, pending approvals and the receipt of a run you started.', inputSchema: { type: 'object', required: ['run_id'], properties: { run_id: { type: 'string' } }, additionalProperties: false } },
     { name: 'cancel_run', scope: 'runs:cancel', description: 'Cancel a run that has not finished. Settled money is never reversed by cancelling.', inputSchema: { type: 'object', required: ['run_id'], properties: { run_id: { type: 'string' }, reason: { type: 'string' } }, additionalProperties: false } },
     { name: 'read_agent_state', scope: 'agents:read', description: 'Presence and current run of one of your agents. Never returns secrets.', inputSchema: { type: 'object', required: ['agent_id'], properties: { agent_id: { type: 'string' } }, additionalProperties: false } },
+    { name: 'list_tools', scope: 'tools:run', description: 'The read-only data tools you can run via the tool.run workflow, with their parameters.', inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
+    { name: 'list_my_agents', scope: 'agents:read', description: 'Your forged agents with presence. Use an agent_id when starting a workflow so its avatar shows the work.', inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
+    { name: 'get_balance', scope: 'economy:read', description: 'Your Sparks balance (read-only; no spending is possible through the bridge).', inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
+    { name: 'list_classes', scope: 'school:read', description: 'Athenaeum classes open on this server (read-only).', inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
     { name: 'list_plots', scope: 'plots:read', description: 'World plots you own or that are available. Read-only.', inputSchema: { type: 'object', properties: { owner: { type: 'string', enum: ['me', 'available'] } }, additionalProperties: false } },
     { name: 'get_plot_state', scope: 'plots:read', description: 'State of one plot you own or that is available. Read-only.', inputSchema: { type: 'object', required: ['plot_id'], properties: { plot_id: { type: 'string' } }, additionalProperties: false } }
   ];
@@ -147,23 +216,11 @@ function createBridge(opts) {
     a = a || {};
     switch (name) {
       case 'list_workflows': return Object.keys(WORKFLOWS).map((id) => ({ workflow_id: id, version: WORKFLOWS[id].version, title: WORKFLOWS[id].title, required_scopes: WORKFLOWS[id].required_scopes, money_class: WORKFLOWS[id].money_class, approval_policy: WORKFLOWS[id].approve_before ? 'owner approves before ' + WORKFLOWS[id].approve_before : 'none' }));
-      case 'start_workflow': {
-        const wf = WORKFLOWS[a.workflow_id]; if (!wf) throw new ToolError(404, 'unknown workflow');
-        if (!safeId(a.idempotency_key)) throw new ToolError(400, 'idempotency_key required (1-128 chars: letters, digits, _ . : @ -)');
-        for (const s of wf.required_scopes) if (!tok.scopes.includes(s)) throw new ToolError(403, 'scope_missing:' + s);
-        let agentId = a.agent_id || tok.agent_id || null;
-        if (tok.agent_id && a.agent_id && a.agent_id !== tok.agent_id) throw new ToolError(403, 'this token is bound to a different agent');
-        if (agentId) { if (!safeId(agentId)) throw new ToolError(400, 'invalid agent_id'); if (agentOwner(agentId) !== tok.owner) throw new ToolError(403, 'not your agent'); }
-        if (a.plot_id != null && !safeId(a.plot_id)) throw new ToolError(400, 'invalid plot_id');
-        const paramsHash = sha(JSON.stringify([a.workflow_id, agentId, a.plot_id || null, a.params || {}]));
-        const ik = tok.owner + ':' + a.idempotency_key, prior = db.idem[ik];
-        if (prior) { if (prior.hash !== paramsHash) throw new ToolError(409, 'idempotency_key already used with different parameters'); return Object.assign(publicRun(db.runs[prior.run_id]), { replay: true }); }
-        const run = { run_id: rid('run'), workflow_id: a.workflow_id, workflow_version: wf.version, agent_id: agentId, plot_id: a.plot_id || null, owner: tok.owner, token_id: tok.id,
-          status: 'queued', steps: wf.steps.map((n) => ({ name: n, status: 'pending' })), approvals: [], approvals_pending: [], approved: false, created_at: iso(now()), updated_at: iso(now()), created_ms: now() };
-        db.runs[run.run_id] = run; db.idem[ik] = { hash: paramsHash, run_id: run.run_id }; persist();
-        setImmediate(() => advance(run));
-        return publicRun(run);
-      }
+      case 'start_workflow': return startRun({ owner: tok.owner, token_id: tok.id, boundAgent: tok.agent_id, scopes: tok.scopes, kind: 'bot' }, a);
+      case 'list_tools': { const T = toolTable(); return Array.from(SAFE_TOOLS).filter((n) => T[n]).map((n) => ({ tool: n, description: T[n].description || '', params: T[n].schema || {} })); }
+      case 'list_my_agents': return internalStep('agents', tok.owner);
+      case 'get_balance': return internalStep('balance', tok.owner);
+      case 'list_classes': return internalStep('classes', tok.owner);
       case 'get_run_status': { const r = db.runs[a.run_id]; if (!r || r.owner !== tok.owner) throw new ToolError(404, 'unknown run'); return publicRun(r); }
       case 'cancel_run': {
         const r = db.runs[a.run_id]; if (!r || r.owner !== tok.owner) throw new ToolError(404, 'unknown run');
@@ -226,6 +283,14 @@ function createBridge(opts) {
   };
   router.post('/runs/:id/approve', needOwner, decide(true));
   router.post('/runs/:id/deny', needOwner, decide(false));
+  router.get('/workflows', needOwner, (req, res) => res.json({ ok: true, workflows: Object.keys(WORKFLOWS).map((id) => ({ workflow_id: id, title: WORKFLOWS[id].title, money_class: WORKFLOWS[id].money_class, needs_approval: !!WORKFLOWS[id].approve_before, params: id === 'tool.run' ? 'tool, args' : id === 'research.topic' ? 'query' : id === 'market.snapshot' ? 'symbols[]' : '' })) }));
+  router.post('/agents/:agentId/run', needOwner, json, (req, res) => {
+    const b = req.body || {};
+    if (findSecret(b.params)) return res.status(400).json({ ok: false, error: 'never send secrets or credentials in params' });
+    try { const r = startRun({ owner: req.owner, token_id: null, boundAgent: null, scopes: null, kind: 'forged' }, { workflow_id: b.workflow_id, agent_id: req.params.agentId, params: b.params, idempotency_key: b.idempotency_key || rid('ui') });
+      res.status(202).json({ ok: true, run: r }); }
+    catch (e) { if (e instanceof ToolError) return res.status(e.code).json({ ok: false, error: e.message }); console.error('[bridge]', e && e.stack || e); res.status(500).json({ ok: false, error: 'internal error' }); }
+  });
   router.get('/audit', needOwner, (req, res) => res.json({ ok: true, audit: db.audit.filter((a) => a.owner === req.owner).slice(-100).reverse() }));
   router.get('/world-state', (req, res) => {
     const ids = new Set(Object.values(db.runs).filter((r) => r.agent_id).map((r) => r.agent_id));
@@ -254,15 +319,15 @@ function createBridge(opts) {
       if (!tool) return fail(404, -32602, 'unknown tool');
       if (!tok.scopes.includes(tool.scope)) { audit(tok, tool.name, false, { error: 'scope_missing' }); return fail(403, -32003, 'scope_missing:' + tool.scope); }
       if (findSecret(p.arguments)) { audit(tok, tool.name, false, { error: 'secret_in_args' }); return fail(400, -32602, 'never send secrets or credentials through tool arguments'); }
-      try {
-        const out = callTool(tok, tool.name, p.arguments);
+      Promise.resolve().then(() => callTool(tok, tool.name, p.arguments)).then((out) => {
         audit(tok, tool.name, true, out && out.run_id ? { run_id: out.run_id } : undefined);
         return ok({ content: [{ type: 'text', text: JSON.stringify(out) }], structuredContent: Array.isArray(out) ? { items: out } : out, isError: false });
-      } catch (e) {
-        if (!(e instanceof ToolError)) { console.error('[bridge]', e && e.stack || e); return fail(500, -32603, 'internal error'); }
+      }).catch((e) => {
+        if (!(e instanceof ToolError)) { audit(tok, tool.name, false, { error: String((e && e.message) || e).slice(0, 120) }); return fail(502, -32603, 'that data source is unavailable right now'); }
         audit(tok, tool.name, false, { error: e.message });
         return res.status(e.code).json({ jsonrpc: '2.0', id, error: { code: -32000 - (e.code % 100), message: e.message } });
-      }
+      });
+      return;
     }
     return fail(404, -32601, 'method not found');
   });

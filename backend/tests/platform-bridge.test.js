@@ -17,7 +17,18 @@ const ops = { a1: { id: 'a1', name: 'Bolt', owner: 'alice', skills: [] }, b1: { 
 const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id) ? ops[id] : null) };
 
 (async () => {
-  const bridge = createBridge({ file: path.join(tmp, 'bridge.json'), plotsFile, operatives, stepMs: 60, uidOf: (req) => req.headers['x-uid'] || '' });
+  const calls = [];
+  const tools = {
+    fetch_price: { description: 'price', schema: { symbol: 'string' }, execute: async ({ symbol }) => { calls.push('fetch_price:' + symbol); return { symbol, usd: 100 }; } },
+    get_fear_greed: { description: 'fg', execute: async () => ({ value: 55 }) },
+    get_trending: { description: 'tr', execute: async () => ['a', 'b'] },
+    search_web: { description: 'web', execute: async ({ query }) => 'results for ' + query + ' key sk-' + 'z'.repeat(30) },
+    wikipedia_search: { description: 'wiki', execute: async () => { throw new Error('wiki down'); } },
+    execute_trade: { description: 'NEVER', execute: async () => { calls.push('TRADE!'); return 'traded'; } },
+    write_file: { description: 'NEVER', execute: async () => { calls.push('WRITE!'); return 'wrote'; } }
+  };
+  const internal = { agents: async () => [{ agent_id: 'a1' }], plots: async () => [], balance: async () => ({ sparks: 42 }), classes: async () => [] };
+  const bridge = createBridge({ file: path.join(tmp, 'bridge.json'), plotsFile, operatives, tools, internal, stepMs: 60, uidOf: (req) => req.headers['x-uid'] || '' });
   const app = express(); app.use('/b', bridge);
   const server = await new Promise((r) => { const s = app.listen(0, () => r(s)); });
   const base = 'http://127.0.0.1:' + server.address().port + '/b';
@@ -110,6 +121,37 @@ const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id)
   const w2 = out(await tool(run.token, 'start_workflow', { workflow_id: 'demo.needs-approval', agent_id: 'a1', idempotency_key: 'job-4' })); await sleep(200);
   assert.strictEqual((await http('POST', '/runs/' + w2.run_id + '/deny', { uid: 'alice' })).status, 200);
   assert.strictEqual(out(await tool(run.token, 'get_run_status', { run_id: w2.run_id })).status, 'failed', 'denied runs fail, they never proceed');
+
+  // ── REAL WORK: forged agents OR outside bots run the same server-side workflows ──
+  const wk = await mint('alice', { label: 'worker', scopes: ['workflows:read', 'workflows:run', 'runs:read', 'agents:read', 'plots:read', 'tools:run', 'economy:read', 'school:read'] });
+  const wait = async (tk, id) => { for (let i = 0; i < 40; i++) { const r = out(await tool(tk, 'get_run_status', { run_id: id })); if (['succeeded', 'failed', 'cancelled', 'expired'].includes(r.status)) return r; await sleep(40); } throw new Error('run did not finish'); };
+  assert.ok(out(await tool(wk.token, 'list_tools', {})).items.every((t) => t.tool !== 'execute_trade' && t.tool !== 'write_file'), 'list_tools never offers write/trade tools');
+  assert.strictEqual((await tool(ro.token, 'start_workflow', { workflow_id: 'market.snapshot', idempotency_key: 'm0' })).status, 403, 'tools:run scope required for data workflows');
+  const ms = out(await tool(wk.token, 'start_workflow', { workflow_id: 'market.snapshot', agent_id: 'a1', params: { symbols: ['bitcoin', 'solana'] }, idempotency_key: 'm1' }));
+  const msDone = await wait(wk.token, ms.run_id);
+  assert.strictEqual(msDone.status, 'succeeded'); assert.deepStrictEqual(Object.keys(msDone.outputs), ['price:bitcoin', 'price:solana', 'fear_greed', 'trending']);
+  assert.ok(JSON.parse(msDone.outputs['price:bitcoin']).usd === 100, 'tool output returned to the bot'); assert.strictEqual(msDone.actor.kind, 'bot');
+  for (const t of ['execute_trade', 'write_file', 'run_js']) assert.strictEqual((await tool(wk.token, 'start_workflow', { workflow_id: 'tool.run', idempotency_key: 'bad-' + t, params: { tool: t, args: {} } })).status, 400, t + ' is not allowed');
+  assert.ok(!calls.includes('TRADE!') && !calls.includes('WRITE!'), 'denied tools were never executed');
+  assert.strictEqual((await tool(wk.token, 'start_workflow', { workflow_id: 'research.topic', idempotency_key: 'r0', params: {} })).status, 400, 'missing query rejected');
+  const rs = out(await tool(wk.token, 'start_workflow', { workflow_id: 'research.topic', idempotency_key: 'r1', params: { query: 'mangroves' } }));
+  const rsDone = await wait(wk.token, rs.run_id);
+  assert.strictEqual(rsDone.status, 'failed', 'a failing tool fails the run honestly'); assert.ok(/wiki down/.test(rsDone.error)); assert.ok(!/sk-z/.test(JSON.stringify(rsDone)), 'secrets in tool output are redacted'); assert.ok(/[redacted]/.test(rsDone.outputs.web));
+  const dr = await wait(wk.token, out(await tool(wk.token, 'start_workflow', { workflow_id: 'dashboard.report', agent_id: 'a1', idempotency_key: 'd1' })).run_id);
+  assert.strictEqual(dr.status, 'succeeded'); assert.strictEqual(JSON.parse(dr.outputs.balance).sparks, 42);
+  assert.strictEqual(out(await tool(wk.token, 'get_balance', {})).sparks, 42, 'bots can read the balance but there is no spend tool');
+  assert.ok(!(await rpc(wk.token, 'tools/list')).json.result.tools.some((t) => /spend|pay|trade|transfer/.test(t.name)), 'no money tools exist');
+
+  // forged agent door: the OWNER starts work for their own forged agent from the dashboard (session auth, not a token)
+  assert.strictEqual((await http('POST', '/agents/a1/run', { body: { workflow_id: 'news.digest' } })).status, 401, 'needs sign-in');
+  assert.strictEqual((await http('POST', '/agents/a1/run', { bearer: wk.token, body: { workflow_id: 'news.digest' } })).status, 401, 'a bot token cannot use the owner door');
+  assert.strictEqual((await http('POST', '/agents/b1/run', { uid: 'alice', body: { workflow_id: 'dashboard.report' } })).status, 403, 'not your forged agent');
+  const fr = await http('POST', '/agents/a1/run', { uid: 'alice', body: { workflow_id: 'dashboard.report', idempotency_key: 'ui-1' } });
+  assert.strictEqual(fr.status, 202); assert.strictEqual(fr.json.run.actor.kind, 'forged');
+  await sleep(250);
+  const frRuns = (await http('GET', '/runs', { uid: 'alice' })).json.runs; const mineRun = frRuns.find((r) => r.run_id === fr.json.run.run_id);
+  assert.strictEqual(mineRun.status, 'succeeded'); assert.ok(mineRun.outputs && mineRun.outputs.agents, 'forged agent run has outputs and a receipt'); assert.ok(mineRun.receipt);
+  assert.ok((await http('GET', '/workflows', { uid: 'alice' })).json.workflows.some((w) => w.workflow_id === 'tool.run'));
 
   // 7. revocation takes effect on the next call
   const info = (await http('GET', '/tokens', { uid: 'alice' })).json.tokens.find((t) => t.label === 'runner');
