@@ -12,7 +12,7 @@ const router = express.Router();
 const fs = require('fs');
 const path = require('path');
 
-const DATA_DIR = path.join(__dirname, 'data');
+const DATA_DIR = process.env.SHADDAI_MMO_DATA || path.join(__dirname, 'data'); // env override = test isolation
 const SKILLS_FILE = path.join(DATA_DIR, 'skills.json');
 const CHARS_FILE = path.join(DATA_DIR, 'characters.json');
 
