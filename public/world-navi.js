@@ -20,7 +20,7 @@
   // PLAY (map, modes, jobs) · OWN (items + mounts, shop, homes, wallet, sparks) · AGENTS + LEARN (agents, academy) · SOCIAL (chat, news, radio).
   // ZEROX signals are off the ring for now (owner: later); M.signals stays in the code.
   var MODULES = [
-    { id: 'map', label: 'MAP', ic: '🗺' }, { id: 'modes', label: 'MODES', ic: '⚙' }, { id: 'jobs', label: 'JOBS', ic: '💼' },
+    { id: 'map', label: 'MAP', ic: '🗺' }, { id: 'modes', label: 'MODES', ic: '🎮' }, { id: 'jobs', label: 'JOBS', ic: '💼' },
     { id: 'inv', label: 'ITEMS', ic: '🎒' }, { id: 'market', label: 'SHOP', ic: '🛒' }, { id: 'plots', label: 'HOMES', ic: '⬡' },
     { id: 'wallet', label: 'WALLET', ic: '👛' }, { id: 'sparks', label: 'SPARKS', ic: '✦' },
     { id: 'bots', label: 'AGENTS', ic: '🤖' }, { id: 'academy', label: 'ACADEMY', ic: '🎓' },
@@ -44,9 +44,9 @@
     academy: '<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5M22 9v6"/>',
     jobs: '<path d="M4 8h16v11H4z"/><path d="M9 8V5h6v3M4 13h16"/>',
     signals: '<path d="M4 20V14M9 20V10M14 20V6M19 20V3"/>',
-    modes: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>'
+    modes: '<path d="M6 8h12a4 4 0 0 1 3.8 5.2l-1.2 3.6a2 2 0 0 1-3.4.7L15 15H9l-2.2 2.5a2 2 0 0 1-3.4-.7l-1.2-3.6A4 4 0 0 1 6 8z"/><path d="M8 10.5v3M6.5 12h3M15.5 11h.01M17.5 13h.01"/>'
   };
-  function icon(id) { return '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (IC[id] || IC.modes) + '</svg>'; }
+  function icon(id) { return '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (IC[id] || IC.map) + '</svg>'; }
 
 
   function load() { try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { return {}; } }
@@ -57,21 +57,9 @@
     waypoint: saved.waypoint || null,
     radio: { band: 'Agent', playing: false, station: 'Agent FM 107.7' },
     flags: { hasHome: !!saved.hasHome, activeBot: saved.activeBot || null, mountedId: saved.mountedId || null, slots: {} },
-    inventory: saved.inventory || [
-      { id: 'sk1', cat: 'Skins', name: 'Astral Sentinel', rarity: 'Rare', power: 12, tradable: true, equipped: false },
-      { id: 'sk2', cat: 'Skins', name: 'Void Warden', rarity: 'Epic', power: 18, tradable: true, equipped: false },
-      { id: 'sk3', cat: 'Skins', name: 'Neon Nomad', rarity: 'Legendary', power: 25, tradable: false, equipped: false },
-      { id: 'sl1', cat: 'Skills', name: 'Phase Shift', rarity: 'Lv 4', power: 4, tradable: true, equipped: true },
-      { id: 'sl2', cat: 'Skills', name: 'Aether Strike', rarity: 'Lv 5', power: 5, tradable: true, equipped: false },
-      { id: 'mt1', cat: 'Mounts', name: 'Starling Disc', rarity: 'Lv 4', power: 4, tradable: true, equipped: false },
-      { id: 'mt2', cat: 'Mounts', name: 'Helios Charger', rarity: 'Lv 5', power: 5, tradable: true, equipped: false }
-    ],
+    inventory: [],   // rebuilt live by realInventory() (no demo items - owner)
     stats: saved.stats || { dragonsSlain: 0, sparksEarned: 0, trades: 0, agentRevenue: 0, classes: 0, colosseum: '0-0' },
-    bots: saved.bots || [
-      { id: 'b1', name: 'AEGIS-7', source: 'Native', skills: ['Targeting Matrix'], skin: 'Sentinel', revenue: 412, state: 'ACTIVE' },
-      { id: 'b2', name: 'NYX-3', source: 'Native', skills: [], skin: 'Void', revenue: 96, state: 'ACTIVE' },
-      { id: 'b3', name: 'ORACLE-9', source: 'Grok-imported', skills: [], skin: 'Neon', revenue: 0, state: 'STANDBY' }
-    ],
+    bots: [],   // legacy field; the AGENTS module reads window.WorldBots (no demo bots - owner)
     schedule: saved.schedule || [],
     chat: { channel: 'Nearby', log: { Nearby: [], Global: [], Party: [], Agent: [] } },
     pins: []
@@ -79,7 +67,7 @@
   function persist() {
     try {
       localStorage.setItem(KEY, JSON.stringify({ module: S.module, waypoint: S.waypoint, hasHome: S.flags.hasHome, activeBot: S.flags.activeBot,
-        mountedId: S.flags.mountedId, inventory: S.inventory, stats: S.stats, bots: S.bots, schedule: S.schedule }));
+        mountedId: S.flags.mountedId, stats: S.stats, schedule: S.schedule }));
     } catch (e) { }
   }
 
@@ -106,7 +94,7 @@
     '#navi .core{position:absolute;inset:27%;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(120,220,255,.35),rgba(10,30,70,.85) 60%);border:2px solid ' + THEME.cyan + ';box-shadow:0 0 40px rgba(0,212,255,.45),0 0 80px rgba(27,108,255,.3) inset;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}' +
     '#navi .core b{letter-spacing:.18em;font-size:clamp(11px,1.7vh,18px);text-shadow:0 0 10px ' + THEME.cyan + '}#navi .core i{font-style:normal;font-size:clamp(10px,1.3vh,13px);color:' + THEME.gold + ';margin-top:4px}' +
     '#navi .core svg{width:38%;height:38%;animation:nvyaw 9s linear infinite;filter:drop-shadow(0 0 8px ' + THEME.cyan + ')}@keyframes nvyaw{0%{transform:rotateY(0)}100%{transform:rotateY(360deg)}}' +
-    '#navi .node{position:absolute;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;background:rgba(5,14,34,.85);border:1px solid rgba(0,212,255,.5);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:19px;transition:.15s;box-shadow:0 0 12px rgba(0,212,255,.2)}' +
+    '#navi .node{position:absolute;--nd:clamp(38px,calc(min(46vh,40vw) * .16),64px);width:var(--nd);height:var(--nd);margin:calc(var(--nd) / -2) 0 0 calc(var(--nd) / -2);border-radius:50%;background:rgba(5,14,34,.85);border:1px solid rgba(0,212,255,.5);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:19px;transition:.15s;box-shadow:0 0 12px rgba(0,212,255,.2)}' +
     '#navi .node small{font-size:9px;letter-spacing:.1em;color:' + THEME.cyan + '}#navi .node:hover,#navi .node.act{border-color:' + THEME.gold + ';box-shadow:0 0 22px rgba(245,166,35,.55);transform:scale(1.12)}' +
     '#navi .plate{position:absolute;top:9%;bottom:24%;width:min(27vw,340px);padding:14px 16px;background:linear-gradient(160deg,rgba(8,22,50,.82),rgba(4,10,26,.86));border:1px solid rgba(0,212,255,.45);box-shadow:0 0 30px rgba(0,212,255,.15),inset 0 0 40px rgba(27,108,255,.08);overflow:auto;clip-path:polygon(0 12px,12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%)}' +
     '#navi .pl{left:2.2%}#navi .pr{right:2.2%}#navi .plate h3{margin:0 0 8px;font-size:15px;letter-spacing:.16em;color:' + THEME.gold + ';border-bottom:1px solid rgba(245,166,35,.35);padding-bottom:6px}' +
@@ -133,7 +121,7 @@
     '#naviWp{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:7999;display:none;padding:5px 14px;font:700 13px "Chakra Petch",sans-serif;letter-spacing:.12em;color:' + THEME.gold + ';background:rgba(5,14,34,.8);border:1px solid ' + THEME.gold + '}' +
     '#naviToasts{position:fixed;left:14px;bottom:70px;z-index:7998;display:flex;flex-direction:column;gap:4px;pointer-events:none}#naviToasts div{background:rgba(5,14,34,.85);border-left:3px solid ' + THEME.cyan + ';padding:5px 10px;font:14px "Chakra Petch",sans-serif;color:' + THEME.white + '}' +
     '@media(max-width:820px){#navi .plate{width:46vw;top:6%;bottom:36%;font-size:12px}#navi .orbwrap{display:none}#navi .hx{width:46px;height:52px;font-size:14px}#navi .hx.c{width:64px;height:72px}#navi .hx.n2{display:none}#navi .kpi{min-width:82px;padding:5px 8px}#navi .kpi span{font-size:15px}#navi .slots{display:none}}';
-  css += '#navi .ic{width:22px;height:22px;display:block;margin-bottom:2px}#navi .hx .ic{width:24px;height:24px}#navi .hx.c .ic{width:34px;height:34px}#navi .node{color:' + THEME.cyan + '}#navi .node.act,#navi .node:hover{color:' + THEME.gold + '}' +
+  css += '#navi .ic{width:22px;height:22px;display:block;margin-bottom:2px}#navi .node .ic{width:calc(var(--nd) * .34);height:calc(var(--nd) * .34)}#navi .node small{font-size:clamp(7px,calc(var(--nd) * .14),9px)}#navi .hx .ic{width:24px;height:24px}#navi .hx.c .ic{width:34px;height:34px}#navi .node{color:' + THEME.cyan + '}#navi .node.act,#navi .node:hover{color:' + THEME.gold + '}' +
     '#navi .node:focus-visible,#navi .hx:focus-visible,#navi button.b:focus-visible,#navi .row:focus-visible{outline:2px solid ' + THEME.gold + ';outline-offset:3px}#navi .hx{color:' + THEME.white + '}';
   css += '' +
     /* NAVI 3D SKIN (2026-10-01): bevelled glass orbs, tilted glass plates, glossy hex row, solid-key buttons, floor grid, lit core. Pure CSS (no blur, no extra passes). */
@@ -177,7 +165,7 @@
     '#navi .orbwrap{transform:translate(-50%,-50%) rotateX(var(--nvTilt,14deg)) rotateY(var(--nvSw,0deg));transform-style:preserve-3d;transition:transform .35s cubic-bezier(.2,.9,.3,1)}' +
     '#navi .plate.pl{transform:rotateY(calc(24deg + var(--nvSw,0deg))) translateZ(-30px);transform-origin:0 50%;transition:transform .35s cubic-bezier(.2,.9,.3,1);animation:nvfloatL 7s ease-in-out infinite}' +
     '#navi .plate.pr{transform:rotateY(calc(-24deg + var(--nvSw,0deg))) translateZ(-30px);transform-origin:100% 50%;transition:transform .35s cubic-bezier(.2,.9,.3,1);animation:nvfloatR 7s ease-in-out infinite}' +
-    '#navi .plate{backdrop-filter:blur(6px) saturate(1.2);box-shadow:0 0 0 1px rgba(0,212,255,.35),0 0 34px rgba(0,212,255,.16),0 24px 60px rgba(0,0,0,.55)}' +
+    '#navi.hq .plate{backdrop-filter:blur(6px) saturate(1.2)}#navi .plate{box-shadow:0 0 0 1px rgba(0,212,255,.35),0 0 34px rgba(0,212,255,.16),0 24px 60px rgba(0,0,0,.55)}' +
     '#navi .plate:before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(115deg,transparent 30%,rgba(140,230,255,.10) 45%,transparent 60%);background-size:260% 100%;animation:nvsheen 6s linear infinite}' +
     '@keyframes nvfloatL{0%,100%{translate:0 0}50%{translate:0 -6px}}@keyframes nvfloatR{0%,100%{translate:0 -6px}50%{translate:0 0}}@keyframes nvsheen{from{background-position:200% 0}to{background-position:-60% 0}}' +
     '#navi .swivel{transform:translateX(-50%) rotateX(calc(var(--nvTilt,14deg) * .6))}' +
@@ -443,11 +431,7 @@
       }, act: function () { } };
   };
 
-  var LISTINGS = [
-    { id: 'l1', t: 'Stardust Trail · Hoverboard Skin', s: 'seller: orion', price: 1250, cur: 'PBC', cat: 'Skins' },
-    { id: 'l2', t: 'Targeting Matrix · Bot Skill', s: 'seller: lira', price: 850, cur: 'SPK', cat: 'Skills' },
-    { id: 'l3', t: 'Aureate Strider · Hoverboard', s: 'seller: nova', price: 2450, cur: 'PBC', cat: 'Mounts' }
-  ];
+  var LISTINGS = [];   // 2026-11-06 owner: no made-up listings. Real player listings (server-backed) plug in here and reuse confirmBuy().
   function openForm(title, fields, onSubmit) {
     modalEl = document.createElement('div'); modalEl.className = 'modal';
     modalEl.innerHTML = '<div><h3 style="margin:0 0 6px;color:' + THEME.gold + '">' + esc(title) + '</h3>' + fields.map(function (f) { return '<label style="font-size:12px;color:' + THEME.cyan + '">' + esc(f.label) + '</label><input data-f="' + f.key + '" placeholder="' + esc(f.ph || '') + '" ' + (f.num ? 'inputmode="numeric"' : '') + '>'; }).join('') +
@@ -538,15 +522,20 @@
     };
   };
 
+  var COUNCIL = [['SHADDAI', 'Orchestrator · strategy and final calls'], ['NEXUS', 'Architect · servers, tools, workflows'], ['ZEROX', 'Revenue · pricing, markets, signals'],
+    ['ORACLE', 'Research · data, trends, intel'], ['TURTLE', 'Design · worlds, UI, art'], ['QUILL', 'Writing · docs, copy, lore'], ['PIKADON', 'Security · audits, permissions']];
   M.bots = function () {
     var WB = window.WorldBots; if (!WB) return { title: 'BOTS', list: [], empty: 'Bots module not loaded.', detail: function () { return ''; } };
     var st = WB.state(), zone = window.__botZone ? window.__botZone() : 'wilderness';
     function tag(d) { var r = WB.rec(d.id); if (r) return r.bodyState === 'active' ? 'ACTIVE' : (r.bodyState === 'destroyed' ? 'DESTROYED' : 'OWNED'); return d.earn === 'starter' ? (st.picked ? 'LOCKED' : 'STARTER') : 'EARN'; }
+    var botRows = WB.ROSTER.map(function (d) { return { id: d.id, t: d.name, s: (d.kind === 'humanoid' ? 'humanoid' : 'wheeled · city only'), tag: tag(d) }; });
     return {
-      title: 'BOTS · ' + WB.ROSTER.filter(function (d) { return WB.rec(d.id); }).length + '/10',
-      list: WB.ROSTER.map(function (d) { return { id: d.id, t: d.name, s: (d.kind === 'humanoid' ? 'humanoid' : 'wheeled · city only'), tag: tag(d) }; }),
+      title: 'AGENTS · BOTS ' + WB.ROSTER.filter(function (d) { return WB.rec(d.id); }).length + '/10',
+      list: [{ head: 'COUNCIL · 7' }].concat(COUNCIL.map(function (c) { return { id: 'ag:' + c[0], t: c[0], s: c[1], tag: 'TALK' }; }), [{ head: 'YOUR BOTS' }], botRows),
       empty: '',
       detail: function (id) {
+        if (/^ag:/.test(id || '')) { var c = COUNCIL.filter(function (x) { return x[0] === id.slice(3); })[0]; if (!c) return '';
+          return '<h3>' + esc(c[0]) + '</h3><div style="height:170px;margin:4px 0 8px;border:1px solid rgba(0,212,255,.45);background:#050814 center/cover no-repeat url(/assets/agents/' + c[0] + '-portrait.png?v=faces-20261106)"></div><div>' + esc(c[1]) + '</div><button class="b g" data-a="talk">TALK TO ' + esc(c[0]) + '</button>'; }
         var d = WB.def(id); if (!d) return '<div class="empty">Choose your first bot: SCRAP (humanoid) or UNI-9 (wheeled). The other eight are earned.</div>';
         var r = WB.rec(id), h = '<h3>' + esc(d.name) + '</h3><div>' + esc(d.blurb) + '</div><div style="margin:6px 0;color:' + THEME.cyan + '">' + (d.kind === 'humanoid' ? 'HUMANOID · walks, fights, follows, carries' : 'WHEELED · talk here or call in a city · never in the wilds or fights') + '</div>';
         if (!r) {
@@ -563,6 +552,7 @@
         return h;
       },
       act: function (id, a) {
+        if (/^ag:/.test(id || '')) { if (a === 'talk') window.open('/agents.html', '_blank'); return; }
         var d = WB.def(id); if (!d) { if (a === 'imp') toast('Grok import: coming with the Forge'); return; }
         if (a === 'pick') { var g = WB.pickStarter(id); toast(g.ok ? d.name + ' is yours' : g.why); }
         else if (a === 'call') { var c = WB.call(id, zone); toast(c.ok ? d.name + ' is with you' : c.why); }
@@ -606,30 +596,52 @@
       act: function (id, a) { if (a === 'copy' && navigator.clipboard) navigator.clipboard.writeText(window.shaddaiPayBox.address); }
     };
   };
-  var CLASSES = [{ id: 'c1', t: 'Combat · Arena Basics', s: '19:00 · Gate B', pin: { x: 200, z: 200, label: 'Academy Gate B', kind: 'Academy' } }, { id: 'c2', t: 'Commerce · Shop Running', s: '20:00 · Market', pin: { x: -200, z: 300, label: 'Market Hall', kind: 'Academy' } }];
+  // ACADEMY (2026-11-06): the classes the Athenaeum class hall actually runs (athenaeum-class.html SAMPLE; keep in sync).
+  // /api/academy/catalog is the paid-API provider catalog, NOT player classes, so it is not used here. Every class meets in the Athenaeum.
+  var ATHENAEUM = { x: 3958.8, z: -3117.6, label: 'The Athenaeum', kind: 'Academy' };
+  var HALL_CLASSES = [
+    { id: 'cls:demo-paint', t: 'Holo-Painting: light and colour', s: 'Painting · level 2', teacher: 'TURTLE' },
+    { id: 'cls:demo-build', t: 'Building: load paths and spans', s: 'Building · level 2', teacher: 'NEXUS' },
+    { id: 'cls:demo-math', t: 'Math: vectors for movers', s: 'Math · level 1', teacher: 'QUILL' },
+    { id: 'cls:demo-phys', t: 'Physics test: projectiles under gravity', s: 'Physics test · level 1', teacher: 'Guest teacher' }
+  ];
   M.academy = function () {
     var AC = window.ShdAcademyCode;
+    var list = [{ id: 'hall', t: 'The Athenaeum · class hall', s: AC ? 'Sign-in code ' + AC.current() : 'Open the class hall' }, { head: 'CLASSES · ' + HALL_CLASSES.length }].concat(HALL_CLASSES);
     return {
-      title: 'ACADEMY', list: [{ id: 'hall', t: 'The Athenaeum · class hall', s: AC ? 'Sign-in code ' + AC.current() : 'Open the class hall' }].concat(CLASSES.map(function (c) { return { id: c.id, t: c.t, s: c.s }; })), empty: 'No classes scheduled.', selId: 'hall',
+      title: 'ACADEMY', list: list, empty: 'No classes scheduled.', selId: 'hall',
       detail: function (id) {
         if (id === 'hall') {   // 2026-11-05: the in-game sign-in code for athenaeum-class.html (no SMS - owner)
           var code = AC ? AC.current() : '------', left = AC ? AC.secondsLeft() : 0;
           return '<h3>The Athenaeum</h3><div>Your sign-in code</div><div style="font:700 34px/1.2 \'Share Tech Mono\',monospace;letter-spacing:.32em;color:' + THEME.gold + ';margin:8px 0">' + code + '</div>' +
-            '<div class="empty">Changes in ' + Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0') + '. Enter it at the class hall to take a seat. Only valid on this device.</div>' +
-            '<button class="b g" data-a="hall">OPEN THE CLASS HALL</button>';
+            '<div class="empty">Changes in <span id="nvCodeLeft">' + Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0') + '</span>. Enter it at the class hall to take a seat. Only valid on this device.</div>' +
+            '<button class="b g" data-a="hall">OPEN THE CLASS HALL</button><button class="b" data-a="wp">SET WAYPOINT</button>';
         }
-        var c = CLASSES.filter(function (x) { return x.id === id; })[0]; if (!c) return '<div class="empty">Tracks: Combat · Commerce · Radio · Lore.</div>'; return '<h3>' + esc(c.t) + '</h3><div>' + esc(c.s) + '</div><button class="b g" data-a="en"' + (S.flags.activeBot ? '' : ' disabled') + '>ENROLL ACTIVE BOT</button>' + (S.flags.activeBot ? '' : '<div class="empty">No bot bound — open Bots.</div>'); },
-      act: function (id, a) { if (id === 'hall' && a === 'hall') { window.open('/athenaeum-class.html', '_blank'); return; } var c = CLASSES.filter(function (x) { return x.id === id; })[0]; if (c && a === 'en') { S.schedule.push({ id: c.id, t: c.t }); setWaypoint(c.pin); if (hooks().onEnrollBot) hooks().onEnrollBot(c.id, S.flags.activeBot); toast('Enrolled. Meet at ' + c.pin.label); } }
+        var c = HALL_CLASSES.filter(function (x) { return x.id === id; })[0];
+        if (!c) return '<div class="empty">Pick a class. All of them meet in the Athenaeum.</div><button class="b" data-a="wp">WAYPOINT TO THE ATHENAEUM</button>';
+        return '<h3>' + esc(c.t) + '</h3><div>' + esc(c.s) + (c.teacher ? ' · ' + esc(c.teacher) : '') + '</div><div class="empty">Meets in the Athenaeum. Take a seat with your sign-in code.</div>' +
+          '<button class="b g" data-a="hall">OPEN THE CLASS HALL</button><button class="b" data-a="wp">SET WAYPOINT</button>';
+      },
+      act: function (id, a) {
+        if (a === 'hall') { window.open('/athenaeum-class.html', '_blank'); return; }
+        if (a === 'wp') setWaypoint(ATHENAEUM);
+      }
     };
   };
-  var JOBS = [{ id: 'j1', t: 'Courier: deliver to Spire', s: '120 ✦', pin: { x: 500, z: -400, label: 'The Spire', kind: 'Bounty' } }];
+  // JOBS (2026-11-06): no bounty system on the server yet, so no made-up jobs. Rows here are live game loops that already pay.
+  var JOBS = [];
   M.jobs = function () {
     return {
-      title: 'JOBS & BOUNTIES', list: JOBS.map(function (j) { return { id: j.id, t: j.t, s: j.s }; }), empty: 'No bounties posted.',
-      detail: function (id) { var j = JOBS.filter(function (x) { return x.id === id; })[0]; return j ? '<h3>' + esc(j.t) + '</h3><div>' + esc(j.s) + '</div><button class="b g" data-a="ac">ACCEPT</button>' : '<div class="empty">Select a job, or post your own (coming).</div>'; },
+      title: 'JOBS & BOUNTIES', list: JOBS.map(function (j) { return { id: j.id, t: j.t, s: j.s }; }), empty: 'Bounty board coming soon. For now, earn Sparks in races (SPARKS), the Colosseum and the farm.',
+      detail: function (id) { var j = JOBS.filter(function (x) { return x.id === id; })[0]; return j ? '<h3>' + esc(j.t) + '</h3><div>' + esc(j.s) + '</div><button class="b g" data-a="ac">ACCEPT</button>' : '<div class="empty">Bounties and player-posted jobs are coming. Nothing here is fake.</div>'; },
       act: function (id, a) { var j = JOBS.filter(function (x) { return x.id === id; })[0]; if (j && a === 'ac') { setWaypoint(j.pin); toast('Job accepted'); } }
     };
   };
+
+  function activeBotName() {   // the bot whose body is out right now (window.WorldBots is the source of truth)
+    var WB = window.WorldBots, st = WB && WB.state(), r = st && st.active ? WB.rec(st.active) : null, d = r && r.bodyState === 'active' ? WB.def(r.id) : null;
+    return d ? d.name : null;
+  }
 
   /* ---------------- render ---------------- */
   function render() {
@@ -645,7 +657,7 @@
     elSw.innerHTML = h; elSw.onclick = function (e) { var b = e.target.closest('.hx'); if (b) setModule(b.dataset.m); };
     var n = elNodes.children; for (var k = 0; k < n.length; k++) n[k].classList.toggle('act', n[k].dataset.m === S.module);
     elKp.innerHTML = '<div class="kpi gd"><b>SPARKS</b><span>' + sparks() + '</span></div><div class="kpi"><b>PAYBOX</b><span>' + pay() + '</span></div><div class="kpi"><b>AGENT REV</b><span>' + rev() + '</span></div>';
-    var ab = S.bots.filter(function (b) { return b.id === S.flags.activeBot; })[0]; elCore.textContent = ab ? ab.name : 'NO ACTIVE BOT';
+    elCore.textContent = activeBotName() || 'NO ACTIVE BOT';
     SLOTS.forEach(function (s) { var e = root.querySelector('[data-s="' + s + '"]'); if (e) { e.classList.toggle('on', !!S.flags.slots[s]); e.textContent = s.toUpperCase(); e.style.display = S.flags.slots[s] ? '' : 'none'; } });
   }
   function setModule(id) { if (!M[id]) return; S.module = id; selected = null; persist(); render(); root.classList.add('spin'); setTimeout(function () { root && root.classList.remove('spin'); }, 260); }
@@ -656,7 +668,7 @@
   function open() {
     if (!root) build(); if (S.open) return;
     var ti = window.__getQualityTier ? window.__getQualityTier() : 0, bg = root.querySelector('.bg');
-    bg.style.backdropFilter = bg.style.webkitBackdropFilter = (ti >= 3 && !low()) ? 'blur(3px)' : 'none';   // full-screen blur only on HIGH+ (a fill-rate tax)
+    var hq = ti >= 3 && !low(); bg.style.backdropFilter = bg.style.webkitBackdropFilter = hq ? 'blur(3px)' : 'none'; root.classList.toggle('hq', hq);   // full-screen + plate blur only on HIGH+ (a fill-rate tax)
     if (ti > 2 && window.__setQualityTier) { capped = ti; window.__setQualityTier(2, 1e6); }              // Navi open: cap at MEDIUM; the world keeps running behind it
     wasLocked = !!document.pointerLockElement; if (wasLocked && document.exitPointerLock) try { document.exitPointerLock(); } catch (e) { }
     S.open = true; root.classList.add('on'); document.body.classList.add('navi-open'); render(); requestAnimationFrame(function () { root.classList.add('show'); }); emit('open');
@@ -669,6 +681,13 @@
     persist(); emit('close');
   }
   function toggle() { S.open ? close() : open(); }
+  var lastCode = null;
+  setInterval(function () {   // ACADEMY code countdown ticks while it is on screen; re-render only when the code changes
+    if (!S.open || S.module !== 'academy' || !root) return;
+    var AC = window.ShdAcademyCode, el = root.querySelector('#nvCodeLeft'); if (!AC) return;
+    var code = AC.current(); if (lastCode && code !== lastCode) { lastCode = code; render(); return; } lastCode = code;
+    if (el) { var left = AC.secondsLeft(); el.textContent = Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0'); }
+  }, 1000);
 
   addEventListener('keydown', function (e) {
     var tag = ((document.activeElement || {}).tagName || '');
