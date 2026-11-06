@@ -8,6 +8,8 @@
    ══════════════════════════════════════════════════════════════════════ */
 (function(){
   'use strict';
+  // v119: embedded inside the dashboard (or any iframe)? The host provides navigation — don't inject a second top nav.
+  if (window.self !== window.top) return;
 
   // ── figure out which pillar is active from the script tag ──────────────
   var self = document.currentScript ||

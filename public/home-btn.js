@@ -27,6 +27,8 @@
 
   function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
   ready(function(){
+    // v119: embedded inside the dashboard (or any iframe)? The host provides navigation — never draw our own pills over it.
+    if (window.self !== window.top) return;
     // already has ANY return chrome (nav, home link, dashboard/back/exit button)?
     // -> skip, so we never double up or overlap a page's own top bar.
     if (document.querySelector('script[src*="nav.js"]')) return;
