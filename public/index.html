@@ -29959,7 +29959,7 @@ function _whLoadRooms() {
   var rooms = []; try { rooms = JSON.parse(localStorage.getItem('shaddai.rooms.'+uid)||'[]'); } catch(_){}
   var container = document.getElementById('whRoomsGrid'); if(!container) return;
   if (!rooms.length) {
-    container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:50px 20px;color:var(--text-muted)"><div style="font-size:32px;margin-bottom:10px">🚪</div><div style="font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:1.5px;margin-bottom:8px">NO PROPERTIES YET</div><div style="font-size:10px;margin-bottom:18px">Walk city districts to discover and claim rooms.</div><button class="wh-btn-p" onclick="location.href=\'game.html\'">Enter 2D World</button></div>';
+    container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:50px 20px;color:var(--text-muted)"><div style="font-size:32px;margin-bottom:10px">🚪</div><div style="font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:1.5px;margin-bottom:8px">NO PROPERTIES YET</div><div style="font-size:10px;margin-bottom:18px">Walk city districts to discover and claim rooms.</div><button class="wh-btn-p" onclick="location.href=\'game.html\'">Enter 3D World</button></div>';
     return;
   }
   container.innerHTML = rooms.map(function(r,i){
@@ -30556,7 +30556,7 @@ function initCityTab() {
         el.className = 'ct-slot' + (isMine ? ' mine' : isOwned ? ' owned' : '');
         el.title = 'Plot #' + (i + 1) + (isMine ? ' — YOURS' : isOwned ? ' — Owned' : ' — Available');
         el.textContent = i + 1;
-        el.onclick = (function(slot, mine) { return function(){ if (mine) { location.href = 'game.html#plot'; } }; })(i, isMine);
+        el.onclick = (function(slot, mine) { return function(){ if (mine) { window.enter3DWorld && window.enter3DWorld(); } }; })(i, isMine);
         grid.appendChild(el);
       }
     }

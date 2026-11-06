@@ -83,6 +83,24 @@
     if (p3) { p3.setAttribute('onclick', 'enter3DWorld()'); }
   }
 
+  /* ── Every remaining "game.html" door (Enter World, Claim in World, region tiles, Walk Office …)
+     opens the 3D world instead. Capture phase so it also covers UI rendered later. ── */
+  function legacy() { return document.documentElement.classList.contains('shd-legacy-nav'); }
+  document.addEventListener('click', function (e) {
+    if (legacy()) return;
+    var el = e.target.closest && e.target.closest('[onclick*="game.html"]');
+    if (!el) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    if (typeof window.enter3DWorld === 'function') window.enter3DWorld();
+  }, true);
+  window.addEventListener('load', function () {
+    if (legacy()) return;
+    window.enter2DWorld = function () { if (typeof window.enter3DWorld === 'function') window.enter3DWorld(); };
+    document.querySelectorAll('[onclick*="game.html"]').forEach(function (b) {
+      if (/Enter 2D World/.test(b.textContent)) b.textContent = 'Enter 3D World';
+    });
+  });
+
   function wrapShowView() {
     var sv = window.showView; if (typeof sv !== 'function' || sv._tidy) return;
     window.showView = function (v) {
