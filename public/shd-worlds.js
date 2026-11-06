@@ -195,6 +195,7 @@
   }
   function taskRow(agent) {
     var row = h('div', { class: 'sw-actions' }), result = h('div', { class: 'sw-sub', style: 'white-space:pre-wrap' });
+    if (window.shdAgentViewer) row.appendChild(btn('View body', function () { window.shdAgentViewer.open({ name: agent.name || agent.id, model: agent.model, forged: true }); }, 'ghost'));
     var sel = h('select', { class: 'sw-sel', 'aria-label': 'Task' }), param = h('input', { class: 'sw-sel', placeholder: '', 'aria-label': 'Task input', style: 'display:none;min-width:0;flex:1' });
     wfList().then(function (list) {
       if (!list.length) { row.appendChild(h('span', { class: 'sw-sub', text: 'Tasks unavailable on this server.' })); return; }
