@@ -274,7 +274,8 @@
       vertexShader: 'attribute vec4 aCell; attribute vec2 aLife; attribute vec4 aTint; uniform float uTime; varying vec2 vUv; varying vec4 vT;\n' +
         'void main(){ float age = uTime - aLife.x; float f = 1.0 - smoothstep(0.7, 1.0, age / max(aLife.y, 0.0001));\n' +
         ' bool dead = !(aLife.y > 0.0 && age >= 0.0 && age < aLife.y); vUv = mix(aCell.xy, aCell.zw, uv); vT = vec4(aTint.rgb, aTint.a * f);\n' +
-        ' gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0); if (dead) gl_Position = vec4(2.0, 2.0, 2.0, 1.0); }',
+        // guard: three only declares instanceMatrix under USE_INSTANCING (live 2026-11-05: "'instanceMatrix' : undeclared identifier")
+        '#ifdef USE_INSTANCING\n gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);\n#else\n gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);\n#endif\n if (dead) gl_Position = vec4(2.0, 2.0, 2.0, 1.0); }',
       fragmentShader: 'uniform sampler2D uMap; uniform float uHasMap; varying vec2 vUv; varying vec4 vT;\n' +
         'void main(){ float a; if (uHasMap > 0.5) a = texture2D(uMap, vUv).a; else { float d = length(vUv - 0.5) * 2.0; a = exp(-d*d*3.0) * (1.0 - smoothstep(0.8, 1.0, d)); }\n' +
         ' a *= vT.a; if (a < 0.003) discard; gl_FragColor = vec4(vT.rgb, a); }',

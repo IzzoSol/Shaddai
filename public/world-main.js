@@ -778,7 +778,7 @@ window.__worldBuilt = false;
     // if(L && window.buildWorldMarketsScreen) worldMarkets = window.buildWorldMarketsScreen(THREE, scene, L);
   }catch(e){ console.warn('world core build failed:', e && e.message); }
   // MAP v4: load terrain → water, THEN the heightAt-dependent realm modules + buildings (below).
-  window.__mapV4Ready = !MAP_V4 ? Promise.resolve(null) : (_ldBegin('terrain'), _loadScript('/world-terrain-v4.js?v=20261024a'))
+  window.__mapV4Ready = !MAP_V4 ? Promise.resolve(null) : (_ldBegin('terrain'), _loadScript('/world-terrain-v4.js?v=20261105a'))
     .then(()=> _loadScript('/world-water.js?v=20261023e'))
     .then(()=> window.buildWorldTerrainV4({ THREE, scene, camera, base: /[?&]waterways=1\b/.test(location.search) ? '/assets/terrain-ww/' : '/assets/terrain/' }))   // ?waterways=1: patched heightmap + Harbor Ring Canal (tools/carve-ring-canal.py)
     .then(function(api){
@@ -852,7 +852,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('mount-ride', function(api){   // MOUNTS (world-mount-ride.js + world-mounts.js): M = Mount Store, E = mount / dismount
       if(!api) return api;
-      return Promise.all([_loadScript('/world-mounts.js?v=20261016a'), _loadScript('/world-mount-ride.js?v=20261011a')]).then(function(){
+      return Promise.all([_loadScript('/world-mounts.js?v=20261016a'), _loadScript('/world-mount-ride.js?v=20261105a')]).then(function(){
         const ml = new GLTFLoader(); ml.setDRACOLoader(dracoLoader); ml.setMeshoptDecoder(MeshoptDecoder);
         window.__interiorsExit = function(){ try{ if(_interiors && _interiors.isInside && _interiors.isInside() && _interiors.exit) _interiors.exit(); }catch(_){} };
         window.__interiorsEnter = function(code){ try{ if(_interiors && _interiors.enter){ if(_interiors.isInside && _interiors.isInside() && _interiors.exit) _interiors.exit(); _interiors.enter(code); } }catch(e){ console.warn('[academy] field trip failed:', e && e.message); } };
@@ -880,7 +880,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('dragons', function(api){   // MAP v4 CROSSING DRAGONS (world-dragons.js) — one per ring station, beaten = crossing open forever
       if(!api) return api;
-      return _loadScript('/world-dragons.js?v=20261024a').then(function(){
+      return _loadScript('/world-dragons.js?v=20261105b').then(function(){
         const dl = new GLTFLoader(); dl.setDRACOLoader(dracoLoader); dl.setMeshoptDecoder(MeshoptDecoder);
         const KEY = 'w3d_dragons_defeated';
         const load = ()=>{ try{ return JSON.parse(localStorage.getItem(KEY) || '[]'); }catch(_){ return []; } };
@@ -2313,6 +2313,9 @@ function _nextAgentBody(){
       body.traverse(c=>{
         if(c.isMesh){
           c.castShadow=true; c.receiveShadow=true;
+          // 2026-11-05: skinned council bodies judged by a stale bounding sphere were culled outright up close (rig probe: invisible at
+          // 2.7 m with culling on, solid with it off) = agents popping / "not loading". Same rule the player avatar already uses. ?agentcull=1 = old behaviour.
+          if(c.isSkinnedMesh && !/[?&]agentcull=1/.test(location.search)) c.frustumCulled = false;
           // Match the WORKING rooms/chamber viewer's material treatment so textured Meshy bodies
           // read as their real texture (not flat/grey/tinted). Key: DON'T stomp the albedo when a
           // texture map exists, force the map to sRGB, and give the body an IBL envMap response.
@@ -5359,7 +5362,7 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
   try{ window.__realmZones = window.WorldRealmZones.create({ layout: window.WORLD_LAYOUT, getPos: function(){ return playerPos; }, castle: function(){ return window.__voidCastle && window.__voidCastle.anchors; }, getHP: function(){ return window.__playerHP == null ? 100 : window.__playerHP; },
     setHP: function(v){ window.__playerHP = v; }, perk: function(k){ return window.ShdInv.perk(k); }, onHurt: function(d){ if(window.__hitfx) window.__hitfx.hurt(d, null); },
     toast: function(m){ if(window.Navi && window.Navi.toast) window.Navi.toast(m); } }); }catch(e){ console.warn('[realm-zones] failed', e && e.message); }
-  addEventListener('keydown', function(e){ if(e.code !== 'Backslash' || e.repeat || !controls.isLocked) return; const r = window.WorldCombatMode.toggle(); if(window.Navi && window.Navi.toast) window.Navi.toast(r.locked ? r.reason : (r.passive ? 'Passive mode ON - no one can hurt you, you cannot fight' : 'Fight mode ON')); });
+  addEventListener('keydown', function(e){ if(e.code !== 'Backslash' || e.shiftKey || e.repeat || !controls.isLocked) return; /* Shift+\ = campfire (was the same key: one press toggled fight mode AND dropped a fire) */ const r = window.WorldCombatMode.toggle(); if(window.Navi && window.Navi.toast) window.Navi.toast(r.locked ? r.reason : (r.passive ? 'Passive mode ON - no one can hurt you, you cannot fight' : 'Fight mode ON')); });
 }, 1500); })();
 // ── PHONE BUTTONS (world-touch-buttons.js): jump / interact / attack / kick / flip / run / ride + Navi / Map / View / Passive + a tray; drive the normal key handlers. Touch devices only (or ?touch=1) ──
 (function bootTouchButtons(){ if(typeof _TOUCH_AWARE === 'undefined' || !_TOUCH_AWARE) return; let n = 0; const iv = setInterval(function(){ if(++n > 600){ clearInterval(iv); return; } if(!(window.__loadPlayable && window.WorldTouch)) return; clearInterval(iv);
@@ -5400,7 +5403,7 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
       getNight: function(){ if(!_v4Sky) return 0; const nf = _v4Sky.nightFactor; return typeof nf === 'function' ? nf() : (nf || 0); }, waterAt: function(x,z){ return _v4Water ? _v4Water.waterHeightAt(x,z) : null; },
       onKneel: function(on){ window.__forceCrouch = !!on; }, onHeal: function(h){ window.__playerHP = Math.min(100, (window.__playerHP == null ? 100 : window.__playerHP) + h); } }); });
     if(window.__mobs && window.__mobs.setSafeFn) window.__mobs.setSafeFn(function(x,z){ return window.__campfire && window.__campfire.isSafe(x,z); });
-    addEventListener('keydown', function(e){ if(e.code !== 'Backslash' || e.repeat) return; try{ const r = window.__campfire.place(); if(window.Navi && window.Navi.toast) window.Navi.toast(r.msg); }catch(_){} });
+    addEventListener('keydown', function(e){ if(e.code !== 'Backslash' || !e.shiftKey || e.repeat) return; try{ const r = window.__campfire.place(); if(window.Navi && window.Navi.toast) window.Navi.toast(r.msg); }catch(_){} });
   }catch(e){ console.warn('[campfire] failed', e && e.message); } }, 1000); })();
 // ── SKY DOCK (world-skydock.js): launch pads + vendor on the Sky Nexus deck (top of the city) ──
 (function bootSkyDock(){ let n = 0; const iv = setInterval(function(){ if(++n > 400){ clearInterval(iv); return; }
@@ -5812,6 +5815,7 @@ window.__qualityTierCount = _Q.tiers.length;
 // PERF (GLM handoff sec.1): long-frame logger, opt-in via ?perf=1. Logs any frame over 50 ms so
 // start-of-game freezes can be traced to the system that ran. Off by default: no console cost.
 var _perfOn=/[?&]perf=1\b/.test(location.search), _perfLast=0;
+var _NAVI_NOTHROTTLE=/[?&]navithrottle=0\b/.test(location.search), _naviFrame=0;   // world redraw 1-in-4 while Navi is open (see the render call)
 // LIGHT POOL step (was an IIFE re-created every frame). FPS S1b: the whole-scene traverse that registers accent lights now runs
 // only when the scene changed (child count / geometry count) — plus a 20 s safety rescan — instead of every 4 s; the nearest-N
 // pick reuses fixed arrays (no per-tick [score,obj] tuples + sort). Behaviour unchanged: same POOL_N, same scoring, same copy.
@@ -6086,7 +6090,7 @@ if (window.WorldSurvival) {
   if (_swimming && _v4Water) { _wY = _v4Water.waterHeightAt(playerPos.x, playerPos.z); _fY = (worldTerrain && worldTerrain.heightAt) ? worldTerrain.heightAt(playerPos.x, playerPos.z) : ((_wY || 0) - 30); }
   _diveY = window.WorldSurvival.diveOffset(dt, { swimming: _swimming && _wY != null && isFinite(_wY), waterY: _wY || 0, floorY: _fY, U: V4_U, wantDive: !!keys['KeyX'], wantUp: !!keys['Space'] });
 }
-if (window.WorldBots) { window.WorldBots.update(dt, playerPos, window.__botZone ? window.__botZone() : 'wilderness'); }
+if (window.WorldBots) { window.WorldBots.update(dt, playerPos, window.__botZone ? window.__botZone() : 'wilderness', window._currentInterior);   /* place: no wheel bots in the Athenaeum / Colosseum */ }
 if (window.__raceTick) window.__raceTick(dt);   // park crates spin + race runtime (no-op until a heat starts)
 if (window.WorldSit) _diveY += window.WorldSit.update(dt, playerPos, playPlayerOnce, clock.elapsedTime, V4_U);   // seated: pins pos, plays Sit_Chair_Loop, lowers the body onto the seat
 const _rawBaseY = (_pctlActive ? _pctlOut.renderPos.y : _onTrain ? playerPos.y : ((_rideOn()) ? playerPos.y : (hover && hover.isRiding()) ? hover.rideBaseY() : veh.baseY(groundY))) - _diveY;
@@ -6579,8 +6583,12 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
   }
   if(window.__shipLock){ try{ window.__shipLock.update(dt); window.__shipLock.applyCamera(); }catch(e){ console.warn('[shiplock] disabled after error', e && e.message); window.__shipLock = null; } }
   if(window.__vfx) window.__vfx.update(dt);   // also keeps the shared soft-point size uniform (viewport height) current
+  if(window.WorldLightBudget) window.WorldLightBudget.tick(dt, camera, scene);   // 2026-11-05: only the nearest 8 point + 2 spot lights shade (count constant = no recompiles)
   const _pt1 = _perfOn ? performance.now() : 0;
-  composer.render();
+  // NAVI OPEN (2026-11-05, owner: "navi polished"): the world sits behind a 55-82 % dark veil and blurred plates, but was still redrawn every frame
+  // (and every redraw re-runs the plates' backdrop blur). Redraw it 1 frame in 4 while Navi is up so the holo menu gets the GPU. ?navithrottle=0 = off.
+  const _naviUp = document.body.classList.contains('navi-open') && !_NAVI_NOTHROTTLE;
+  if(!_naviUp || (++_naviFrame % 4) === 0) composer.render();
   if(_perfOn){ const _pt2 = performance.now(); window.__perfSplit = { simMs: +(_pt1 - _pt0).toFixed(1), renderCpuMs: +(_pt2 - _pt1).toFixed(1) }; }
   if(window.__perfFrame) window.__perfFrame(dt);   // ?perf=1 profiler (guarded: a dropped script must not throw every frame) (world-perf-hud.js; our gamedev repo's game-qa-performance pattern)
 }

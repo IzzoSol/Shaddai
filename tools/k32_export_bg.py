@@ -17,7 +17,7 @@ for eid in ids or list(BAZAAR_BUILDERS):
     ob = BAZAAR_BUILDERS[eid](); ob["vc_linear_ok"] = 1
     for o in list(bpy.context.scene.objects): o.select_set(False)
     for o in [ob] + list(ob.children_recursive): o.select_set(True)
-    path = OUT + "/shaddai_%s_city_v01.glb" % eid
+    path = OUT + "/shaddai_%s_city_v02.glb" % eid   # v02 (2026-11-05): capstone flush with the street, funnel + gap + 6 oculi, incline lift. v01 kept for rollback.
     kw = dict(filepath=path, export_format="GLB", use_selection=True, export_yup=True, export_apply=True, export_extras=True, export_cameras=False, export_lights=False)
     try: bpy.ops.export_scene.gltf(export_vertex_color="ACTIVE", **kw)
     except TypeError: bpy.ops.export_scene.gltf(**kw)

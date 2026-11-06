@@ -8,6 +8,16 @@
  */
 (function (root) {
   'use strict';
+  // BODY PICKER (owner 2026-11-05): an imported Grok (or any) agent chooses a HUMANOID or a WHEEL body when it enters the world.
+  // Wheel bots stay out of the Athenaeum and the Colosseum (WorldBots.frameAllowed) until wheel races return.
+  var FRAME_IDS = { humanoid: ['scrap', 'lanky', 'tinker', 'warden', 'drifter'], wheeled: ['unicycle', 'porter', 'clerk', 'analyst', 'herald'] };
+  function bodySelect(opId) {
+    var R = (root.WorldBots && root.WorldBots.ROSTER) || [], nm = function (id) { var d = R.filter(function (b) { return b.id === id; })[0]; return d ? d.name + ' · ' + d.blurb : id.toUpperCase(); };
+    var pref = ''; try { pref = root.localStorage.getItem('shd_bot_body_pref') || ''; } catch (e) { }   // the body picked on /bot-bodies.html
+    var grp = function (frame, label) { return '<optgroup label="' + label + '">' + FRAME_IDS[frame].map(function (id) { return '<option value="' + frame + ':' + id + '"' + (id === pref ? ' selected' : '') + '>' + nm(id).replace(/[<>"&]/g, '') + '</option>'; }).join('') + '</optgroup>'; };
+    return '<select data-body-for="' + String(opId).replace(/[^\w-]/g, '') + '" title="Body: humanoid goes everywhere; wheel bots stay in the cities (not the Athenaeum or Colosseum)" style="max-width:170px;background:#0b1320;color:#e8f0ff;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:5px">' +
+      grp('humanoid', 'Humanoid · goes everywhere') + grp('wheeled', 'Wheel bot · city only') + '</select>';
+  }
   function base() { return (typeof root.SHD_MMO_API === 'string' && root.SHD_MMO_API) ? root.SHD_MMO_API.replace(/\/$/, '') : '/api/mmo'; }
   function uid() { try { return (root.localStorage && (root.localStorage.getItem('shd_uid') || root.localStorage.getItem('shd_player_code'))) || ''; } catch (e) { return ''; } }
   function call(method, path, body, extraHeaders) {
@@ -17,7 +27,7 @@
   }
   var Net = root.WorldAgentsNet = {
     roster: function () { return call('GET', '/agent/forge-roster'); }, bodies: function () { return call('GET', '/agent/bodies'); },
-    claim: function (id) { return call('POST', '/agent/claim', { operativeId: id }); }, shift: function (g) { return call('POST', '/agent/shift/' + g, {}); },
+    claim: function (id, frame, bodyKind) { return call('POST', '/agent/claim', { operativeId: id, frame: frame, bodyKind: bodyKind }); }, setFrame: function (g, frame, bodyKind) { return call('POST', '/agent/bodies/' + g + '/frame', { frame: frame, bodyKind: bodyKind }); }, shift: function (g) { return call('POST', '/agent/shift/' + g, {}); },
     collect: function (g) { return call('POST', '/agent/collect/' + g, {}, { 'Idempotency-Key': 'c-' + g + '-' + Date.now() }); }, release: function (g) { return call('DELETE', '/agent/bodies/' + g); },
     registerExternal: function (f) { return call('POST', '/xagent/register', f); }, listExternal: function () { return call('GET', '/xagent/list'); },
     jobs: function (q) { return call('GET', '/jobs' + (q || '')); }, postJob: function (j) { return call('POST', '/jobs', j); }, approve: function (id) { return call('POST', '/jobs/' + id + '/approve', {}); },
@@ -38,9 +48,9 @@
     if (tab === 'agents') {
       Promise.all([Net.roster(), Net.bodies()]).then(function (r) { var ro = r[0], bo = r[1]; if (!panel) return; var h = offline(ro) || offline(bo);
         var granted = {}; (bo.bodies || []).forEach(function (b) { granted[b.operativeId] = b; });
-        h += '<div style="color:#e8c45c;letter-spacing:.1em;margin:4px 0">STATIONED IN THE WORLD</div>' + ((bo.bodies || []).map(function (b) { var id = b.identity || {}; return '<div style="padding:6px 0;border-top:1px solid rgba(255,255,255,.08)"><b>' + esc(id.codename || b.operativeId) + '</b> <small style="opacity:.7">' + esc(b.rarity) + ' ' + esc(b.archetype || '') + (id.provider ? ' &middot; ' + esc(id.provider) : '') + '</small><br><small>' + esc(b.presence) + ' &middot; lv ' + b.level + ' &middot; +' + ((b.yieldPerShift || {}).sparks || 0) + ' Sparks/shift &middot; home ' + esc(b.roomKey) + '</small><br>' +
+        h += '<div style="color:#e8c45c;letter-spacing:.1em;margin:4px 0">STATIONED IN THE WORLD</div>' + ((bo.bodies || []).map(function (b) { var id = b.identity || {}; return '<div style="padding:6px 0;border-top:1px solid rgba(255,255,255,.08)"><b>' + esc(id.codename || b.operativeId) + '</b> <small style="opacity:.7">' + esc(b.rarity) + ' ' + esc(b.archetype || '') + (id.provider ? ' &middot; ' + esc(id.provider) : '') + ' &middot; body ' + esc(String(b.bodyKind || 'scrap').toUpperCase()) + ' (' + (b.frame === 'wheeled' ? 'wheel' : 'humanoid') + ')</small><br><small>' + esc(b.presence) + ' &middot; lv ' + b.level + ' &middot; +' + ((b.yieldPerShift || {}).sparks || 0) + ' Sparks/shift &middot; home ' + esc(b.roomKey) + '</small><br>' +
           '<button data-a="shift" data-g="' + esc(b.grantId) + '" style="' + BTN + '">Work shift</button><button data-a="collect" data-g="' + esc(b.grantId) + '" style="' + GBTN + '">Collect</button><button data-a="release" data-g="' + esc(b.grantId) + '" style="' + BTN.replace(/0,255,156/g, '255,90,110').replace('#00ff9c', '#ff5a6e') + '">Release</button></div>'; }).join('') || '<div style="opacity:.6">none yet</div>');
-        h += '<div style="color:#e8c45c;letter-spacing:.1em;margin:10px 0 4px">YOUR FORGED &amp; IMPORTED AGENTS</div>' + ((ro.agents || []).filter(function (a) { return !granted[a.operativeId]; }).map(function (a) { return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid rgba(255,255,255,.08)"><span><b>' + esc(a.codename) + '</b> <small style="opacity:.7">' + esc(a.rarity) + ' ' + esc(a.archetype || '') + (a.provider ? ' &middot; ' + esc(a.provider) : '') + '</small></span><button data-a="claim" data-o="' + esc(a.operativeId) + '" style="' + BTN + '">Enter world</button></div>'; }).join('') || '<div style="opacity:.6">Forge an agent in the Dashboard (3D Forge) or import one in the Import tab.</div>');
+        h += '<div style="color:#e8c45c;letter-spacing:.1em;margin:10px 0 4px">YOUR FORGED &amp; IMPORTED AGENTS</div>' + ((ro.agents || []).filter(function (a) { return !granted[a.operativeId]; }).map(function (a) { return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid rgba(255,255,255,.08)"><span><b>' + esc(a.codename) + '</b> <small style="opacity:.7">' + esc(a.rarity) + ' ' + esc(a.archetype || '') + (a.provider ? ' &middot; ' + esc(a.provider) : '') + '</small></span><span style="display:flex;gap:6px;align-items:center">' + bodySelect(a.operativeId) + '<button data-a="claim" data-o="' + esc(a.operativeId) + '" style="' + BTN + '">Enter world</button></span></div>'; }).join('') || '<div style="opacity:.6">Forge an agent in the Dashboard (3D Forge) or import one in the Import tab.</div>');
         body.innerHTML = h; });
     } else if (tab === 'import') {
       body.innerHTML = '<div style="opacity:.8;margin-bottom:6px">Bring an outside agent (Grok, Muse, Claude, GPT…) into SHADDAI. It gets a bearer token to take jobs, a wallet <b>address</b> for payouts, and a body in the world when you press Enter world. <b style="color:#ff9a6e">Never paste private keys, seeds or API keys here.</b></div>' +
@@ -66,7 +76,7 @@
     panel.addEventListener('click', function (e) { var t = e.target.closest('[data-a]'); if (!t) return; var a = t.getAttribute('data-a');
       if (a === 'x') return close(); if (a === 'tab') return open(t.getAttribute('data-t'));
       var done = function (j, okMsg) { toast(j.success ? okMsg : (j.error || 'failed')); view(); };
-      if (a === 'claim') Net.claim(t.getAttribute('data-o')).then(function (j) { done(j, 'Agent entered the world'); });
+      if (a === 'claim') { var sel = panel.querySelector('select[data-body-for="' + t.getAttribute('data-o') + '"]'), v = (sel && sel.value || 'humanoid:scrap').split(':'); Net.claim(t.getAttribute('data-o'), v[0], v[1]).then(function (j) { done(j, 'Agent entered the world as ' + v[1].toUpperCase() + (v[0] === 'wheeled' ? ' (wheel bot: city only, not the Athenaeum or Colosseum)' : '')); }); }
       else if (a === 'shift') Net.shift(t.getAttribute('data-g')).then(function (j) { done(j, 'Shift started'); });
       else if (a === 'collect') Net.collect(t.getAttribute('data-g')).then(function (j) { done(j, j.gained ? '+' + j.gained.sparks + ' Sparks collected' : 'collected'); });
       else if (a === 'release') Net.release(t.getAttribute('data-g')).then(function (j) { done(j, 'Agent released'); });

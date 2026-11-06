@@ -3,7 +3,7 @@
  *   var arena = window.buildColosseumArena(THREE, { scene })  → room record for world-interiors.js
  *   arena.heightAt(x, z) · arena.contains(x, z) · arena.resolve(pos, prevX, prevZ)
  *   arena.setTheme('classic'|'royal'|'night'|'festival') · arena.setField('sand'|'soccer'|'tactics'|'team-attack'|'party'|'water'|'lava'|'void'|'grass'|'ice')  (last five: world-colosseum-floors.js)
- *   arena.spectate(i) (C cycles broadcast cams while inside, X returns to the player)
+ *   arena.spectate(i) (] cycles broadcast cams while inside, X returns to the player)
  *
  * Built on its own island (x = 12000) because the true-size bowl (~205 × 170 m ≈ 800 × 660 units) is wider
  * than the whole city. 1 m = 7/1.8 units. Classical monumental look (owner: "less futuristic").
@@ -710,7 +710,8 @@
     function spectate(i) { if (i == null || i < 0) { camIdx = -1; window.__probeCam = null; return null; } camIdx = i % cams.length; window.__probeCam = { pos: cams[camIdx].pos, look: cams[camIdx].look }; return cams[camIdx].name; }
     addEventListener('keydown', function (e) {
       if (!group.visible || /input|textarea/i.test((document.activeElement || {}).tagName || '')) return;
-      if (e.code === 'KeyC') { var n = spectate(camIdx + 1); if (window.__toast) window.__toast('📺 ' + n + '  ·  C next · X back'); }
+      // 2026-11-05: was C, which is also the dodge roll (player controller) + hoverboard roll-right, so every roll in the arena switched cameras
+      if (e.code === 'BracketRight') { var n = spectate(camIdx + 1); if (window.__toast) window.__toast('📺 ' + n + '  ·  ] next · X back'); }
       if (e.code === 'KeyX' && camIdx >= 0) spectate(-1);
     });
 

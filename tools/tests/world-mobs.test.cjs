@@ -14,8 +14,8 @@ function mk() {
 const near = (r, kind) => { const m = r.list().find(g => g.userData.kind === kind); return m; };
 const tick = (r, sec, dt) => { for (let i = 0; i < sec / (dt || 0.05); i++) r.mobs.update(dt || 0.05); };
 
-t('roster: 8 enemy types, 16 camps, every camp has a companion type; golems only in the outer ring', () => {
-  const r = mk(); assert.strictEqual(Object.keys(r.mobs.TYPES).length, 8); assert.strictEqual(r.mobs.camps().length, 16);
+t('roster: 9 enemy types (+ citadel skeleton guard, b7476d03), 16 camps, every camp has a companion type; golems only in the outer ring', () => {
+  const r = mk(); assert.strictEqual(Object.keys(r.mobs.TYPES).length, 9); assert(r.mobs.TYPES.skeleton, 'citadel skeleton type'); assert.strictEqual(r.mobs.camps().length, 16);
   const kinds = {}; r.list().forEach(g => { kinds[g.userData.kind] = (kinds[g.userData.kind] || 0) + 1; }); ['mummy', 'imp', 'wraith', 'stalker', 'wolf', 'spitter', 'scorpion', 'golem'].forEach(k => assert(kinds[k] > 0, 'missing ' + k));
   assert(kinds.wolf >= 2 && kinds.spitter >= 2 && kinds.golem >= 2, JSON.stringify(kinds));
 });

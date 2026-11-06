@@ -56,11 +56,21 @@
   function addSkill(id, skill) { var r = rec(id); if (!r) return false; if (r.skills.indexOf(skill) < 0) r.skills.push(skill); save(); emit('skill', { id: id, skill: skill }); return true; }
   function stow(id, item) { var r = rec(id), def = r && byId[id]; if (!r || def.kind !== 'humanoid') return { ok: false, why: 'only humanoids carry items' }; if (r.storage.length >= storageCap(id)) return { ok: false, why: 'storage full' }; r.storage.push(item); save(); return { ok: true }; }
 
+  // FRAME RULES (owner 2026-11-05: "they cannot use wheel bots in the athenaeum or colosseum unless we do races later on"). Humanoids can go in.
+  // place = the interior code (window._currentInterior). The Colosseum lobby counts too, not only the arena floor ('fight' zone).
+  var NO_WHEELS = { ATHENAEUM: 'the Athenaeum', COLOSSEUM: 'the Colosseum' }, RACE = { on: false };
+  function frameAllowed(kind, place, opts) {
+    if (kind !== 'wheeled') return { ok: true };
+    var p = String(place || '').toUpperCase();
+    if (NO_WHEELS[p] && !((opts && opts.race) || RACE.on)) return { ok: false, why: 'Wheel bots wait outside ' + NO_WHEELS[p] + '. Bring a humanoid bot (wheel races come later).' };
+    return { ok: true };
+  }
   // zone: 'city' | 'wilderness' | 'void' | 'fight' | 'interior'
-  function call(id, zone) {
+  function call(id, zone, place) {
     var r = rec(id), def = byId[id]; if (!r) return { ok: false, why: 'not owned' };
     if (r.bodyState === 'destroyed') return { ok: false, why: 'body destroyed — rebuild it' };
     if (zone === 'fight') return { ok: false, why: 'bots cannot enter fights (Colosseum kits are set in the Navi)' };
+    var fr = frameAllowed(def.kind, place); if (!fr.ok) return fr;
     if (def.kind === 'wheeled' && zone !== 'city' && zone !== 'interior') return { ok: false, why: 'wheeled bots stay in the cities — talk to them in the Navi' };
     r.bodyState = 'active'; S.active = id; save(); emit('call', { id: id, zone: zone }); return { ok: true };
   }
@@ -144,9 +154,10 @@
     });
   }
   var PL = { x: 0, z: 0, px: null, pz: null };
-  function update(dt, playerPos, zone) {
+  function update(dt, playerPos, zone, place) {
     if (!ctx) return;
     S.owned.forEach(function (r) { if (r.bodyState === 'active' && byId[r.id].kind === 'wheeled' && zone && zone !== 'city' && zone !== 'interior') { r.bodyState = 'stowed'; save(); emit('recalled', { id: r.id, zone: zone }); } });   // wheeled bots never leave the cities
+    S.owned.forEach(function (r) { if (r.bodyState !== 'active') return; var fr = frameAllowed(byId[r.id].kind, place); if (!fr.ok) { r.bodyState = 'stowed'; save(); emit('recalled', { id: r.id, zone: zone, place: place, why: fr.why }); if (root.__toast) root.__toast((byId[r.id].name || r.id) + ': ' + fr.why); } });   // no wheels in the Athenaeum / Colosseum
     syncBodies(); if (!playerPos) return;
     var U = 3.889, pv = PL.px == null ? 0 : Math.hypot(playerPos.x - PL.px, playerPos.z - PL.pz) / Math.max(dt, 1e-3) / U; PL.px = playerPos.x; PL.pz = playerPos.z;
     Object.keys(bodies).forEach(function (id) {
@@ -172,7 +183,7 @@
       if (P.legL) { P.legL.rotation.x = sw; P.legR.rotation.x = -sw; } if (P.armL) { P.armL.rotation.x = -sw * 0.8; P.armR.rotation.x = sw * 0.8; } if (P.wheel) P.wheel.rotation.x += moving ? dt * 6 : 0;
     });
   }
-  root.WorldBots = { PRICE: PRICE, buy: buy, ROSTER: ROSTER, TUNE: TUNE, STARTERS: STARTERS, def: function (id) { return byId[id]; }, state: function () { return S; }, rec: rec, pickStarter: pickStarter, unlock: unlock, grant: grant, call: call, dismiss: dismiss,
+  root.WorldBots = { PRICE: PRICE, buy: buy, ROSTER: ROSTER, frameAllowed: frameAllowed, NO_WHEELS: NO_WHEELS, setRaceMode: function (on) { RACE.on = !!on; }, TUNE: TUNE, STARTERS: STARTERS, def: function (id) { return byId[id]; }, state: function () { return S; }, rec: rec, pickStarter: pickStarter, unlock: unlock, grant: grant, call: call, dismiss: dismiss,
     canAttackBot: canAttackBot, damage: damage, rebuild: rebuild, setFollow: setFollow, setHoverboard: setHoverboard, addSkill: addSkill, stow: stow, storageCap: storageCap, challenge: challenge, accept: accept,
     spawnBodies: spawnBodies, update: update, _sim: function () { return sim; }, on: function (f) { listeners.push(f); }, _reset: function () { S = { owned: [], active: null, picked: false, challenges: [] }; save(); } };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SHADDAI · Bot bodies</title>
+<!-- BOT BODIES (2026-11-05, owner: "make sure the Grok bot bodies are the wheel bots and humanoid bots and they can choose them, they cannot use wheel
+     bots in the athenaeum or colosseum unless we do races later"). All 10 roster bodies (world-bots.js ROSTER on world-bot-bodies.js rigs), live
+     animated. Click one to see where it can go; "Use this body" saves your pick (localStorage shd_bot_body_pref) for Navi / Agents > Enter world. -->
+<script type="importmap">{ "imports": { "three": "/vendor/three/three.module.js" } }</script>
+<style>
+:root{--bg:#06090e;--line:rgba(126,158,142,.22);--ink:#e8f0ea;--muted:#8fa39a;--acc:#00e5a0;--gold:#e8c45c;--warn:#f87171;--font:'Rajdhani','Inter',system-ui,sans-serif;--mono:'Share Tech Mono',ui-monospace,monospace}
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font:15px/1.45 var(--font)}
+canvas{position:fixed;inset:0;display:block}
+header{position:fixed;left:18px;top:14px;z-index:5}h1{margin:0;font-size:24px;letter-spacing:.04em}h1 em{font-style:normal;color:var(--acc)}
+.sub{color:var(--muted);font-size:13px;margin-top:2px;max-width:60ch}
+.lab{position:fixed;z-index:4;transform:translate(-50%,0);text-align:center;pointer-events:none;font:600 12px/1.2 var(--mono);letter-spacing:.06em;white-space:nowrap}
+.lab small{display:block;color:var(--muted);font-weight:400}
+.row{position:fixed;z-index:4;left:18px;font:600 11px var(--mono);letter-spacing:.14em;text-transform:uppercase}
+#card{position:fixed;right:18px;top:14px;z-index:6;width:min(330px,42vw);background:rgba(10,16,24,.92);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;gap:8px}
+#card h2{margin:0;font-size:20px}.k{font:600 11px var(--mono);letter-spacing:.1em;color:var(--muted)}
+.ok{color:var(--acc)}.no{color:var(--warn)}
+.where div{display:flex;justify-content:space-between;font:12px var(--mono);border-bottom:1px dashed var(--line);padding:3px 0}
+button{font:600 12px var(--font);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;padding:9px 14px;border-radius:9px;border:1px solid var(--acc);background:var(--acc);color:#04120c}
+button.sec{background:transparent;color:var(--acc)}
+#clips{position:fixed;right:18px;bottom:16px;z-index:6;display:flex;gap:6px}#clips button{background:rgba(10,16,24,.85);color:var(--muted);border-color:var(--line);padding:7px 10px}#clips button.on{color:var(--acc);border-color:var(--acc)}
+#rule{position:fixed;left:18px;bottom:16px;z-index:6;max-width:min(560px,55vw);font-size:13px;color:var(--muted);background:rgba(10,16,24,.85);border:1px solid var(--line);border-radius:12px;padding:10px 13px}
+#rule b{color:var(--ink)}
+</style></head><body>
+<header><h1>Bot <em>bodies</em></h1><div class="sub">Every agent you bring in, a Grok bot included, picks one of these. Humanoids go everywhere. Wheel bots are city bots.</div></header>
+<div id="labels"></div>
+<div id="card"></div>
+<div id="clips"></div>
+<div id="rule"><b>The rule:</b> wheel bots wait outside <b>the Athenaeum</b> and <b>the Colosseum</b>; bring a humanoid to class or to a fight. Wheel races and wheel customization come later (the game already has a race-mode switch for it).</div>
+<script src="/world-bot-bodies.js?v=20261105a"></script>
+<script src="/world-bots.js?v=20261105a"></script>
+<script type="module">
+import * as THREE from 'three';
+const R = window.WorldBots.ROSTER, BODY = { scrap: 'scrap', lanky: 'lanky', tinker: 'scrap', warden: 'lanky', drifter: 'scrap', unicycle: 'unicycle', porter: 'unicycle', clerk: 'analyst', analyst: 'analyst', herald: 'analyst' };
+const r = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true }); r.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5)); document.body.appendChild(r.domElement);
+const s = new THREE.Scene(); s.background = new THREE.Color(0x0b1016); s.add(new THREE.HemisphereLight(0xffffff, 0x445566, 1.6)); const d = new THREE.DirectionalLight(0xfff2d8, 2.2); d.position.set(3, 7, 6); s.add(d);
+const floor = new THREE.Mesh(new THREE.CircleGeometry(14, 64), new THREE.MeshStandardMaterial({ color: 0x18222c, roughness: 0.9 })); floor.rotation.x = -Math.PI / 2; s.add(floor);
+const lane = (z, c) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(13, 2.6), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.08 })); m.rotation.x = -Math.PI / 2; m.position.set(0, 0.01, z); s.add(m); };
+lane(-3.2, 0xe8c45c); lane(2.2, 0x27e0ff);
+const bots = [], ring = new THREE.Mesh(new THREE.RingGeometry(0.75, 0.9, 40), new THREE.MeshBasicMaterial({ color: 0x00e5a0 })); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.02; s.add(ring);
+['humanoid', 'wheeled'].forEach((kind, row) => { R.filter(b => b.kind === kind).forEach((def, i) => {
+  const b = window.WorldBotBodies.build(THREE, BODY[def.id], def.style); b.root.position.set((i - 2) * 2.3 - 0.8, 0, row ? 2.2 : -3.2); b.root.rotation.y = 0; s.add(b.root);
+  const mx = new THREE.AnimationMixer(b.root); bots.push({ def, b, mx }); }); });
+const lab = document.getElementById('labels'); bots.forEach(o => { const e = document.createElement('div'); e.className = 'lab'; e.innerHTML = o.def.name + '<small>' + (o.def.kind === 'wheeled' ? 'wheel' : 'humanoid') + '</small>'; e.style.color = o.def.kind === 'wheeled' ? '#27e0ff' : '#e8c45c'; lab.appendChild(e); o.el = e; });
+const rowL = (txt, z, c) => { const e = document.createElement('div'); e.className = 'row'; e.textContent = txt; e.style.color = c; document.body.appendChild(e); return { e, z }; };
+const rows = [rowL('Humanoid · goes everywhere', -3.2, '#e8c45c'), rowL('Wheel bot · city only', 2.2, '#27e0ff')];
+let clip = 'idle'; const play = c => { clip = c; bots.forEach(o => { o.mx.stopAllAction(); const cl = o.b.clips[c] || o.b.clips.idle; o.mx.clipAction(cl).play(); }); document.querySelectorAll('#clips button').forEach(b => b.classList.toggle('on', b.dataset.c === c)); };
+document.getElementById('clips').innerHTML = ['idle', 'walk', 'run', 'wave', 'talk'].map((c, i) => '<button type="button" data-c="' + c + '">' + (i + 1) + ' ' + c + '</button>').join('');
+document.getElementById('clips').onclick = e => { const b = e.target.closest('[data-c]'); if (b) play(b.dataset.c); };
+addEventListener('keydown', e => { const m = { Digit1: 'idle', Digit2: 'walk', Digit3: 'run', Digit4: 'wave', Digit5: 'talk' }[e.code]; if (m) play(m); });
+let sel = null; try { sel = localStorage.getItem('shd_bot_body_pref'); } catch (e) { }
+function card() {
+  const o = bots.find(x => x.def.id === sel) || bots[0]; sel = o.def.id; ring.position.x = o.b.root.position.x; ring.position.z = o.b.root.position.z;
+  const W = window.WorldBots, where = [['City streets', 'city', null], ['Wilderness / realms', 'wilderness', null], ['The Athenaeum (classes)', 'interior', 'ATHENAEUM'], ['The Colosseum (lobby + fights)', 'interior', 'COLOSSEUM'], ['Shops, homes, offices', 'interior', 'NEXUS']];
+  const ok = (z, p) => { if (o.def.kind === 'wheeled' && z !== 'city' && z !== 'interior') return false; return W.frameAllowed(o.def.kind, p).ok; };
+  let saved = null; try { saved = localStorage.getItem('shd_bot_body_pref'); } catch (e) { }
+  document.getElementById('card').innerHTML = '<span class="k">' + (o.def.kind === 'wheeled' ? 'WHEEL BOT' : 'HUMANOID') + '</span><h2>' + o.def.name + '</h2><div style="color:var(--muted)">' + o.def.blurb + '</div>' +
+    '<div class="where">' + where.map(w => '<div><span>' + w[0] + '</span><span class="' + (ok(w[1], w[2]) ? 'ok">yes' : 'no">no') + '</span></div>').join('') + '</div>' +
+    '<button type="button" id="use"' + (saved === o.def.id ? ' class="sec"' : '') + '>' + (saved === o.def.id ? 'Your body' : 'Use this body') + '</button><span class="k">Applies when your agent enters the world (Navi / Agents → Enter world).</span>';
+  document.getElementById('use').onclick = () => { try { localStorage.setItem('shd_bot_body_pref', o.def.id); } catch (e) { } card(); };
+}
+const ray = new THREE.Raycaster(), mv = new THREE.Vector2();
+r.domElement.addEventListener('click', e => { mv.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(mv, cam); let best = null, bd = 1e9; bots.forEach(o => { const p = o.b.root.position.clone().setY(1); const dd = ray.ray.distanceToPoint(p); if (dd < 1.1 && dd < bd) { bd = dd; best = o; } }); if (best) { sel = best.def.id; card(); } });
+const cam = new THREE.PerspectiveCamera(40, 1, 0.1, 100); cam.position.set(-0.8, 6.4, 13.6); cam.lookAt(-0.8, 0.9, -0.4);
+function resize() { r.setSize(innerWidth, innerHeight); cam.aspect = innerWidth / innerHeight; cam.fov = cam.aspect < 1 ? 62 : 40; cam.updateProjectionMatrix(); } addEventListener('resize', resize); resize();
+const clock = new THREE.Clock(), v = new THREE.Vector3();
+function loop() { requestAnimationFrame(loop); const dt = clock.getDelta(), t = clock.elapsedTime;
+  bots.forEach(o => { o.mx.update(dt); o.b.blink && o.b.blink(t); o.b.root.rotation.y = o.def.id === sel ? Math.sin(t * 0.8) * 0.6 : 0;
+    v.copy(o.b.root.position); v.y = -0.15; v.project(cam); o.el.style.left = ((v.x * 0.5 + 0.5) * innerWidth) + 'px'; o.el.style.top = ((-v.y * 0.5 + 0.5) * innerHeight) + 'px'; });
+  rows.forEach(rw => { v.set(-6.6, 1.9, rw.z); v.project(cam); rw.e.style.top = ((-v.y * 0.5 + 0.5) * innerHeight) + 'px'; });
+  r.render(s, cam); }
+play('idle'); card(); loop(); window.__ready = 1; window.__bots = bots;
+</script></body></html>

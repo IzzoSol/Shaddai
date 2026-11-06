@@ -224,7 +224,7 @@
         else if (a === 'travel2') { var pr = id.split(':'), t2 = root.__travel && root.__travel[pr[0]] && root.__travel[pr[0]](pr[1]); toast(t2 ? 'Colosseum: ' + t2 : 'Not ready (enter the Colosseum first)'); }
         else if (a === 'travel') { var tr = root.__travel && root.__travel[id] && root.__travel[id](); toast(tr ? 'Traveled: ' + tr : 'Not ready yet'); panel(); }
         else if (a === 'bbuy') { var rb = root.WorldBots.buy(id, o.spend || function (n, k, i) { return root.ShdSparks ? root.ShdSparks.spend(n, k, i) : false; }); toast(rb.ok ? 'Bought ' + rb.def.name + ' for ' + rb.paid : rb.why); panel(true); }
-        else if (a === 'bcall') { try { root.WorldBots.call(id); toast('Calling ' + id); } catch (e) { toast('Could not call'); } panel(); }
+        else if (a === 'bcall') { try { var cr = root.WorldBots.call(id, root.__botZone ? root.__botZone() : 'wilderness', root._currentInterior); toast(cr && cr.ok === false ? cr.why : 'Calling ' + id); } catch (e) { toast('Could not call'); } panel(); }
         else if (a === 'go') { if (st.riding) dismount(); summon(id, true); panel(); } else if (a === 'stow') { stow(); panel(); }
       });
     }

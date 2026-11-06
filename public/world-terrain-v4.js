@@ -252,7 +252,10 @@
     // Two value-noise lookups + a few mixes: no textures, no extra draws. ?tsplat=0 = old flat look.
     var SPLAT = !(typeof location !== 'undefined' && /[?&]tsplat=0\b/.test(location.search));
     if (SPLAT) {
-      var SU = { uHole: { value: new THREE.Vector4(0, 0, 0, 0) },   // (x, z, radius, on): the Grid-centre shaft down to the Underground Bazaar
+      // up to 8 round openings (x, z, radius, on) cut into the ground: the Underground Bazaar's capstone gap + its six glass oculi (2026-11-05;
+      // was a single 145 m shaft that swallowed the whole Grid centre). setHole(x, z, r) = one opening, setHoles([[x, z, r], ...]) = several.
+      var HOLES = []; for (var hi = 0; hi < 8; hi++) HOLES.push(new THREE.Vector4(0, 0, 0, 0));
+      var SU = { uHoles: { value: HOLES },
 
         uSnowLo: { value: (opts.snowLoM != null ? opts.snowLoM : 430) * PM }, uSnowHi: { value: (opts.snowHiM != null ? opts.snowHiM : 520) * PM },
         uSea: { value: SEA_U }, uRock: { value: opts.rockMix != null ? opts.rockMix : 1.0 }
@@ -284,7 +287,7 @@
         sh.vertexShader = 'varying vec3 vTWP; varying vec3 vTWN;\n' + sh.vertexShader.replace('#include <begin_vertex>',
           '#include <begin_vertex>\n  vTWP = (modelMatrix * vec4(position, 1.0)).xyz; vTWN = normalize(mat3(modelMatrix) * objectNormal);');
         sh.fragmentShader = [
-          'varying vec3 vTWP; varying vec3 vTWN; uniform float uSnowLo, uSnowHi, uSea, uRock; uniform vec4 uHole;',
+          'varying vec3 vTWP; varying vec3 vTWN; uniform float uSnowLo, uSnowHi, uSea, uRock; uniform vec4 uHoles[8];',
           (LAYERS ? '#define TV_LAYERS\nuniform vec4 uRA[10]; uniform float uRB[10]; uniform float uTime;\nuniform sampler2D tLava, tDune, tMoss, tFrost, tRego, tObs, tHarv, tGrass, tRipN, tRipH;' : ''),
           'vec3 tvEmit = vec3(0.0); float tvRough = -1.0; float tvRip = 0.0;',
           'float tvH(vec2 p){ p = fract(p * vec2(127.1, 311.7)); p += dot(p, p + 34.5); return fract(p.x * p.y); }',
@@ -295,7 +298,7 @@
           '#endif'
         ].join('\n') + '\n' + sh.fragmentShader.replace('#include <map_fragment>', [
           '#include <map_fragment>',
-          '  if (uHole.w > 0.5 && distance(vTWP.xz, uHole.xy) < uHole.z) discard;',
+          '  for (int hI = 0; hI < 8; hI++) { if (uHoles[hI].w > 0.5 && distance(vTWP.xz, uHoles[hI].xy) < uHoles[hI].z) discard; }',
           '  {',
           '    float n1 = tvN(vTWP.xz * 0.004), n2 = tvN(vTWP.xz * 0.045) * 0.6 + tvN(vTWP.xz * 0.21) * 0.4;',
           '    vec3 base = diffuseColor.rgb;',
@@ -564,7 +567,8 @@
 
     var api = {
       ready: false, mesh: group, material: material, meta: meta, seaLevel: SEA_U, half: HALF, source: hm.src,
-      setHole: function (x, z, r) { SU.uHole.value.set(x, z, r || 0, r ? 1 : 0); },   // cut the bazaar shaft open (world units)
+      setHole: function (x, z, r) { if (!HOLES) return; HOLES.forEach(function (v, i) { if (i === 0) v.set(x, z, r || 0, r ? 1 : 0); else v.set(0, 0, 0, 0); }); },   // one opening (world units); r = 0 closes all
+      setHoles: function (list) { if (!HOLES) return; HOLES.forEach(function (v, i) { var h = list && list[i]; if (h && h[2] > 0) v.set(h[0], h[1], h[2], 1); else v.set(0, 0, 0, 0); }); },   // up to 8 [x, z, r]
       heightAt: heightAt, setHeightExtra: function (f) { EXTRA.fn = typeof f === 'function' ? f : null; },
       meshHeightAt: meshHeightAt,   // ground the terrain mesh shows (no ride extras) — for builders that sit things ON the ground under a deck
       groundAt: function (x, z) { var u = (x + HALF) * INV_CELL, v = (z + HALF) * INV_CELL; u = u < 0 ? 0 : (u > NM1 ? NM1 : u); v = v < 0 ? 0 : (v > NM1 ? NM1 : v); var i = Math.min(u | 0, NM1 - 1), j = Math.min(v | 0, NM1 - 1), fx = u - i, fy = v - j, k = j * N + i, t = HD[k] + (HD[k + 1] - HD[k]) * fx, b = HD[k + N] + (HD[k + N + 1] - HD[k + N]) * fx; return HA + HB * (t + (b - t) * fy); },   // raw heightmap only

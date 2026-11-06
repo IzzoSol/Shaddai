@@ -23,7 +23,7 @@ t('every module the panel opens exports its entry point', () => {
   for (const [f, re] of Object.entries(need)) assert(re.test(P(f)), f + ' is missing its entry point');
 });
 t('host defines the globals the panel calls (__rideBoard, __skateJam, __naval, __raceChallenge, __travel.*)', () => {
-  const h = P('SHADDAI-WORLD-3D.html');
+  const h = P('SHADDAI-WORLD-3D.html') + '\n' + P('world-main.js');   // 2026-11-05: the inline module was extracted to world-main.js (SPEED-BRIEF phase 3)
   for (const g of ['window.__rideBoard =', 'window.__skateJam =', 'window.__naval =', 'window.__raceChallenge =', 'window.__travel = {'])
     assert(h.includes(g), 'missing ' + g);
   for (const k of ['maglev:', 'park:', 'colosseum:', 'colospot:', 'field:', 'grid:']) assert(new RegExp('\\n  ' + k).test(h), '__travel.' + k + ' missing');

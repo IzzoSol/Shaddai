@@ -45,7 +45,14 @@ router.post('/', softAuth, express.json({ limit: '256kb' }), (req, res) => {
     // never a client-supplied value. store.create() upserts in place when owner+codename
     // match an existing record, so trusting b.owner here would let a POST silently
     // rewrite someone else's operative (bypassing any ownership check added to PATCH).
-    const op = store.create({ ...b, owner: req.userId || 'local' });
+    // SECURITY (PIKADON 2026-11-05): only the creative fields come from the client. Spreading the whole body let a caller pass
+    // `id` (create() writes db.operatives[id] = op, so a known id overwrote someone else's record) or self-set economy/stats/
+    // inventory/tokenId/timestamps. Those stay server-owned. NOTE: rarity is still client-sent because forge.html relays the
+    // value /api/forge returned; moving that server-side is an open item.
+    const ALLOWED = ['codename', 'archetype', 'model', 'rarity', 'look', 'portrait', 'brain', 'tools', 'buildHash', 'room'];
+    const clean = {};
+    for (const k of ALLOWED) if (b[k] !== undefined) clean[k] = b[k];
+    const op = store.create({ ...clean, owner: req.userId || 'local' });
 
     // Forge → Character: full-body FLUX portrait (fire-and-forget)
     try { require('./char-gen').generateCharForOperative(op).catch(() => {}); } catch (e) {}

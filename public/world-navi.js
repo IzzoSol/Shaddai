@@ -147,7 +147,7 @@
     '#navi .node:before{content:"";position:absolute;left:14%;top:5%;width:72%;height:38%;border-radius:50%;background:linear-gradient(rgba(255,255,255,.6),rgba(255,255,255,0));opacity:.5;pointer-events:none}' +
     '#navi .node>*{position:relative;filter:drop-shadow(0 2px 3px rgba(0,0,0,.7))}' +
     '#navi .node:hover,#navi .node.act{transform:translateY(-4px) scale(1.14);border-color:' + THEME.gold + ';box-shadow:0 16px 22px rgba(0,0,0,.6),0 0 26px rgba(245,166,35,.6),0 0 60px rgba(245,166,35,.25),inset 0 -9px 13px rgba(60,30,0,.55),inset 0 3px 7px rgba(255,235,190,.35)}' +
-    '#navi .node.act{animation:nvpulse 2.2s ease-in-out infinite}@keyframes nvpulse{50%{box-shadow:0 16px 22px rgba(0,0,0,.6),0 0 38px rgba(245,166,35,.85),0 0 80px rgba(245,166,35,.35),inset 0 -9px 13px rgba(60,30,0,.55),inset 0 3px 7px rgba(255,235,190,.35)}}' +
+    '#navi .node.act::after{content:"";position:absolute;inset:-4px;border-radius:50%;pointer-events:none;box-shadow:0 0 38px rgba(245,166,35,.85),0 0 80px rgba(245,166,35,.35);opacity:0;animation:nvpulse 2.2s ease-in-out infinite}@keyframes nvpulse{50%{opacity:1}}' +   /* 2026-11-05: glow fades a pre-drawn layer (compositor) instead of animating box-shadow (a repaint every frame) */
     '#navi .plate{background:linear-gradient(160deg,rgba(20,48,100,.88),rgba(5,12,32,.92) 60%,rgba(3,8,22,.95));border:1px solid rgba(110,215,255,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -40px 60px rgba(0,0,0,.35),inset 0 0 0 1px rgba(0,212,255,.08),0 0 30px rgba(0,212,255,.14)}' +
     '#navi .pl{transform:rotateY(8deg);transform-origin:0 50%}#navi .pr{transform:rotateY(-8deg);transform-origin:100% 50%}' +
     '#navi .plate:before{content:"";position:absolute;left:0;top:0;width:100%;height:46px;background:linear-gradient(rgba(255,255,255,.1),rgba(255,255,255,0));pointer-events:none}' +
@@ -179,7 +179,7 @@
     '#navi .plate.pr{transform:rotateY(calc(-24deg + var(--nvSw,0deg))) translateZ(-30px);transform-origin:100% 50%;transition:transform .35s cubic-bezier(.2,.9,.3,1);animation:nvfloatR 7s ease-in-out infinite}' +
     '#navi .plate{backdrop-filter:blur(6px) saturate(1.2);box-shadow:0 0 0 1px rgba(0,212,255,.35),0 0 34px rgba(0,212,255,.16),0 24px 60px rgba(0,0,0,.55)}' +
     '#navi .plate:before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(115deg,transparent 30%,rgba(140,230,255,.10) 45%,transparent 60%);background-size:260% 100%;animation:nvsheen 6s linear infinite}' +
-    '@keyframes nvfloatL{0%,100%{margin-top:0}50%{margin-top:-6px}}@keyframes nvfloatR{0%,100%{margin-top:-6px}50%{margin-top:0}}@keyframes nvsheen{from{background-position:200% 0}to{background-position:-60% 0}}' +
+    '@keyframes nvfloatL{0%,100%{translate:0 0}50%{translate:0 -6px}}@keyframes nvfloatR{0%,100%{translate:0 -6px}50%{translate:0 0}}@keyframes nvsheen{from{background-position:200% 0}to{background-position:-60% 0}}' +
     '#navi .swivel{transform:translateX(-50%) rotateX(calc(var(--nvTilt,14deg) * .6))}' +
     '@media (prefers-reduced-motion:reduce){#navi .plate{animation:none}#navi .plate:before{animation:none}}';
   var root, elL, elR, elSw, elKp, elNodes, elCore, modalEl;
@@ -608,10 +608,18 @@
   };
   var CLASSES = [{ id: 'c1', t: 'Combat · Arena Basics', s: '19:00 · Gate B', pin: { x: 200, z: 200, label: 'Academy Gate B', kind: 'Academy' } }, { id: 'c2', t: 'Commerce · Shop Running', s: '20:00 · Market', pin: { x: -200, z: 300, label: 'Market Hall', kind: 'Academy' } }];
   M.academy = function () {
+    var AC = window.ShdAcademyCode;
     return {
-      title: 'ACADEMY', list: CLASSES.map(function (c) { return { id: c.id, t: c.t, s: c.s }; }), empty: 'No classes scheduled.',
-      detail: function (id) { var c = CLASSES.filter(function (x) { return x.id === id; })[0]; if (!c) return '<div class="empty">Tracks: Combat · Commerce · Radio · Lore.</div>'; return '<h3>' + esc(c.t) + '</h3><div>' + esc(c.s) + '</div><button class="b g" data-a="en"' + (S.flags.activeBot ? '' : ' disabled') + '>ENROLL ACTIVE BOT</button>' + (S.flags.activeBot ? '' : '<div class="empty">No bot bound — open Bots.</div>'); },
-      act: function (id, a) { var c = CLASSES.filter(function (x) { return x.id === id; })[0]; if (c && a === 'en') { S.schedule.push({ id: c.id, t: c.t }); setWaypoint(c.pin); if (hooks().onEnrollBot) hooks().onEnrollBot(c.id, S.flags.activeBot); toast('Enrolled. Meet at ' + c.pin.label); } }
+      title: 'ACADEMY', list: [{ id: 'hall', t: 'The Athenaeum · class hall', s: AC ? 'Sign-in code ' + AC.current() : 'Open the class hall' }].concat(CLASSES.map(function (c) { return { id: c.id, t: c.t, s: c.s }; })), empty: 'No classes scheduled.', selId: 'hall',
+      detail: function (id) {
+        if (id === 'hall') {   // 2026-11-05: the in-game sign-in code for athenaeum-class.html (no SMS - owner)
+          var code = AC ? AC.current() : '------', left = AC ? AC.secondsLeft() : 0;
+          return '<h3>The Athenaeum</h3><div>Your sign-in code</div><div style="font:700 34px/1.2 \'Share Tech Mono\',monospace;letter-spacing:.32em;color:' + THEME.gold + ';margin:8px 0">' + code + '</div>' +
+            '<div class="empty">Changes in ' + Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0') + '. Enter it at the class hall to take a seat. Only valid on this device.</div>' +
+            '<button class="b g" data-a="hall">OPEN THE CLASS HALL</button>';
+        }
+        var c = CLASSES.filter(function (x) { return x.id === id; })[0]; if (!c) return '<div class="empty">Tracks: Combat · Commerce · Radio · Lore.</div>'; return '<h3>' + esc(c.t) + '</h3><div>' + esc(c.s) + '</div><button class="b g" data-a="en"' + (S.flags.activeBot ? '' : ' disabled') + '>ENROLL ACTIVE BOT</button>' + (S.flags.activeBot ? '' : '<div class="empty">No bot bound — open Bots.</div>'); },
+      act: function (id, a) { if (id === 'hall' && a === 'hall') { window.open('/athenaeum-class.html', '_blank'); return; } var c = CLASSES.filter(function (x) { return x.id === id; })[0]; if (c && a === 'en') { S.schedule.push({ id: c.id, t: c.t }); setWaypoint(c.pin); if (hooks().onEnrollBot) hooks().onEnrollBot(c.id, S.flags.activeBot); toast('Enrolled. Meet at ' + c.pin.label); } }
     };
   };
   var JOBS = [{ id: 'j1', t: 'Courier: deliver to Spire', s: '120 ✦', pin: { x: 500, z: -400, label: 'The Spire', kind: 'Bounty' } }];

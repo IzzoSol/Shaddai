@@ -10,7 +10,7 @@ const assert = require('assert');
 const DR = require(path.join(__dirname, '..', '..', 'public', 'world-dragons.js'));
 const RIDE = require(path.join(__dirname, '..', '..', 'public', 'world-dragon-ride.js'));
 const U = DR.U;
-const EL7 = ['ice', 'lava', 'thorn', 'sand', 'void', 'crystal', 'lightning'];
+const EL7 = ['ice', 'lava', 'thorn', 'sand', 'void', 'crystal', 'lightning', 'blight'];   // 8 since 2026-11-05: one element per realm (dark forest = blight)
 
 let pass = 0, fail = 0;
 function test(name, fn) {
@@ -40,13 +40,14 @@ function breathRun(A, extraSecs) {
 
 console.log('world-dragon-elements tests');
 
-test('mapping: every station realm → one of the 7 elements; all 7 used; regions + legacy names resolve', () => {
+test('mapping: every station realm → its own element; all 8 used, none shared; regions + legacy names resolve', () => {
   const src = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'world-layout.js'), 'utf8');
   const rows = [...src.matchAll(/\{ id: '(\w+)',[^}]*realm: '(\w+)',\s*dragon: '(\w+)' \}/g)].map(m => ({ id: m[1], realm: m[2], dragon: m[3] }));
   assert(rows.length >= 8, 'station rows parsed: ' + rows.length);
   const got = {};
   rows.forEach(s => { const e = DR.resolveElement(s); assert(EL7.includes(e), s.id + ' → ' + e); got[s.realm] = e; });
-  assert.deepStrictEqual(got, { void: 'void', desert: 'sand', volcano: 'lava', suburb: 'lightning', meadow: 'thorn', ocean: 'crystal', darkforest: 'thorn', arctic: 'ice' });
+  assert.deepStrictEqual(got, { void: 'void', desert: 'sand', volcano: 'lava', suburb: 'lightning', meadow: 'thorn', ocean: 'crystal', darkforest: 'blight', arctic: 'ice' });
+  assert.strictEqual(new Set(Object.values(got)).size, Object.keys(got).length, 'two realms share an element');
   EL7.forEach(e => assert(Object.values(got).includes(e), 'element unused: ' + e));
   // realm wins over colour; colour is the fallback; legacy element names alias onto the 7
   assert.strictEqual(DR.resolveElement({ realm: 'arctic', dragon: 'red' }), 'ice');

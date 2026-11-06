@@ -80,18 +80,20 @@
     void:      { body: 0x120c1a, belly: 0x3a2450, membrane: 0x1a1024, glow: 0x9a40ff, breathA: 0x8a3aff, breathB: 0x08040e, style: 'void',      scorch: 0x050308, blend: 'norm', label: 'Void' },
     crystal:   { body: 0x6a6e76, belly: 0xd8dce4, membrane: 0x8a90a0, glow: 0xeef4ff, breathA: 0xffffff, breathB: 0xa8b0c4, style: 'crystal',   scorch: 0x2a2c30, blend: 'add',  label: 'Crystal' },
     lightning: { body: 0x2a1250, belly: 0xb070ff, membrane: 0x4a1e8a, glow: 0xc06aff, breathA: 0xf4e0ff, breathB: 0x9a40ff, style: 'lightning', scorch: 0x12041e, blend: 'add',  label: 'Storm' },
+    // 2026-11-05 owner: one dragon per realm, each its own. The dark forest shared 'thorn' with the meadow; it gets BLIGHT (obsidian + crimson rot).
+    blight:    { body: 0x140a0e, belly: 0x7a1028, membrane: 0x2a0c14, glow: 0xff2a48, breathA: 0xff6a7a, breathB: 0x3a0610, style: 'blight',    scorch: 0x1a0408, blend: 'norm', label: 'Blight' },
   };
   // pre-2026-09-28 element names (and synonyms) → the 7 canonical elements
-  var ELEMENT_ALIAS = { fire: 'lava', magma: 'lava', frost: 'ice', poison: 'thorn', vine: 'thorn', shadow: 'void', smoke: 'void', steel: 'crystal', silver: 'crystal', tide: 'crystal', storm: 'lightning' };
+  var ELEMENT_ALIAS = { fire: 'lava', magma: 'lava', frost: 'ice', poison: 'thorn', vine: 'thorn', shadow: 'void', smoke: 'void', rot: 'blight', necrotic: 'blight', steel: 'crystal', silver: 'crystal', tide: 'crystal', storm: 'lightning' };
   // realm id (world-layout regions / stations[].realm) → element. Takes priority over the station colour.
-  var REALM_TO_ELEMENT = { arctic: 'ice', volcano: 'lava', lava: 'lava', darkforest: 'thorn', meadow: 'thorn', forest: 'thorn', desert: 'sand', sand: 'sand', beach: 'sand',
+  var REALM_TO_ELEMENT = { arctic: 'ice', volcano: 'lava', lava: 'lava', darkforest: 'blight', meadow: 'thorn', forest: 'thorn', desert: 'sand', sand: 'sand', beach: 'sand',
     void: 'void', rift: 'void', ocean: 'crystal', crystal: 'crystal', suburb: 'lightning', storm: 'lightning', sky: 'lightning' };
   // WORLD_LAYOUT.stations[].dragon colour → element (fallback when the realm is unknown)
-  var COLOR_TO_ELEMENT = { red: 'lava', blue: 'ice', tan: 'sand', green: 'thorn', void: 'void', dark: 'thorn', black: 'lightning', teal: 'crystal' };
+  var COLOR_TO_ELEMENT = { red: 'lava', blue: 'ice', tan: 'sand', green: 'thorn', void: 'void', dark: 'blight', black: 'lightning', teal: 'crystal' };
   // damage-type resistances (fraction removed). damage(id, amount, pos, type) — type is the player's damage kind.
   var RESIST = {
     lava: { fire: 0.6, ice: -0.25 }, ice: { ice: 0.6, fire: -0.25 }, sand: { physical: 0.2, lightning: 0.3 }, thorn: { poison: 0.7, fire: -0.25 },
-    void: { arcane: 0.5, light: -0.25 }, crystal: { physical: 0.35, arcane: -0.2 }, lightning: { lightning: 0.6, ice: -0.2 },
+    void: { arcane: 0.5, light: -0.25 }, crystal: { physical: 0.35, arcane: -0.2 }, lightning: { lightning: 0.6, ice: -0.2 }, blight: { poison: 0.5, light: -0.3, fire: -0.15 },
   };
   // station → element: explicit s.element, else realm, else colour, else the colour key itself (legacy names aliased)
   function resolveElement(s) {
@@ -128,6 +130,8 @@
                  counter: 'Thin beam, but the shards bounce twice: keep moving, never stand where they land.' },
     lightning: { shape: 'line',  inhale: 1.2, len: 45, endR: 2.5, dps: 22, dmgType: 'lightning', chain: { r: 10, frac: 0.45 }, status: { kind: 'shock', dur: 0.5, mag: 0.2 },
                  counter: 'Longest wind-up. Dodging the beam is not enough: get > 10 m from it or the arc jumps to you.' },
+    blight:    { shape: 'cone',  inhale: 1.2, len: 34, endR: 9.5, dps: 16, dmgType: 'poison',    status: { kind: 'burn', dur: 4, mag: 4 },
+                 counter: 'Slow, wide crimson rot: the long wind-up is your cue to get behind it. The rot keeps ticking for 4 s.' },
   };
   function elementTune(el) { return ELEMENT_TUNE[ELEMENT_ALIAS[el] || el] || ELEMENT_TUNE.lava; }
   function breathInhale(el, tune) { tune = tune || TUNE; var E = elementTune(el); return Math.max(tune.minTelegraph, E.inhale || tune.breath.inhale); }
@@ -1034,6 +1038,7 @@
     crystal:   { speed: 46, spread: 0.07, s0: 0.3, s1: 0.8, life: 0.6,  grav: 0,   shape: 1, rate: 90,
                  shard: { rate: 30, size: [0.6, 1.6], life: 0.7, speed: 44, grav: -2,   geo: 'spike', color: 0xe8eef8, blend: 'add' } },
     lightning: { speed: 50, spread: 0.05, s0: 0.3, s1: 1.0, life: 0.35, grav: 0,   shape: 0, rate: 160, arcs: { every: 0.07, life: 0.12, jitter: 1.6 } },
+    blight:    { speed: 18, spread: 0.28, s0: 1.6, s1: 6.0, life: 1.7,  grav: -0.6, shape: 0, rate: 130, swirl: 2 },
   };
   function createFxSim(el, heightAt) {
     el = ELEMENT_ALIAS[el] || el; if (!FX_STYLE[el]) el = 'lava';
@@ -1525,7 +1530,7 @@
     decalGeo.setAttribute('aGlow', new THREE.InstancedBufferAttribute(dGlow, 1).setUsage(THREE.DynamicDrawUsage));
     var decalMat = track(new THREE.ShaderMaterial({
       uniforms: { uTime: { value: 0 } },
-      vertexShader: 'attribute vec3 aCol; attribute float aFade; attribute float aGlow; varying vec3 vCol; varying float vFade; varying float vGlow; varying vec2 vUv; void main(){ vCol=aCol; vFade=aFade; vGlow=aGlow; vUv=uv; gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position,1.0); }',
+      vertexShader: 'attribute vec3 aCol; attribute float aFade; attribute float aGlow; varying vec3 vCol; varying float vFade; varying float vGlow; varying vec2 vUv; void main(){ vCol=aCol; vFade=aFade; vGlow=aGlow; vUv=uv;\n#ifdef USE_INSTANCING\n gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position,1.0);\n#else\n gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);\n#endif\n }',
       // aGlow 0 = scorch/frost; 1 = molten lava pool (bright cracked crust: glow veins pulse, dark crust plates)
       fragmentShader: 'uniform float uTime; varying vec3 vCol; varying float vFade; varying float vGlow; varying vec2 vUv; float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233))) * 43758.5453); } void main(){ vec2 p = vUv*2.0-1.0; float r = length(p); float n = h(floor(vUv*9.0)); float a = smoothstep(1.0, 0.35 + 0.25*n, r) * vFade * 0.85; if (a < 0.01) discard; vec3 c = vCol; if (vGlow > 0.5) { float cr = h(floor(vUv*6.0)); float vein = smoothstep(0.08, 0.0, abs(fract(vUv.x*6.0 + cr) - 0.5) * abs(fract(vUv.y*6.0 + cr*1.7) - 0.5)); c = mix(vec3(0.16,0.05,0.02), vCol * (1.4 + 0.3*sin(uTime*3.0 + cr*6.0)), clamp(vein + (1.0 - r)*0.5, 0.0, 1.0)); a = min(1.0, a * 1.2); } gl_FragColor = vec4(c, a); }',
       transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4, toneMapped: false,

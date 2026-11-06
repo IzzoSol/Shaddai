@@ -42,7 +42,7 @@
       '<div style="position:absolute;left:0;right:0;bottom:16vh;text-align:center;opacity:0;transition:opacity 1s 1.2s">' +
       '<div style="font:700 clamp(28px,5vw,64px)/1 \'Chakra Petch\',system-ui;letter-spacing:.32em;color:#f5d27a;text-shadow:0 0 24px rgba(232,196,92,.6)">SHADDAI COLOSSEUM</div>' +
       '<div style="margin-top:10px;font:600 clamp(12px,1.4vw,18px) system-ui;letter-spacing:.4em;color:#e8f6ff;opacity:.85">THE ARENA AWAITS</div></div>' +
-      '<div style="position:absolute;right:20px;bottom:calc(11vh + 12px);font:600 12px system-ui;color:#cfe;opacity:.6">any key · skip</div>';
+      '<div style="position:absolute;right:20px;bottom:calc(11vh + 12px);font:600 12px system-ui;color:#cfe;opacity:.6">any key · skip &nbsp;·&nbsp; inside: ] spectator cams, X back</div>';
     document.body.appendChild(ov);
     requestAnimationFrame(function () { ov.children[0].style.transform = 'none'; ov.children[1].style.transform = 'none'; ov.children[2].style.opacity = 1; });
     ov.addEventListener('click', end);

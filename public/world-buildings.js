@@ -4323,45 +4323,47 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader, o
     bannerIM.instanceMatrix.needsUpdate = true;   // 2026-10-23 owner: "de-clutter" - the pennants had no string and read as floating squares; built but not added
 
     // ── GRAND CENTRAL MONUMENT: tiered fountain + genie lamp + spinning holo ──
+    // 2026-11-05: the monument is one group so the Underground Bazaar can hide it when its capstone shrine takes the centre (window.__hubMonument).
+    const monument = new THREE.Group(); monument.name = 'hub-monument'; scene.add(monument);
     const tierR = [13, 8.5, 5.0], tierH = 2.0, tierBaseY = [1.0, 3.4, 5.8];
     for (let i = 0; i < tierR.length; i++) {
       const tier = new THREE.Mesh(
         new THREE.CylinderGeometry(tierR[i], tierR[i] + 0.8, tierH, 40, 1), stoneWarm);
       tier.position.set(cx, baseY + tierBaseY[i] + tierH / 2, cz);
       tier.castShadow = true; tier.receiveShadow = true;
-      scene.add(tier);
+      monument.add(tier);
       const water = new THREE.Mesh(new THREE.CircleGeometry(tierR[i] * 0.9, 40), neonCyan);
       water.rotation.x = -Math.PI / 2;
       water.position.set(cx, baseY + tierBaseY[i] + tierH + 0.05, cz);
-      water.renderOrder = 3; scene.add(water);
+      water.renderOrder = 3; monument.add(water);
       const rim = new THREE.Mesh(new THREE.TorusGeometry(tierR[i] + 0.2, 0.22, 6, 60), neonGold);
       rim.rotation.x = Math.PI / 2;
       rim.position.set(cx, baseY + tierBaseY[i] + tierH, cz); rim.renderOrder = 3;
-      scene.add(rim);
+      monument.add(rim);
     }
     // Tapered central column.
     const column = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.7, 8, 16, 1), goldMat);
     column.position.set(cx, baseY + 5.8 + 2 + 4, cz); column.castShadow = true;
-    scene.add(column);
+    monument.add(column);
     // Genie-lamp finial (oval body + spout + flame orb).
     const lampBody = new THREE.Mesh(new THREE.SphereGeometry(2.0, 20, 14), goldMat);
     lampBody.scale.set(1.5, 0.75, 1.0);
     lampBody.position.set(cx, baseY + 15.8, cz); lampBody.castShadow = true;
-    scene.add(lampBody);
+    monument.add(lampBody);
     const spout = new THREE.Mesh(new THREE.ConeGeometry(0.5, 3.0, 12), goldMat);
     spout.position.set(cx + 3.0, baseY + 16.1, cz);
-    spout.rotation.z = -Math.PI / 2.3; scene.add(spout);
+    spout.rotation.z = -Math.PI / 2.3; monument.add(spout);
     const flame = new THREE.Mesh(new THREE.SphereGeometry(1.0, 16, 12), orbMat);
-    flame.position.set(cx, baseY + 17.6, cz); scene.add(flame);
+    flame.position.set(cx, baseY + 17.6, cz); monument.add(flame);
     const flameGlow = new THREE.Mesh(new THREE.SphereGeometry(1.7, 16, 12), neonGold);
-    flameGlow.position.set(cx, baseY + 17.6, cz); flameGlow.renderOrder = 3; scene.add(flameGlow);
+    flameGlow.position.set(cx, baseY + 17.6, cz); flameGlow.renderOrder = 3; monument.add(flameGlow);
 
     // Spinning holo halo rings around the column (rotation.y → visible spin).
     const haloY = [9.0, 11.4, 13.4];
     for (let i = 0; i < haloY.length; i++) {
       const halo = new THREE.Mesh(new THREE.TorusGeometry(3.4 - i * 0.6, 0.2, 6, 48), haloGlow);
       halo.position.set(cx, baseY + haloY[i], cz); halo.renderOrder = 3;
-      scene.add(halo);
+      monument.add(halo);
       spinners.push({ o: halo, ry: (i % 2 ? -1 : 1) * (0.18 + i * 0.10) });
     }
     // Spinning holo market-board — 4 signage planes on a rotating cross.
@@ -4376,14 +4378,16 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader, o
       p.rotation.y = i / 4 * TWO_PI; p.renderOrder = 4;
       board.add(p);
     }
-    scene.add(board);
+    monument.add(board);
     spinners.push({ o: board, ry: 0.25 });
     // Crowning beacon orb.
     const crown = new THREE.Mesh(new THREE.SphereGeometry(1.3, 18, 14), orbMat);
-    crown.position.set(cx, baseY + 20.0, cz); scene.add(crown);
+    crown.position.set(cx, baseY + 20.0, cz); monument.add(crown);
 
     // SOLID collider for the central monument (fountain base).
-    hubColliders.push({ cx: cx, cz: cz, r: 14 });
+    const monumentCollider = { cx: cx, cz: cz, r: 14 };
+    hubColliders.push(monumentCollider);
+    window.__hubMonument = { group: monument, collider: monumentCollider, cx: cx, cz: cz, baseY: baseY, plazaR: PLAZA_R, stallR: STALL_R };
 
     // ── WARM + NEON GATHERING LIGHT (two cheap point lights) ──────────────────
     const warmLight = new THREE.PointLight(0xffd27a, 1.6, 260, 2);

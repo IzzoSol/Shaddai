@@ -720,14 +720,14 @@
           '}',
 
           // ── character chooser ──────────────────────────────────────────
-          '#spawnPicker .sp-char-row{display:flex;gap:11px;justify-content:center;flex-wrap:wrap;max-width:700px;margin-bottom:26px;animation:spRise .66s ease both}',
-          '#spawnPicker .sp-char{position:relative;isolation:isolate;width:70px;background:linear-gradient(160deg,rgba(255,255,255,0.055),rgba(4,7,14,0.35));border:1.5px solid rgba(150,200,235,0.14);border-radius:13px;padding:6px 5px 5px;cursor:pointer;outline:none;transition:transform .18s cubic-bezier(.2,.9,.3,1.35),box-shadow .22s,border-color .22s,background .22s}',
+          '#spawnPicker .sp-char-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;max-width:900px;margin-bottom:26px;animation:spRise .66s ease both}',
+          '#spawnPicker .sp-char{position:relative;isolation:isolate;width:92px;background:linear-gradient(160deg,rgba(255,255,255,0.055),rgba(4,7,14,0.35));border:1.5px solid rgba(150,200,235,0.14);border-radius:13px;padding:6px 5px 5px;cursor:pointer;outline:none;transition:transform .18s cubic-bezier(.2,.9,.3,1.35),box-shadow .22s,border-color .22s,background .22s}',
           '#spawnPicker .sp-char:hover,#spawnPicker .sp-char:focus-visible{transform:translateY(-5px);box-shadow:0 10px 24px rgba(0,0,0,.5)}',
           // premium selected state: cyan ring + inner glow + lift + gold check
           '#spawnPicker .sp-char.on{background:linear-gradient(160deg,rgba(39,224,255,0.16),rgba(4,7,14,0.4));border-color:var(--sp-cyan);transform:translateY(-4px);box-shadow:0 0 0 1px var(--sp-cyan),0 0 22px rgba(39,224,255,0.5),inset 0 0 16px rgba(39,224,255,0.14)}',
           '#spawnPicker .sp-char.on::after{content:"\\2713";position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:50%;background:var(--sp-cyan);color:#02121a;font-family:"Share Tech Mono",monospace;font-size:10px;line-height:16px;text-align:center;box-shadow:0 0 12px var(--sp-cyan);z-index:3}',
           '#spawnPicker .sp-char img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:9px;display:block;background:#06080d;filter:saturate(1.05)}',
-          '#spawnPicker .sp-char-nm{font-family:"Orbitron",sans-serif;font-weight:700;font-size:7px;letter-spacing:.12em;text-align:center;margin-top:6px;text-transform:uppercase}',
+          '#spawnPicker .sp-char-nm{font-family:"Orbitron",sans-serif;font-weight:700;font-size:10px;letter-spacing:.12em;text-align:center;margin-top:6px;text-transform:uppercase}',
         ].join('');
         document.head.appendChild(s);
       }

@@ -467,10 +467,10 @@ test('clips: fly/idle/walk/run weights sum to 1; air = fly, standing = idle, tak
   return 'ok';
 });
 
-test('elements (2026-09-28): ring colours map onto the 7 ref-sheet elements; every wind-up ≥ minTelegraph', () => {
+test('elements (2026-11-05): ring colours map onto the 8 elements, one per realm; every wind-up ≥ minTelegraph', () => {
   const L = ringLayout(8, 2828), core = DR.createDragonsCore({ heightAt: flat, layout: L, getPlayer: () => null });
   const els = core.dragons.map(d => d.element);
-  assert.deepStrictEqual(els, ['void', 'sand', 'lava', 'lightning', 'thorn', 'crystal', 'thorn', 'ice']);
+  assert.deepStrictEqual(els, ['void', 'sand', 'lava', 'lightning', 'thorn', 'crystal', 'blight', 'ice']);
   els.forEach(e => assert(DR.ELEMENT_TUNE[e] && DR.breathInhale(e) >= DR.TUNE.minTelegraph));
   return els.join(' ');
 });

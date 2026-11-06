@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Athenaeum · Class Hall</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tomorrow:wght@500;600&family=Albert+Sans:wght@400;500;600&family=Martian+Mono:wght@400;500&family=Marcellus&display=swap">
+<style>
+/* THE ATHENAEUM CLASS HALL (2026-11-05, owner): the foundation for classes, built like the Forge (forge-demo.html): full-bleed holographic
+   3D hall, a step panel bottom-left, HUD corners. Steps: Navi code -> class -> teacher + PIKADON audit -> countdown (seats fill, skippable)
+   -> live class (first-person / stage / level 2 / spectator cams, media, agent notes, bot physics test) -> wrap-up + Colosseum sign-up.
+   Fees, PayBox payments and server-issued codes are deliberately NOT here yet (owner: "fill in teacher fees later"). */
+:root{--bg:#050b14;--surface:#0b1828;--line:#1d3a55;--text:#d8eeff;--muted:#8fb0c8;--accent:#5fe0ff;--trim:#e8c45c;--human:#e8c45c;--bot:#27e0ff;--ok:#00e5a0;--warn:#f87171;
+  --f-display:"Marcellus",Georgia,serif;--f-ui:"Albert Sans",system-ui,sans-serif;--f-hud:"Tomorrow",system-ui,sans-serif;--f-data:"Martian Mono",ui-monospace,monospace;
+  --card:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,18px 100%,0 calc(100% - 18px));--plate:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));color-scheme:dark}
+*{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--text);font:15px/1.45 var(--f-ui)}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.ui{position:fixed;z-index:5}
+#tl{top:14px;left:16px;font:600 .78rem var(--f-hud);letter-spacing:.08em;color:var(--accent)}#tl .sub{color:var(--muted);font-weight:500}
+.seg{display:flex;gap:4px;margin-top:8px;width:min(320px,60vw)}.seg i{flex:1;height:4px;background:var(--line)}.seg i.on{background:var(--accent)}.seg i.cur{background:var(--trim)}
+#tr{top:14px;right:16px;text-align:right;font-family:var(--f-hud)}#tr div{display:flex;gap:10px;justify-content:flex-end;align-items:baseline}#tr .k{color:var(--trim);font-size:.76rem;letter-spacing:.08em}#tr .v{color:var(--accent);font-size:1.05rem;font-weight:600}
+#cams{bottom:14px;right:16px;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:52vw}
+#cams button,.chip{font:500 .74rem var(--f-hud);letter-spacing:.05em;background:rgba(11,24,40,.75);border:1px solid var(--line);color:var(--muted);padding:7px 11px;cursor:pointer}
+#cams button[aria-pressed="true"],.chip[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+#bl{left:16px;bottom:14px;width:min(430px,calc(100vw - 32px))}
+.panel{background:var(--line);clip-path:var(--card);padding:1.5px}.panel>.in{background:rgba(6,16,28,.9);clip-path:var(--card);padding:16px 18px 14px;display:grid;gap:11px;max-height:calc(100vh - 140px);overflow:auto}
+.panel h2{font:400 1.4rem/1.1 var(--f-display);color:var(--trim);margin:0;letter-spacing:.03em}.panel p{margin:0;color:var(--muted);font-size:.9rem}
+.panel input[type=text],.panel textarea{background:#071526;border:1px solid var(--line);color:var(--text);font:500 .95rem var(--f-ui);padding:10px 12px;width:100%;border-radius:0}
+.panel input:focus,.panel textarea:focus{outline:2px solid var(--accent)}
+.code{font:600 1.6rem var(--f-data)!important;letter-spacing:.45em;text-align:center}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row .grow{flex:1}.fine{font-size:.76rem;color:var(--muted)}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:10px 18px;border:0;background:var(--accent);color:#04101c;font:600 .92rem/1 var(--f-ui);cursor:pointer;clip-path:var(--plate)}
+.btn.sec{background:transparent;color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}.btn[disabled]{opacity:.4;cursor:not-allowed}
+.ghost{background:none;border:0;color:var(--muted);font:500 .85rem var(--f-ui);cursor:pointer;padding:8px 4px}.ghost:hover{color:var(--accent)}
+.card{border:1px solid var(--line);padding:10px 12px;display:grid;gap:4px}.card b{color:var(--text)}
+.badge{display:inline-block;font:600 .68rem var(--f-hud);letter-spacing:.08em;padding:3px 8px;border:1px solid currentColor}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.gold{color:var(--trim)}
+.checks div{display:flex;justify-content:space-between;font:.8rem var(--f-data);padding:3px 0;border-bottom:1px dashed var(--line)}
+#notes{top:70px;right:16px;width:min(330px,40vw);max-height:46vh;overflow:auto;display:none}
+#notes .n{background:rgba(6,16,28,.86);border-left:3px solid var(--accent);padding:7px 10px;margin-bottom:6px;font-size:.82rem;animation:nin .4s ease-out}
+#notes .n b{font:600 .72rem var(--f-hud);letter-spacing:.08em}#notes .n.m{border-left-color:var(--warn)}
+@keyframes nin{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+#media{left:50%;top:14px;transform:translateX(-50%);display:none;font:600 .74rem var(--f-hud);letter-spacing:.08em;color:var(--trim);background:rgba(6,16,28,.8);border:1px solid var(--line);padding:6px 12px}
+#count{left:50%;top:38%;transform:translate(-50%,-50%);text-align:center;display:none;pointer-events:none}
+#count .t{font:400 clamp(3rem,10vw,7rem)/1 var(--f-display);color:var(--trim);text-shadow:0 0 30px rgba(232,196,92,.5)}#count .s{font:600 .9rem var(--f-hud);letter-spacing:.3em;color:var(--accent)}
+#skip{position:fixed!important;left:50%;bottom:18px;transform:translateX(-50%);display:none}   /* .btn's position:relative must not win */
+#spec{top:50px;left:50%;transform:translateX(-50%);display:none;font:600 .8rem var(--f-hud);letter-spacing:.2em;color:var(--warn);border:1px solid var(--warn);padding:6px 14px;background:rgba(20,6,10,.7)}
+.drop{border:1.5px dashed var(--line);padding:12px;text-align:center;color:var(--muted);font-size:.85rem}.drop.hot{border-color:var(--accent);color:var(--accent)}
+@media (max-width:760px){#bl{left:0;right:0;bottom:0;width:auto}.panel>.in{max-height:46vh}#notes{display:none!important}#cams{bottom:auto;top:64px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body>
+<canvas id="c" aria-hidden="true"></canvas>
+<div class="ui" id="tl"><div>THE ATHENAEUM // CLASS HALL</div><div class="sub">Two levels · humans and bots learn together</div><div class="seg" id="seg"></div></div>
+<div class="ui" id="tr"><div><span class="k">SEATS</span><span class="v" id="seats">0 / 0</span></div><div><span class="k">STATUS</span><span class="v" id="status" style="font-size:.85rem">SIGN IN</span></div></div>
+<div class="ui" id="spec">SPECTATOR · READ ONLY</div>
+<div class="ui" id="media"></div>
+<div class="ui" id="notes" aria-live="polite"></div>
+<div class="ui" id="count"><div class="t" id="countT">0:20</div><div class="s">CLASS BEGINS · SEATS FILLING</div></div>
+<button class="btn sec ui" id="skip" type="button">Skip to class</button>
+<div class="ui" id="cams" role="group" aria-label="Camera"></div>
+<div class="ui" id="bl"><div class="panel"><div class="in" id="panel"></div></div></div>
+
+<script src="/academy-code.js?v=20261105a"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+'use strict';
+var $ = function (id) { return document.getElementById(id); };
+var Q = new URLSearchParams(location.search), SPECTATE = Q.get('spectate') === '1';
+var reduce = matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+var SUBJECTS = ['Painting', 'Building', 'Math', 'Physics test', 'Open topic'];
+var AUDIENCE = { human: 'Humans', bot: 'Bots (humanoid bodies)', mixed: 'Humans + bots' }   /* wheel bots wait outside the Athenaeum (WorldBots.frameAllowed) */, FORMAT = { video: 'Video', audio: 'Audio', files: 'File collection' };
+var AGENTS = [['SHADDAI', '#ffcf4a'], ['NEXUS', '#34e5b0'], ['ORACLE', '#c084fc'], ['ZEROX', '#ff7a18'], ['TURTLE', '#1fd6c4'], ['QUILL', '#b98cff'], ['PIKADON', '#ff5a6e']];
+var SAMPLE = [   // shown when /api/academy/catalog is not reachable (static hosting); the real catalog replaces it when the server answers
+  { id: 'demo-paint', name: 'Holo-Painting: light and colour', subject: 'Painting', level: 2, audience: 'mixed', format: 'video', teacher: { name: 'TURTLE', type: 'house', verified: true }, seats: 36 },
+  { id: 'demo-build', name: 'Building: load paths and spans', subject: 'Building', level: 2, audience: 'bot', format: 'files', teacher: { name: 'NEXUS', type: 'house', verified: true }, seats: 28 },
+  { id: 'demo-math', name: 'Math: vectors for movers', subject: 'Math', level: 1, audience: 'mixed', format: 'audio', teacher: { name: 'QUILL', type: 'house', verified: true }, seats: 48 },
+  { id: 'demo-phys', name: 'Physics test: projectiles under gravity', subject: 'Physics test', level: 1, audience: 'bot', format: 'files', teacher: { name: 'Guest teacher', type: 'owner', verified: false }, seats: 40 }
+];
+var S = { i: SPECTATE ? 4 : 0, max: SPECTATE ? 4 : 0, signed: SPECTATE, classes: SAMPLE.slice(), cls: null, level: 1, audience: 'mixed', format: 'video', subject: 'Math', audit: 'none', filled: 0, cap: 48, countLeft: 20, notes: [], files: [], test: null, signup: null, cam: SPECTATE ? 'orbit' : 'orbit' };
+var STEPS = ['Sign in', 'Class', 'Teacher', 'Countdown', 'Live', 'Wrap-up'];
+var STATUS = ['SIGN IN', 'CHOOSE CLASS', 'TEACHER CHECK', 'SEATS FILLING', 'IN CLASS', 'CLASS ENDED'];
+var W = null;
+
+/* ======================= 3D HALL (two levels) ======================= */
+function buildHall() {
+  var cv = $('c'), r = new THREE.WebGLRenderer({ canvas: cv, antialias: true, powerPreference: 'high-performance' }); r.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
+  var scene = new THREE.Scene(); scene.background = new THREE.Color(0x050b14); scene.fog = new THREE.FogExp2(0x050b14, 0.018);
+  var cam = new THREE.PerspectiveCamera(55, 1, 0.1, 400), ADD = THREE.AdditiveBlending;
+  var cA = new THREE.Color(0x5fe0ff), cT = new THREE.Color(0xe8c45c), cH = new THREE.Color(0xe8c45c), cB = new THREE.Color(0x27e0ff);
+  function lineMat(c, o) { return new THREE.LineBasicMaterial({ color: c, transparent: true, opacity: o, blending: ADD, depthWrite: false }); }
+  function glowMat(c, o) { return new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: o, blending: ADD, depthWrite: false, side: THREE.DoubleSide }); }
+  function ring(rr, y, c, o, seg) { var g = new THREE.BufferGeometry().setFromPoints(Array.from({ length: (seg || 96) + 1 }, function (_, i) { var a = i / (seg || 96) * Math.PI * 2; return new THREE.Vector3(Math.cos(a) * rr, y, Math.sin(a) * rr); })); var l = new THREE.Line(g, lineMat(c, o)); scene.add(l); return l; }
+  scene.add(new THREE.HemisphereLight(0x8fbfff, 0x0a0a18, 0.8)); var key = new THREE.PointLight(0xffe6b0, 1.4, 60); key.position.set(0, 9, 0); scene.add(key);
+  // floor + stage
+  var floor = new THREE.Mesh(new THREE.CircleGeometry(30, 72), new THREE.MeshStandardMaterial({ color: 0x07111d, metalness: 0.5, roughness: 0.6 })); floor.rotation.x = -Math.PI / 2; scene.add(floor);
+  for (var k = 1; k <= 6; k++) ring(k * 4.5, 0.02, k % 2 ? cA : cT, 0.18);
+  var stage = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.6, 0.6, 48), new THREE.MeshStandardMaterial({ color: 0x1a1608, metalness: 0.8, roughness: 0.35, emissive: cT, emissiveIntensity: 0.15 })); stage.position.y = 0.3; scene.add(stage);
+  ring(4.4, 0.62, cT, 0.9); ring(3.2, 0.62, cA, 0.6);
+  // teacher hologram (simple figure; human = gold, bot = cyan; swapped per class)
+  var teacher = new THREE.Group(); teacher.position.set(0, 0.6, 0); scene.add(teacher);
+  var tMat = glowMat(cT, 0.55); [[0, 2.5, 0, 0.32], [0, 1.6, 0, 0.5]].forEach(function (q, i) { var m = new THREE.Mesh(i ? new THREE.CylinderGeometry(0.42, 0.5, 1.5, 16) : new THREE.SphereGeometry(q[3], 16, 12), tMat); m.position.set(q[0], q[1], q[2]); teacher.add(m); });
+  // holo screen over the stage (canvas texture: video / audio / files state)
+  var sc = document.createElement('canvas'); sc.width = 512; sc.height = 288; var sx = sc.getContext('2d'), stex = new THREE.CanvasTexture(sc);
+  var screen = new THREE.Mesh(new THREE.PlaneGeometry(9, 5.06), new THREE.MeshBasicMaterial({ map: stex, transparent: true, opacity: 0.92, side: THREE.DoubleSide, blending: ADD, depthWrite: false })); screen.position.set(0, 6.4, -1.5); scene.add(screen);
+  // LEVEL 1: three tiers of seats in a 260-degree arc facing the stage
+  var seats = [], ARC0 = Math.PI * 0.72, ARC1 = Math.PI * 2.28;
+  [[9.5, 0.5, 18], [12, 1.25, 22], [14.5, 2.0, 26]].forEach(function (t) { for (var i = 0; i < t[2]; i++) { var a = ARC0 + (ARC1 - ARC0) * (i + 0.5) / t[2]; seats.push({ x: Math.cos(a) * t[0], y: t[1], z: Math.sin(a) * t[0], a: a, lvl: 1 }); } });
+  [[9.5, 0.5], [12, 1.25], [14.5, 2.0]].forEach(function (t) { var g = new THREE.Mesh(new THREE.RingGeometry(t[0] - 1.1, t[0] + 1.1, 64, 1, ARC0, ARC1 - ARC0), new THREE.MeshStandardMaterial({ color: 0x0d1b2c, metalness: 0.4, roughness: 0.6, side: THREE.DoubleSide })); g.rotation.x = -Math.PI / 2; g.position.y = t[1] - 0.05; scene.add(g); });
+  // LEVEL 2: mezzanine ring (y 6.5) with workshop stations - easels (painting), build tables, math boards, a physics pendulum rig
+  var L2Y = 6.5, deck = new THREE.Mesh(new THREE.RingGeometry(19, 24, 72), new THREE.MeshStandardMaterial({ color: 0x0b1626, metalness: 0.5, roughness: 0.55, side: THREE.DoubleSide })); deck.rotation.x = -Math.PI / 2; deck.position.y = L2Y; scene.add(deck);
+  ring(19.1, L2Y + 1.1, cA, 0.7); ring(19.1, L2Y + 0.02, cT, 0.5); ring(24, L2Y + 0.02, cA, 0.3);
+  for (var p = 0; p < 12; p++) { var pa = p / 12 * Math.PI * 2, col = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, L2Y, 8), new THREE.MeshStandardMaterial({ color: 0x1a1608, metalness: 0.8, roughness: 0.35, emissive: cT, emissiveIntensity: 0.2 })); col.position.set(Math.cos(pa) * 18.6, L2Y / 2, Math.sin(pa) * 18.6); scene.add(col); }
+  var stations = new THREE.Group(); scene.add(stations); var pendulum = null;
+  for (var s = 0; s < 16; s++) { var sa = s / 16 * Math.PI * 2 + 0.2, sx2 = Math.cos(sa) * 21.5, sz = Math.sin(sa) * 21.5, kind = s % 4, st = new THREE.Group(); st.position.set(sx2, L2Y, sz); st.lookAt(0, L2Y, 0); stations.add(st);
+    if (kind === 0) { var easel = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.2), glowMat(new THREE.Color().setHSL(s / 16, 0.8, 0.6), 0.5)); easel.position.set(0, 1.6, 0); st.add(easel); }
+    else if (kind === 1) { var tbl = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.9, 1.2), new THREE.MeshStandardMaterial({ color: 0x14243a })); tbl.position.y = 0.45; st.add(tbl); for (var b = 0; b < 4; b++) { var cube = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.35, 0.35), glowMat(cA, 0.6)); cube.position.set(-0.6 + b * 0.4, 1.08 + (b % 2) * 0.36, 0); st.add(cube); } }
+    else if (kind === 2) { var board = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(2.4, 1.4, 6, 4)), lineMat(cT, 0.7)); board.position.set(0, 1.7, 0); st.add(board); }
+    else { var arm = new THREE.Group(); arm.position.y = 2.8; st.add(arm); var rod = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, -1.8, 0)]), lineMat(cA, 0.9)); arm.add(rod); var bob = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 8), glowMat(cT, 0.9)); bob.position.y = -1.8; arm.add(bob); if (!pendulum) pendulum = arm; } }
+  // holographic dome lattice + motes
+  for (var d = 1; d <= 5; d++) ring(28 * Math.cos(d / 6 * Math.PI / 2), 28 * Math.sin(d / 6 * Math.PI / 2) * 0.55 + 2, cA, 0.07);
+  for (var m2 = 0; m2 < 16; m2++) { var ma = m2 / 16 * Math.PI * 2, pts = []; for (var e = 0; e <= 12; e++) { var el = e / 12 * Math.PI / 2; pts.push(new THREE.Vector3(Math.cos(ma) * 28 * Math.cos(el), 28 * Math.sin(el) * 0.55 + 2, Math.sin(ma) * 28 * Math.cos(el))); } scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat(cA, 0.06))); }
+  var MN = 500, mp = new Float32Array(MN * 3); for (var q = 0; q < MN; q++) { mp[q * 3] = (Math.random() - 0.5) * 50; mp[q * 3 + 1] = Math.random() * 16; mp[q * 3 + 2] = (Math.random() - 0.5) * 50; }
+  var mg = new THREE.BufferGeometry(); mg.setAttribute('position', new THREE.BufferAttribute(mp, 3)); var motes = new THREE.Points(mg, new THREE.PointsMaterial({ size: 0.07, color: cT, transparent: true, opacity: 0.6, blending: ADD, depthWrite: false })); scene.add(motes);
+  // STUDENTS: instanced bodies + heads, hidden (scale 0) until their seat fills; gold = human, cyan = bot
+  var N = seats.length, bodyI = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.26, 0.32, 0.9, 10), glowMat(0xffffff, 0.55), N), headI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.2, 12, 8), glowMat(0xffffff, 0.75), N);
+  bodyI.frustumCulled = headI.frustumCulled = false; scene.add(bodyI); scene.add(headI);
+  var o3 = new THREE.Object3D(), grow = new Float32Array(N), kindOf = new Uint8Array(N), fillOrder = Array.from({ length: N }, function (_, i) { return i; }).sort(function () { return Math.random() - 0.5; });
+  for (var i2 = 0; i2 < N; i2++) { bodyI.setColorAt(i2, cH); headI.setColorAt(i2, cH); }
+  function setKind(i, bot) { kindOf[i] = bot ? 1 : 0; bodyI.setColorAt(i, bot ? cB : cH); headI.setColorAt(i, bot ? cB : cH); bodyI.instanceColor.needsUpdate = headI.instanceColor.needsUpdate = true; }
+  // cameras: orbit (spectator / outside view), seat (first person, row 2), stage (teacher's view), level2 (mezzanine)
+  // camera framing checked in headless renders (2026-11-05): seat = seated eye height over the row in front; stage = the teacher's eyes
+  // (in front of the hologram's head, not behind its body); level2 = on the mezzanine facing the workshop stations
+  var sa0 = Math.PI * 1.5 + 0.13, CAMS = { orbit: null, seat: { p: [Math.cos(sa0) * 12.4, 1.25 + 2.0, Math.sin(sa0) * 12.4], t: [0, 2.0, 0] }, stage: { p: [0, 3.2, -0.7], t: [0, 2.0, -12] }, level2: { p: [-21.5, L2Y + 2.1, 1.5], t: [21.5 * Math.cos(Math.PI - 1.0), L2Y + 1.1, -21.5 * Math.sin(Math.PI - 1.0)] } };   // standing on the deck, looking along the ring of stations
+  var cp = new THREE.Vector3(0, 30, 40), ct = new THREE.Vector3(0, 2, 0), gp = new THREE.Vector3(), gt = new THREE.Vector3(), introT = reduce ? 9 : 0;
+  function resize() { var w = innerWidth, h = innerHeight; r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
+  addEventListener('resize', resize); resize();
+  function drawScreen(t) {
+    sx.clearRect(0, 0, 512, 288); sx.fillStyle = 'rgba(6,16,28,0.55)'; sx.fillRect(0, 0, 512, 288); sx.strokeStyle = '#5fe0ff'; sx.lineWidth = 3; sx.strokeRect(4, 4, 504, 280);
+    var c = S.cls; sx.fillStyle = '#e8c45c'; sx.font = '600 22px sans-serif'; sx.textAlign = 'center'; sx.fillText(c ? c.name : 'THE ATHENAEUM', 256, 40);
+    sx.font = '500 15px sans-serif'; sx.fillStyle = '#8fb0c8'; sx.fillText(c ? (FORMAT[S.format] + ' · ' + AUDIENCE[S.audience] + ' · Level ' + S.level) : 'Two levels · humans and bots', 256, 64);
+    if (S.i >= 4) {
+      if (S.format === 'audio') { sx.strokeStyle = '#5fe0ff'; sx.lineWidth = 2; sx.beginPath(); for (var x = 20; x < 492; x += 4) { var y = 170 + Math.sin(x * 0.05 + t * 6) * 30 * Math.sin(x * 0.011 + t) * Math.sin(t * 1.7 + x * 0.002); x === 20 ? sx.moveTo(x, y) : sx.lineTo(x, y); } sx.stroke(); }
+      else if (S.format === 'files') { sx.textAlign = 'left'; sx.font = '14px monospace'; (S.files.length ? S.files : [{ name: 'Waiting for the teacher to share files' }]).slice(0, 7).forEach(function (f, i) { sx.fillStyle = i % 2 ? '#d8eeff' : '#5fe0ff'; sx.fillText('▸ ' + f.name, 40, 110 + i * 22); }); }
+      else { var g2 = sx.createLinearGradient(0, 80, 512, 280); g2.addColorStop(0, '#0c2a44'); g2.addColorStop(1, '#2a1f08'); sx.fillStyle = g2; sx.fillRect(30, 84, 452, 180); sx.fillStyle = '#e8c45c'; sx.beginPath(); sx.arc(256 + Math.sin(t) * 120, 174 + Math.cos(t * 1.3) * 40, 16, 0, 7); sx.fill(); sx.fillStyle = '#8fb0c8'; sx.font = '13px sans-serif'; sx.textAlign = 'center'; sx.fillText('LIVE · teacher video stream slot', 256, 254); }
+    } else { sx.fillStyle = '#5fe0ff'; sx.font = '600 40px sans-serif'; sx.fillText(S.i === 3 ? fmt(S.countLeft) : 'CLASS HALL', 256, 175); }
+    stex.needsUpdate = true;
+  }
+  var last = performance.now(), screenT = 0;
+  function frame(now) {
+    requestAnimationFrame(frame); var dt = Math.min(0.05, (now - last) / 1000); last = now; var T = now / 1000;
+    // seats fill toward S.filled
+    for (var j = 0; j < N; j++) { var on = fillOrder.indexOf(j) < S.filled ? 1 : 0; grow[j] += (on - grow[j]) * Math.min(1, dt * 5); var s0 = seats[j], g = grow[j];
+      o3.position.set(s0.x, s0.y + 0.45 + (1 - g) * 1.2, s0.z); o3.scale.setScalar(g < 0.01 ? 0.0001 : g); o3.rotation.set(0, -s0.a - Math.PI / 2, 0); o3.updateMatrix(); bodyI.setMatrixAt(j, o3.matrix);
+      o3.position.y = s0.y + 1.12 + (1 - g) * 1.2 + (kindOf[j] ? Math.sin(T * 3 + j) * 0.03 : 0); o3.updateMatrix(); headI.setMatrixAt(j, o3.matrix); }
+    bodyI.instanceMatrix.needsUpdate = headI.instanceMatrix.needsUpdate = true;
+    teacher.rotation.y = Math.sin(T * 0.5) * 0.8; teacher.position.y = 0.6 + Math.sin(T * 1.6) * 0.05; if (pendulum) pendulum.rotation.z = Math.sin(T * 2.2) * 0.5; motes.rotation.y = T * 0.02;
+    screen.lookAt(cam.position.x, screen.position.y, cam.position.z); screenT += dt; if (screenT > 0.1) { screenT = 0; drawScreen(T); }
+    // camera
+    if (introT < 6) { introT += dt; var u = Math.min(1, introT / 6), e2 = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2, a = 2.6 * (1 - e2) + T * 0.0; gp.set(Math.sin(a) * (34 - 12 * e2), 22 - 12 * e2, Math.cos(a) * (34 - 12 * e2)); gt.set(0, 2, 0); cp.copy(gp); ct.copy(gt); }
+    else { var C = CAMS[S.cam]; if (!C) { var oa = T * 0.08; gp.set(Math.sin(oa) * 26, 13, Math.cos(oa) * 26); gt.set(0, 2.5, 0); } else { gp.fromArray(C.p); gt.fromArray(C.t); } var kk = 1 - Math.exp(-dt * 2.4); cp.lerp(gp, kk); ct.lerp(gt, kk); }
+    cam.position.copy(cp); cam.lookAt(ct); r.render(scene, cam);
+  }
+  requestAnimationFrame(frame);
+  return { N: N, setKind: setKind, teacherBot: function (bot) { tMat.color.copy(bot ? cB : cT); }, skipIntro: function () { introT = 9; } };
+}
+
+/* ======================= STEPS / UI ======================= */
+function fmt(s) { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function seg() { $('seg').innerHTML = STEPS.map(function (_, i) { return '<i class="' + (i < S.i ? 'on' : i === S.i ? 'cur' : '') + '"></i>'; }).join(''); $('status').textContent = STATUS[S.i]; $('seats').textContent = S.filled + ' / ' + S.cap; }
+function cams() { var L = [['orbit', 'Spectator'], ['seat', 'First person'], ['stage', 'Teacher view'], ['level2', 'Level 2']]; $('cams').innerHTML = L.map(function (c) { return '<button type="button" data-cam="' + c[0] + '" aria-pressed="' + (S.cam === c[0]) + '">' + c[1] + '</button>'; }).join(''); }
+$('cams').addEventListener('click', function (e) { var b = e.target.closest('[data-cam]'); if (!b) return; S.cam = b.dataset.cam; cams(); });
+addEventListener('keydown', function (e) { if (/input|textarea/i.test((document.activeElement || {}).tagName)) return; var m = { Digit1: 'orbit', Digit2: 'seat', Digit3: 'stage', Digit4: 'level2' }[e.code]; if (m) { S.cam = m; cams(); } });
+function chips(name, map, cur) { return '<div class="opts" role="radiogroup" aria-label="' + name + '">' + Object.keys(map).map(function (k) { return '<button type="button" class="chip" data-' + name + '="' + k + '" aria-pressed="' + (cur === k) + '">' + map[k] + '</button>'; }).join('') + '</div>'; }
+function go(i) { S.i = i; S.max = Math.max(S.max, i); render(); }
+function render() {
+  seg(); cams(); var h = '', c = S.cls;
+  $('count').style.display = S.i === 3 ? 'block' : 'none'; $('skip').style.display = S.i === 3 && !SPECTATE ? 'inline-flex' : 'none';
+  $('notes').style.display = S.i >= 4 ? 'block' : 'none'; $('media').style.display = S.i === 4 ? 'block' : 'none'; if (S.i === 4) $('media').textContent = '● LIVE · ' + FORMAT[S.format].toUpperCase();
+  if (SPECTATE) { $('spec').style.display = 'block'; $('bl').style.display = 'none'; return; }
+  if (S.i === 0) h = '<h2>Sign in</h2><p>Open <b>Navi → Academy</b> in the world. Type the 6-digit code it shows.</p><input type="text" id="code" class="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000" aria-label="Navi code">' +
+    '<div class="row"><button class="btn grow" id="nx" type="button">Enter the hall</button></div><p class="fine" id="codeMsg">The code changes every 10 minutes. It works on the device where your game is open.</p>' +
+    '<p class="fine"><a class="ghost" href="?spectate=1" style="padding:0">Watch as a spectator instead</a></p>';
+  else if (S.i === 1) h = '<h2>Choose a class</h2>' + S.classes.map(function (k) { return '<button type="button" class="card chip" data-cls="' + esc(k.id) + '" aria-pressed="' + (c && c.id === k.id) + '" style="text-align:left"><b>' + esc(k.name) + '</b><span class="fine">' + esc(k.subject || 'Open topic') + ' · Level ' + (k.level || 1) + ' · ' + esc((k.teacher && k.teacher.name) || 'Teacher') + (k.teacher && k.teacher.verified ? ' · <span class="ok">pre-verified</span>' : '') + '</span></button>'; }).join('') +
+    '<p class="fine">Level</p>' + chips('lvl', { 1: 'Level 1 · Lecture hall', 2: 'Level 2 · Workshop' }, String(S.level)) + '<p class="fine">Who is in the room</p>' + chips('aud', AUDIENCE, S.audience) + '<p class="fine">Format</p>' + chips('fmt', FORMAT, S.format) +
+    '<div class="row"><button class="ghost" id="bk" type="button">Back</button><button class="btn grow" id="nx" type="button"' + (c ? '' : ' disabled') + '>Choose this class</button></div>';
+  else if (S.i === 2) { var T = c.teacher || {}, pre = !!T.verified, done = S.audit === 'approved';
+    h = '<h2>Teacher</h2><div class="card"><b>' + esc(T.name || 'Teacher') + '</b><span class="fine">' + (T.type === 'house' ? 'House faculty' : T.type === 'operative' ? 'Agent teacher' : 'Guest teacher') + '</span>' +
+      '<span>' + (pre ? '<span class="badge ok">PRE-VERIFIED</span> Students do not pay for an audit.' : done ? '<span class="badge ok">AUDITED BY PIKADON</span>' : '<span class="badge warn">NOT VERIFIED</span>') + '</span></div>' +
+      (pre || done ? '' : '<p>Guest teachers can ask PIKADON to audit what they will teach before class (optional). It checks claims, safety and accuracy.</p><button class="btn sec" id="audit" type="button"' + (S.audit === 'running' ? ' disabled' : '') + '>' + (S.audit === 'running' ? 'PIKADON is auditing' : 'Request a PIKADON audit') + '</button>') +
+      (S.audit !== 'none' && !pre ? '<div class="checks" id="checks"></div>' : '') +
+      '<p class="fine">Fees: set by the teacher and confirmed on the dashboard (coming next). During the beta every class is free.</p>' +
+      '<div class="row"><button class="ghost" id="bk" type="button">Back</button><button class="btn grow" id="nx" type="button">Take my seat</button></div>'; }
+  else if (S.i === 3) h = '<h2>Seats filling</h2><p>' + esc(c.name) + '. Students arrive as the timer runs down.</p><div class="row"><button class="btn sec grow" id="skip2" type="button">Skip to class</button></div>';
+  else if (S.i === 4) h = '<h2>' + esc(c.name) + '</h2><p>' + FORMAT[S.format] + ' class · ' + AUDIENCE[S.audience] + '. Your 7 agents are taking notes on the right.</p>' +
+    (S.format === 'files' ? '<div class="drop" id="drop">Drop class files here, or <label style="color:var(--accent);cursor:pointer">choose files<input type="file" id="pick" multiple hidden></label><br><span class="fine">Collected on this device for now.</span></div>' : '') +
+    '<div class="row"><button class="btn sec" id="phys" type="button">Run a bot physics test</button><span class="fine" id="physOut"></span></div>' +
+    '<div class="row"><button class="btn grow" id="nx" type="button">End class</button></div><p class="fine">Cameras: 1 spectator · 2 first person · 3 teacher · 4 level 2. Share <b>?spectate=1</b> to let people watch from outside the world.</p>';
+  else { var mis = S.notes.filter(function (n) { return n.m; }).length;
+    h = '<h2>Class ended</h2><div class="card"><b>' + S.filled + ' attended</b><span class="fine">' + S.notes.length + ' agent notes · ' + mis + ' mistakes logged for review' + (S.test ? ' · physics test ' + S.test.score + '/7 agents within 2%' : '') + '</span></div>' +
+      '<div class="row"><button class="btn sec" id="dl" type="button">Download notes</button></div>' +
+      '<h2 style="font-size:1.1rem">Colosseum sign-up</h2><p>Sign up for the Colosseum here. Tell us who you are.</p><input type="text" id="who" maxlength="40" placeholder="Name or handle"><textarea id="note" rows="2" maxlength="280" placeholder="A note about you"></textarea>' +
+      '<div class="row"><button class="btn grow" id="sign" type="button">Save my sign-up</button><button class="btn sec" type="button" disabled title="PayBox entry fees come next, after owner and legal review">Pay with PayBox (next)</button></div><p class="fine" id="signMsg">' + (S.signup ? 'Signed up as ' + esc(S.signup.who) + '.' : 'Free during the beta. Saved on this device until the server sign-up is live.') + '</p>'; }
+  $('panel').innerHTML = h; wire();
+}
+function wire() {
+  var q = function (s) { return $('panel').querySelector(s); }, qa = function (s) { return $('panel').querySelectorAll(s); };
+  var bk = q('#bk'); if (bk) bk.onclick = function () { go(S.i - 1); };
+  if (S.i === 0) { var inp = q('#code'), nx = q('#nx'); var tryIt = function () { var ok = window.ShdAcademyCode && window.ShdAcademyCode.check(inp.value); if (ok) { S.signed = true; go(1); } else q('#codeMsg').innerHTML = '<span class="warn">That code does not match. Open Navi → Academy and type the code it shows now.</span>'; };
+    nx.onclick = tryIt; inp.onkeydown = function (e) { if (e.key === 'Enter') tryIt(); }; setTimeout(function () { inp.focus(); }, 50); }
+  if (S.i === 1) {
+    qa('[data-cls]').forEach(function (b) { b.onclick = function () { S.cls = S.classes.filter(function (k) { return k.id === b.dataset.cls; })[0]; S.level = S.cls.level || 1; S.audience = S.cls.audience || 'mixed'; S.format = S.cls.format || 'video'; S.cap = Math.min(W ? W.N : 66, S.cls.seats || 48); render(); }; });
+    qa('[data-lvl]').forEach(function (b) { b.onclick = function () { S.level = +b.dataset.lvl; S.cam = S.level === 2 ? 'level2' : 'orbit'; render(); }; });
+    qa('[data-aud]').forEach(function (b) { b.onclick = function () { S.audience = b.dataset.aud; render(); }; });
+    qa('[data-fmt]').forEach(function (b) { b.onclick = function () { S.format = b.dataset.fmt; render(); }; });
+    var n1 = q('#nx'); if (n1) n1.onclick = function () { if (W) W.teacherBot(S.cls.teacher && S.cls.teacher.type === 'operative'); S.audit = 'none'; go(2); };
+  }
+  if (S.i === 2) { var au = q('#audit'); if (au) au.onclick = runAudit; if (S.audit !== 'none') drawChecks(); q('#nx').onclick = startCountdown; }
+  if (S.i === 3) q('#skip2').onclick = skipCountdown;
+  if (S.i === 4) { q('#nx').onclick = function () { clearInterval(noteTimer); go(5); }; q('#phys').onclick = physicsTest;
+    var dz = q('#drop'), pk = q('#pick'); if (dz) { dz.ondragover = function (e) { e.preventDefault(); dz.classList.add('hot'); }; dz.ondragleave = function () { dz.classList.remove('hot'); };
+      dz.ondrop = function (e) { e.preventDefault(); dz.classList.remove('hot'); addFiles(e.dataTransfer.files); }; pk.onchange = function () { addFiles(pk.files); }; } }
+  if (S.i === 5) { q('#dl').onclick = downloadNotes; q('#sign').onclick = function () { var who = q('#who').value.trim(); if (who.length < 2) { q('#signMsg').innerHTML = '<span class="warn">Add a name or handle first.</span>'; return; }
+      S.signup = { who: who, note: q('#note').value.trim().slice(0, 280), at: Date.now(), cls: S.cls && S.cls.id }; try { localStorage.setItem('shd_colosseum_signup_v1', JSON.stringify(S.signup)); } catch (e) { } render(); }; }
+}
+/* PIKADON audit (foundation): four content checks animate; the real review endpoint plugs in here when teacher submissions are live */
+var AUDIT = ['Claims are backed or labelled as opinion', 'Nothing unsafe to try at home', 'Facts checked against the knowledge base', 'Price and length match the description'];
+function drawChecks() { var el = $('panel').querySelector('#checks'); if (!el) return; var n = S.auditStep || 0; el.innerHTML = AUDIT.map(function (a, i) { return '<div><span>' + a + '</span><span class="' + (i < n ? 'ok' : '') + '">' + (i < n ? 'PASS' : i === n && S.audit === 'running' ? '…' : '') + '</span></div>'; }).join(''); }
+function runAudit() { S.audit = 'running'; S.auditStep = 0; render(); var t = setInterval(function () { S.auditStep++; if (S.auditStep >= AUDIT.length) { clearInterval(t); S.audit = 'approved'; render(); } else drawChecks(); }, reduce ? 50 : 700); }
+/* countdown: seats fill as the timer runs (demo 20 s; a scheduled class counts to its start time) */
+var countTimer = null;
+function startCountdown() { go(3); S.countLeft = 20; S.filled = 0; fillKinds(); countTimer = setInterval(function () { S.countLeft -= 0.25; S.filled = Math.min(S.cap, Math.round(S.cap * (1 - S.countLeft / 20) * 0.94)); $('countT').textContent = fmt(S.countLeft); seg(); if (S.countLeft <= 0) { clearInterval(countTimer); beginClass(); } }, 250); }
+function skipCountdown() { clearInterval(countTimer); S.filled = Math.round(S.cap * 0.94); beginClass(); }
+function fillKinds() { if (!W) return; for (var i = 0; i < W.N; i++) W.setKind(i, S.audience === 'bot' ? true : S.audience === 'human' ? false : (i % 3 === 0)); }
+/* live: agents post notes (observations + mistakes to learn from) */
+var NOTE_BANK = {
+  Painting: [['TURTLE', 'Complementary light makes the edge pop.'], ['ORACLE', 'Three of us mixed the glaze too dark.', 1], ['QUILL', 'Wrote the palette as a recipe card.']],
+  Building: [['NEXUS', 'Load goes down the columns, not across the beam.'], ['ZEROX', 'Underpriced the steel by 12%.', 1], ['PIKADON', 'Flagged the unbraced span as unsafe.']],
+  Math: [['QUILL', 'Vectors add tip to tail.'], ['SHADDAI', 'Lost a sign on the y component.', 1], ['ORACLE', 'Dot product = how much two moves agree.']],
+  'Physics test': [['NEXUS', 'Range peaks at 45° when drag is zero.'], ['ZEROX', 'Forgot to convert km/h to m/s.', 1], ['PIKADON', 'Verified the units on every answer.']],
+  'Open topic': [['SHADDAI', 'Asked the class for one real example each.'], ['TURTLE', 'Turned the idea into a sketch.'], ['QUILL', 'Missed the speaker\'s second point.', 1]]
+};
+var noteTimer = null;
+function note(who, text, mistake) { var col = (AGENTS.filter(function (a) { return a[0] === who; })[0] || [0, '#5fe0ff'])[1]; S.notes.push({ who: who, text: text, m: !!mistake, t: Date.now() });
+  var d = document.createElement('div'); d.className = 'n' + (mistake ? ' m' : ''); d.innerHTML = '<b style="color:' + col + '">' + who + (mistake ? ' · MISTAKE' : '') + '</b><br>' + esc(text); $('notes').prepend(d); }
+function beginClass() { go(4); if (S.level === 2) S.cam = 'level2'; else S.cam = 'seat'; cams(); var bank = (NOTE_BANK[(S.cls && S.cls.subject)] || NOTE_BANK['Open topic']).slice(), k = 0;
+  note('SHADDAI', 'Class started. ' + S.filled + ' in the room.'); noteTimer = setInterval(function () { if (k < bank.length) { var b = bank[k++]; note(b[0], b[1], b[2]); } else clearInterval(noteTimer); }, reduce ? 300 : 3500); }
+function addFiles(list) { Array.from(list || []).slice(0, 20).forEach(function (f) { S.files.push({ name: f.name.slice(0, 60), size: f.size }); }); note('QUILL', 'Collected ' + S.files.length + ' file' + (S.files.length === 1 ? '' : 's') + ' for the class pack.'); }
+/* bot physics test: a projectile question; the true answer is computed, each agent answers with its own error, scored within 2% */
+function physicsTest() {
+  var v = 18 + Math.round(Math.random() * 14), ang = [30, 40, 45, 55][Math.floor(Math.random() * 4)], g = 9.81, truth = v * v * Math.sin(2 * ang * Math.PI / 180) / g;
+  var errs = { SHADDAI: 0.004, NEXUS: 0.001, ORACLE: 0.012, ZEROX: 0.09, TURTLE: 0.03, QUILL: 0.008, PIKADON: 0.0 }, score = 0;
+  note('NEXUS', 'Physics test: v = ' + v + ' m/s at ' + ang + '°, no drag. True range ' + truth.toFixed(1) + ' m.');
+  AGENTS.forEach(function (a) { var e = errs[a[0]] * (Math.random() < 0.5 ? -1 : 1), ans = truth * (1 + e), ok = Math.abs(e) <= 0.02; if (ok) score++; if (!ok) note(a[0], 'Answered ' + ans.toFixed(1) + ' m (' + (e * 100).toFixed(0) + '% off). Learning: check units and the sin(2θ) term.', true); });
+  S.test = { v: v, ang: ang, truth: +truth.toFixed(2), score: score }; $('panel').querySelector('#physOut').textContent = score + '/7 within 2%';
+}
+function downloadNotes() { var blob = new Blob([JSON.stringify({ class: S.cls, level: S.level, audience: S.audience, format: S.format, attended: S.filled, notes: S.notes, physicsTest: S.test, files: S.files, audit: S.audit, at: new Date().toISOString() }, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'athenaeum-notes-' + ((S.cls && S.cls.id) || 'class') + '.json'; a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000); }
+$('skip').onclick = function () { if (S.i === 3) skipCountdown(); };
+
+/* boot */
+try { W = buildHall(); } catch (e) { console.warn('3D unavailable', e); }
+fetch('/api/academy/catalog').then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {   // real classes when the server answers
+  var items = d && (d.classes || d.items || (Array.isArray(d) ? d : null)); if (!items || !items.length) return;
+  S.classes = items.slice(0, 12).map(function (k) { return { id: k.id, name: k.name || k.title || k.id, subject: k.subject || k.track || 'Open topic', level: k.level || 1, audience: k.audience || 'mixed', format: k.format || 'video', teacher: { name: (k.teacher && (k.teacher.name || k.teacher.id)) || 'Teacher', type: (k.teacher && k.teacher.type) || 'house', verified: !!(k.verified || (k.teacher && (k.teacher.verified || k.teacher.type === 'house'))) }, seats: k.seats || k.capacity || 48 }; });
+  if (S.i === 1) render();
+}).catch(function () { });
+if (SPECTATE) { S.cls = SAMPLE[2]; S.cap = 48; S.filled = 40; fillKinds(); S.cam = 'orbit'; setInterval(function () { $('seats').textContent = S.filled + ' / ' + S.cap; }, 1000); }
+render();
+window.__athenaeum = { S: S, go: go, skip: skipCountdown, physicsTest: physicsTest };
+})();
+</script></body></html>

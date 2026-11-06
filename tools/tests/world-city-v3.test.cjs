@@ -25,7 +25,8 @@ const window = {
   removeEventListener(t, f) { listeners[t] = (listeners[t] || []).filter(x => x !== f); },
   dispatch(t, e) { (listeners[t] || []).slice().forEach(f => f(e)); }
 };
-const ctx = { window, document, Math, console, Promise, JSON, Object, Array, String, Number, isFinite, Infinity };
+// ?fullcity=1: the game thins the 208 garden plots to ~10% by default (owner: "too many plots", world-city-v3.js); these tests check the full data set
+const ctx = { window, document, Math, console, Promise, JSON, Object, Array, String, Number, isFinite, Infinity, location: { search: '?fullcity=1' } };
 vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'public', 'world-city-v3.js'), 'utf8'), ctx, { filename: 'world-city-v3.js' });
 const build = window.buildWorldCityV3, P = build.pure, U = 7 / 1.8;
 

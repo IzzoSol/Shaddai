@@ -7,7 +7,7 @@
 const puppeteer = require('puppeteer'), os = require('os'), sleep = ms => new Promise(r => setTimeout(r, ms));
 const OUT = 'C:/Users/Brittany/eye';
 (async () => {
-  if (os.freemem() / 1048576 < 700) { console.log('refused: low RAM'); process.exit(3); }
+  if (os.freemem() / 1048576 < 520) { console.log('refused: low RAM'); process.exit(3); }
   const b = await puppeteer.launch({ headless: 'new', protocolTimeout: 900000, executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const p = await b.newPage(); await p.setViewport({ width: 900, height: 560 }); const errs = new Map();
   p.on('pageerror', e => { const k = (e.stack || e.message).split('\n').slice(0, 3).join(' | ').slice(0, 300); errs.set(k, (errs.get(k) || 0) + 1); });

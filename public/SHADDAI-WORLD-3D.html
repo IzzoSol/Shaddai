@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
 <script>window.__isMobile = (function(){ try{ return /[?&]mobile=1/.test(location.search) || (matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) < 900); }catch(e){ return false; } })();</script>
@@ -67,13 +67,13 @@ window.__INTRO_CINEMATIC = /[?&]intro=cinematic(?:&|$|#)/.test(location.search);
   /* ── LIGHT LOADING SCREEN (default; ?intro=cinematic restores the cinematic intro above) ── */
   #introLite{display:none}
   /* NEW INTRO MOTION (motion-lab language: RGB-split glitch-in, scan sweep, caption rise) — GPU-only CSS, off for reduced-motion */
-  #introLite .wm{text-shadow:0 0 22px rgba(0,255,156,.35);animation:introGlitchIn 1.3s steps(1,end) both,introGlitchLoop 7s 2s infinite}
-  @keyframes introGlitchIn{0%{opacity:0;transform:translateX(-6px) skewX(8deg);text-shadow:-6px 0 #ff2fa0,6px 0 #27e0ff}15%{opacity:1;transform:translateX(5px);text-shadow:5px 0 #ff2fa0,-5px 0 #27e0ff}30%{opacity:.4;transform:translateX(-3px) skewX(-6deg)}45%{opacity:1;transform:none;text-shadow:-3px 0 #ff2fa0,3px 0 #27e0ff}70%{text-shadow:2px 0 #ff2fa0,-2px 0 #27e0ff}100%{opacity:1;transform:none;text-shadow:0 0 22px rgba(0,255,156,.35)}}
-  @keyframes introGlitchLoop{0%,93%,100%{transform:none;text-shadow:0 0 22px rgba(0,255,156,.35)}94%{transform:translateX(3px);text-shadow:-4px 0 #ff2fa0,4px 0 #27e0ff}96%{transform:translateX(-2px) skewX(4deg);text-shadow:3px 0 #ff2fa0,-3px 0 #27e0ff}98%{transform:none}}
-  #liteSlides::after{content:'';position:absolute;left:0;right:0;height:140px;top:-140px;background:linear-gradient(180deg,transparent,rgba(0,255,156,.08) 60%,rgba(0,255,156,.22) 98%,transparent);animation:introScan 5.5s linear infinite;pointer-events:none}
-  @keyframes introScan{to{transform:translateY(calc(100vh + 280px))}}
+  /* 2026-11-05 owner: "smooth and no green line coming down, better animations without giving up speed ... loading bar bigger".
+     The glitch steps and the green scan sweep are gone; the wordmark rises in once (opacity + transform only = compositor, no repaints). */
+  #introLite .wm{text-shadow:0 0 22px rgba(0,255,156,.35);animation:introRise 1.1s cubic-bezier(.16,1,.3,1) both}
+  #introLite .wm-sub{animation:introRise 1.1s cubic-bezier(.16,1,.3,1) .25s both}
+  @keyframes introRise{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
   @keyframes capIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-  @media (prefers-reduced-motion:reduce){#introLite .wm{animation:none}#liteSlides::after{display:none}}
+  @media (prefers-reduced-motion:reduce){#introLite .wm,#introLite .wm-sub{animation:none}}
   body.touch-ui #hint,body.touch-ui #modeToggle{display:none!important}   /* phone: no keyboard legend, no cursor/play toggle; the touch buttons replace them */
   #liteSlides{display:none}
   html.intro-lite #liteSlides{display:block}
@@ -82,13 +82,14 @@ window.__INTRO_CINEMATIC = /[?&]intro=cinematic(?:&|$|#)/.test(location.search);
   html.intro-lite #intro::before,html.intro-lite #intro::after{display:none}
   html.intro-lite #intro{z-index:99999}   /* the loading screen covers every HUD pill (Sparks / Navi / cursor mode) while it is up; .gone ignores pointer events */
   html.intro-lite #portalCv,html.intro-lite #introInner{display:none}
-  html.intro-lite #introLite{display:block;text-align:center;width:min(460px,86vw)}
+  html.intro-lite #introLite{display:block;text-align:center;width:min(700px,90vw)}
   #introLite .wm{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(34px,7vw,72px);letter-spacing:.16em;color:#00ff9c;line-height:1}
   #introLite .wm-sub{margin-top:12px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:.42em;color:#e8c45c;text-transform:uppercase}
-  #introLite .lbar{margin:38px auto 0;height:3px;background:#141a21;border-radius:2px;overflow:hidden}
-  #introLite .lbar i{display:block;height:100%;width:0;background:#00ff9c;transition:width .35s ease-out}
-  #introLite .lrow{display:flex;justify-content:space-between;margin-top:10px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:.12em;color:#7d8a96;text-transform:uppercase}
-  #introLite .lrow b{color:#e8c45c;font-weight:400}
+  /* bigger loading bar (owner 2026-11-05): 12 px track with a hairline frame, the fill glides (width eases), percent reads at a glance */
+  #introLite .lbar{margin:40px auto 0;height:12px;background:rgba(10,16,22,.85);border:1px solid rgba(0,255,156,.28);border-radius:8px;overflow:hidden;box-shadow:0 0 24px rgba(0,255,156,.12)}
+  #introLite .lbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#00c97a,#00ff9c 70%,#9dffd6);border-radius:8px;box-shadow:0 0 14px rgba(0,255,156,.55);transition:width .5s cubic-bezier(.22,1,.36,1)}
+  #introLite .lrow{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;font-family:'Share Tech Mono',monospace;font-size:14px;letter-spacing:.12em;color:#9aa8b4;text-transform:uppercase}
+  #introLite .lrow b{color:#e8c45c;font-weight:400;font-size:22px;letter-spacing:.06em}
   #introLite .tip{margin-top:26px;min-height:2.6em;font-family:'Chakra Petch',sans-serif;font-size:13px;line-height:1.35;color:#aab6c1}
   #introLite .tip span{color:#00ff9c}
   #portalCv{position:absolute;inset:0;width:100%;height:100%}
@@ -213,7 +214,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <div class="hud" id="hint" aria-label="Controls">
   <span class="hk"><b>W</b><b>A</b><b>S</b><b>D</b><em>Move</em></span><span class="hk"><b>Shift</b><em>Run</em></span><span class="hk"><b>Space</b><em>Jump</em></span><span class="hk"><b>Mouse</b><em>Look</em></span>
   <span class="hk"><b>E</b><em>Interact</em></span><span class="hk"><b>V</b><em>Camera</em></span><span class="hk"><b>O</b><em>Hoverboard</em></span><span class="hk"><b>I</b><em>Mounts &amp; Travel</em></span><span class="hk"><b>U</b><em>Maglev</em></span>
-  <span class="hk"><b>Y</b><em>Navi</em></span><span class="hk"><b>H</b><em>Map</em></span><span class="hk"><b>Tab</b><em>Cursor</em></span><span class="hk"><b>Esc</b><em>Menu</em></span>
+  <span class="hk"><b>Y</b><em>Navi</em></span><span class="hk"><b>H</b><em>Map</em></span><span class="hk"><b>Tab</b><em>Cursor</em></span><span class="hk"><b>F2</b><em>Hide UI</em></span><span class="hk"><b>Esc</b><em>Menu</em></span>
 </div>
 <div id="bikeHud" class="hud" style="display:none;top:18px;right:120px;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;color:#27e0ff;text-shadow:0 0 12px #27e0ff">🏍 GRID BIKE</div>
 <div id="credits" class="hud" style="top:18px;right:24px;font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:2px;color:#ffcf4a;text-shadow:0 0 12px rgba(255,207,74,.5)">⚡ — SHAD</div>
@@ -326,9 +327,9 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-realm-kits.js?v=20261022a"></script>
 <script src="/world-townsfolk.js?v=20261023b"></script>
 <script src="/world-realm-dress.js?v=20261024c"></script>
-<script src="/world-perf-guard.js?v=20261024a"></script>
-<script src="/world-underground-bazaar.js?v=20261025a"></script>   <!-- K32 underground bazaar: centre lift, cavern city, Colosseum + Undersea lines; ?bazaar=0 = off -->
-<script src="/world-edge-realms.js?v=20261024d"></script><script src="/world-realm-roads.js?v=20261024b"></script><script src="/world-biome-scatter.js?v=20261024b"></script><script src="/world-city-crowns.js?v=20261023a"></script><script src="/world-dragon-shards.js?v=20261023a"></script><script src="/world-hoverpark-k40.js?v=20261024a"></script><script src="/world-titans.js?v=20261024c"></script>   <!-- K31 edge realms beyond the rim (not on map; sealed foot-only gate); ?edgerealms=0 = off -->
+<script src="/world-perf-guard.js?v=20261024a"></script><script src="/world-light-budget.js?v=20261105a"></script>
+<script src="/world-underground-bazaar.js?v=20261105f"></script>   <!-- K32 underground bazaar: centre lift, cavern city, Colosseum + Undersea lines; ?bazaar=0 = off -->
+<script src="/world-edge-realms.js?v=20261024d"></script><script src="/world-realm-roads.js?v=20261024b"></script><script src="/world-biome-scatter.js?v=20261024b"></script><script src="/world-city-crowns.js?v=20261023a"></script><script src="/world-dragon-shards.js?v=20261105b"></script><script src="/world-hoverpark-k40.js?v=20261024a"></script><script src="/world-titans.js?v=20261024c"></script>   <!-- K31 edge realms beyond the rim (not on map; sealed foot-only gate); ?edgerealms=0 = off -->
 <script src="/world-race-kit.js?v=20261023m"></script>   <!-- race kit dress + start elevator (K6/K6b); ?racekit=0 = off -->   <!-- realm towns at each ring station (K10 buildings + K19 props); ?realmkits=0 = off -->   <!-- Blender pylon + realm station kits (K7/K8); ?transitkit=0 = code geometry -->
 <script src="/world-train-v2.js?v=20260928"></script>
 <script src="/world-falprops.js?v=20260925m4"></script>
@@ -342,7 +343,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-gear.js?v=20261001a"></script>
 <script src="/world-gear-wear.js?v=20261022a"></script>
 <script src="/world-binary-vision.js?v=20261023a"></script><script src="/world-listening-room.js?v=20261023d"></script>
-<script src="/world-colosseum-intro.js?v=20261023a"></script>   <!-- arena entry cinematic (skippable); ?colointro=0 = off -->   <!-- TURTLE studio Listening Room (owner ref): stand on the ring in the museum, press L -->   <!-- realm protective gear on the body (respirator / desert wrap / frost kit); ?gearwear=0 = off -->
+<script src="/world-colosseum-intro.js?v=20261105a"></script>   <!-- arena entry cinematic (skippable); ?colointro=0 = off -->   <!-- TURTLE studio Listening Room (owner ref): stand on the ring in the museum, press L -->   <!-- realm protective gear on the body (respirator / desert wrap / frost kit); ?gearwear=0 = off -->
 <script src="/world-buffs.js?v=20261003a"></script>
 <script src="/world-realm-hazards.js?v=20261002a"></script>
 <script src="/world-combat-mode.js?v=20261002a"></script>
@@ -370,7 +371,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-farm3d.js?v=20261001a"></script>
 <script src="/world-arcade.js?v=20261001a"></script>   <!-- arcade: slots, higher-lower, hover dash -->
 <script src="/world-farm.js?v=20261001a"></script>   <!-- farm beds -->   <!-- one unique verb per council office -->
-<script src="/world-agents-ui.js?v=20261001a"></script>   <!-- Agents & Jobs panel (I > Agents & Jobs): station agents, import Grok/Muse/..., jobs board -->
+<script src="/world-agents-ui.js?v=20261105a"></script>   <!-- Agents & Jobs panel (I > Agents & Jobs): station agents, import Grok/Muse/..., jobs board -->
 <script src="/world-hovercars.js?v=20261015a"></script>
 <script src="/world-race-select.js?v=20261016sx"></script><script src="/world-race-hq.js?v=20261023m"></script><script src="/world-home-deeds.js?v=20261016a"></script>   <!-- realm-town homes for Sparks (server deeds) -->   <!-- Race HQ: Blender K27 building beside Dragon Gate, race desk + showroom (E) -->   <!-- Mario-Kart style race select: cup/circuit map, hover car + board picker, Grand Prix series -->   <!-- hover car kit: air traffic + rideable cars (owner refs: retro hover cars + Rimba pod) -->
 <script src="/world-copy.js?v=20261001a"></script>   <!-- copy bank: citizen chatter, agent greetings, vendor + toast lines -->
@@ -378,7 +379,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-trick-score.js?v=20261009c"></script><script src="/world-shops.js?v=20261009c"></script><script src="/world-skatejam.js?v=20261009c"></script>   <!-- Skate Jam trick game (I > Races) -->
 <script src="/world-race-challenge.js?v=20261001a"></script>   <!-- challenge races + Sparks wagers (I > Races) -->
 <script src="/world-colosseum-vendors.js?v=20261011a"></script>   <!-- concourse vendors: E at any kiosk (snacks, drinks, gear, mounts, cosmetics, wagers) -->
-<script src="/world-colosseum.js?v=20261015c"></script>
+<script src="/world-colosseum.js?v=20261105a"></script>
 <script src="/world-terrain.js?v=20260925m2"></script>
 <script src="/world-biomes.js?v=20261009c"></script>
 <script src="/world-ocean.js?v=20260925m3"></script>
@@ -394,11 +395,11 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-tactics.js?v=20260924a"></script>
 <script src="/world-trails.js?v=20260925m3"></script>
 <script src="/world-landmarks.js?v=20260925m3"></script>
-<script src="/world-buildings.js?v=20261023a"></script>
+<script src="/world-buildings.js?v=20261105a"></script>
 <script src="/world-collision.js?v=20260926obb"></script>
 <script src="/world-player-controller.js?v=20261023a"></script>   <!-- kinematic capsule player (docs/PLAYER-CONTROLLER.md) -->
 <script src="/world-operatives.js?v=20261023a"></script>
-<script src="/world-spawn.js?v=20261009c"></script>
+<script src="/world-spawn.js?v=20261105a"></script>
 <script src="/world-themes.js?v=20261009c"></script>
 <script src="/athenaeum-layout.js?v=20261011a"></script>
 <script src="/world-athenaeum.js?v=20261023p"></script><script src="/world-athenaeum-lifts.js?v=20261023a"></script>
@@ -413,16 +414,16 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-dialogue.js?v=20260703d"></script>
 <script src="/world-radio.js?v=20260703d"></script>
 <script src="/world-showcase.js?v=20260929a"></script>   <!-- showcase (art/book/music/NFT), ad space, chain adapter (hedera/solana ready) -->
-<script src="/world-devkit.js?v=20261009c"></script><script src="/world-vfx.js?v=20261009c"></script><script src="/world-rng.js?v=20261009c"></script><script src="/world-economy.js?v=20261009c"></script><script src="/world-race.js?v=20261016t"></script>
+<script src="/world-devkit.js?v=20261009c"></script><script src="/world-vfx.js?v=20261105a"></script><script src="/world-rng.js?v=20261009c"></script><script src="/world-economy.js?v=20261009c"></script><script src="/world-race.js?v=20261016t"></script>
 <script src="/world-merge.js?v=20261024a"></script><script src="/world-race-landmarks.js?v=20261009c"></script><script src="/world-race-track.js?v=20261016s"></script><script src="/world-speed-fx.js?v=20261009c"></script><script src="/world-shiplock.js?v=20261015a"></script>
 <script src="/world-hoverpark.js?v=20261003m"></script><script src="/world-hoverpark-v2.js?v=20261011a"></script><script src="/world-park-dress.js?v=20261015b"></script>   <!-- hoverskate park at the PLAZA_SKATE marker (NW race quarter) -->
 <script src="/world-race-prizebox.js?v=20261011a"></script><script src="/world-cutscene-travel.js?v=20261016r"></script><script src="/world-static-batch.js?v=20261011a"></script><script src="/world-game-modes.js?v=20261016b"></script><script src="/world-race-run.js?v=20261011a"></script>   <!-- race runtime: crates, pads, items, AI, HUD -->   <!-- hoverskate race rules: circuits, gates, penalties, items -->
 <script src="/world-bot-bodies.js?v=20260929a"></script>   <!-- rigged code-built bot bodies (SCRAP, LANKY, UNI-9, ANALYST, casino) -->
-<script src="/world-bots.js?v=20261015c"></script>   <!-- 10 agent bots: humanoid followers + city wheel-bots -->
+<script src="/world-bots.js?v=20261105a"></script>   <!-- 10 agent bots: humanoid followers + city wheel-bots -->
 <script src="/world-sit.js?v=20260929a"></script>   <!-- E on sofas/benches/stools sits you down -->
 <script src="/world-survival.js?v=20260929a"></script>   <!-- dive/breath + respawn spots (settable in Navi > Plots) -->
 <script src="/world-academy-client.js?v=20261011a"></script>
-<script src="/world-live-feeds.js?v=20261023a"></script><script src="/world-city-screens.js?v=20261023b"></script><script src="/world-hud-clean.js?v=20261023m"></script><script src="/world-navi.js?v=20261023c"></script>
+<script src="/world-live-feeds.js?v=20261023a"></script><script src="/world-city-screens.js?v=20261023b"></script><script src="/world-hud-clean.js?v=20261105b"></script><script src="/academy-code.js?v=20261105a"></script><script src="/world-navi.js?v=20261105b"></script>
 <script src="/world-navi-chat.js?v=20261015a"></script>   <!-- Navi CHAT relay (/api/mp) + name sign-up; ?chat=0 = local only -->   <!-- NAVI: Y or ` opens the holographic command center (docs/NAVI.md) -->
 <script src="/world-lounge.js?v=1"></script>
 <script src="/portals/portals-registry.js?v=20260703d"></script>
@@ -431,13 +432,13 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 </template>
 <script>/* BOOT BUNDLES (2026-10-24, docs/SPEED-BRIEF-20261024.md): the scripts in #boot-scripts above are minified + concatenated in this order into
    public/dist by `node tools/build-dist.cjs` (rerun after editing any of them). ?bundle=0 = load the original files one by one. */
-window.__BOOT_BUNDLES = ["/dist/boot-1.26275bf172.js","/dist/boot-2.4e6fe86db1.js","/dist/boot-3.e75d78f1b1.js"];
+window.__BOOT_BUNDLES = ["/dist/boot-1.31f3e55990.js","/dist/boot-2.c95be648f7.js","/dist/boot-3.b7ca1ff9e9.js"];
 (function(){ var useB = window.__BOOT_BUNDLES.length && !/[?&]bundle=0/.test(location.search), h = "";
   if (useB) window.__BOOT_BUNDLES.forEach(function(s){ h += '<script src="' + s + '"><\/script>'; });
   else h = document.getElementById("boot-scripts").innerHTML;
   document.write(h); })();
 </script>
-<script type="module" src="/world-main.js?v=c4864a244a"></script>
+<script type="module" src="/world-main.js?v=4c53bc3e9d"></script>
 <!-- ════════ AGENT DISTRICTS ════════ -->
 <div id="district" class="dist"><div class="dist-card">
   <button class="dist-x" onclick="closeDistrict()">✕ EXIT</button>

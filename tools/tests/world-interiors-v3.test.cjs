@@ -35,7 +35,7 @@ test('enterable buildings: every storefront/office/market/techlab/civic in the f
   const fabricKeys = ['sc-storefront-s', 'sc-storefront-l', 'sc-office', 'sc-office-mid', 'sc-market', 'sc-techlab', 'sc-civic-tower'];
   const want = data.fabric.items.filter(i => fabricKeys.includes(i.key)).length;
   assert.strictEqual(B.filter(b => b.source === 'fabric').length, want);
-  assert.strictEqual(want, 3335);
+  assert.strictEqual(want, 3311);   // 2026-11-05: district circles rebuilt (3a9b6af6); every fabric building of these kinds is still enterable
   assert.ok(!B.some(b => /sc-garden|sc-teleport|sc-ad-pylon/.test(b.key)), 'garden/teleport/pylon stay open');
   ['arcade', 'gallery', 'broadcast', 'deed-office', 'campus'].forEach(r => assert.strictEqual((byRecipe[r] || []).length, 1, r));
   assert.strictEqual(byRecipe.studio.length, 4);

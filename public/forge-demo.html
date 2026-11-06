@@ -132,6 +132,9 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-acti
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<!-- real council bodies (2026-11-05): r128 GLTFLoader reads the agents' meshopt + webp + quantized GLBs -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/meshopt_decoder.js"></script>
 <script>
 (function(){
 'use strict';
@@ -142,8 +145,12 @@ var PAL={grid:{n:'The Grid',a:0x2FD6FF,t:0xE6B84A,bg:0x04101C,css:['#2FD6FF','#E
          void:{n:'Deep Void',a:0x8B6BFF,t:0xC9B6FF,bg:0x0A0716,css:['#8B6BFF','#C9B6FF','#0A0716','#16102E','#33285E','#E6DCFF','#A99BD6']}};
 var STEPS=[{k:'bind',t:'Bind',s:'Seal the oath'},{k:'body',t:'Body',s:'Shape the form'},{k:'license',t:'License',s:'Grant the right'},{k:'labor',t:'Labor',s:'Perform the work'},{k:'vault',t:'PayBox',s:'Open the vault'}];
 var STATUS=['AWAITING OATH','FORM UNSHAPED','LICENSE PENDING','NO JOB RUN','VAULT SEALED'];
-var S={i:0,max:0,name:'',purpose:'Research and summaries',oath:false,kind:'humanoid',finish:'auto',skills:{Research:true},job:'Summarise a document',labor:0,vault:0,sparks:0,pal:'grid'};
+var S={i:0,max:0,name:'',purpose:'Research and summaries',oath:false,kind:'SHADDAI',finish:'auto',skills:{Research:true},job:'Summarise a document',labor:0,vault:0,sparks:0,pal:'grid'};
 var SKILLS=['Research','Writing','Design','Code review','Market scan','Audit'],CAP=3;
+/* The bodies a forged agent can wear in Shaddai World: the 7 council GLBs (backend/lib/operatives.js VALID_MODELS). */
+var BODY_ROLE={SHADDAI:'Sovereign',NEXUS:'Architect',ORACLE:'Seer',TURTLE:'Creative',QUILL:'Scribe',PIKADON:'Guardian',ZEROX:'Trader'},BODIES=Object.keys(BODY_ROLE);
+var bodyNoteText='';function bodyNote(t){bodyNoteText=t;var n=document.getElementById('bodyNote');if(n)n.textContent=t}
+function title(k){return k.charAt(0)+k.slice(1).toLowerCase()}
 var W=null; // 3D world, null if WebGL is unavailable
 
 /* ============================ 3D WORLD ============================ */
@@ -286,6 +293,51 @@ function buildWorld(){
   scene.add(crops);glow(FX,1,FZ,20,cA,.04);
   var bm=holoMat(cT);var bot=new THREE.Group();var bh=humanoid(bm),bw=wheeled(bm);bw.visible=false;bot.add(bh);bot.add(bw);bot.scale.setScalar(.55);bot.position.set(FX-7,.3,FZ-3.3);bot.rotation.y=Math.PI/2;scene.add(bot);bot.visible=false;
 
+  /* REAL BODIES (2026-11-05, owner: "finishing the models"): the chosen council GLB is built on the pedestal with the same scan-line
+     hologram (a skinned twin of the holo shader sharing uBuild), then materialises into its real textures and idles. The field bot is a
+     second parse of the same download, walking while it works. The primitive hologram stays as the placeholder and the fallback. */
+  var HVS='#include <common>\n#include <skinning_pars_vertex>\nvarying vec3 vWN;varying vec3 vV;varying float vY;void main(){\n#include <beginnormal_vertex>\n#include <skinbase_vertex>\n#include <skinnormal_vertex>\n#include <begin_vertex>\n#include <skinning_vertex>\nvec4 wp=modelMatrix*vec4(transformed,1.);vY=wp.y;vV=normalize(cameraPosition-wp.xyz);vWN=normalize(mat3(modelMatrix)*objectNormal);gl_Position=projectionMatrix*viewMatrix*wp;}';
+  var bufs={},body={root:null,mixer:null,real:false,readyAt:0},botBody={root:null},loadTok=0;
+  function holoSkin(skinned){var m=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:ADD,side:THREE.DoubleSide,
+    uniforms:{uA:{value:figCol},uT:{value:cT},uTime:uTime,uBuild:fm.uniforms.uBuild,uAlpha:fm.uniforms.uAlpha},vertexShader:HVS,fragmentShader:HF});m.skinning=!!skinned;return m}
+  function fetchBody(k){return bufs[k]||(bufs[k]=fetch('/assets/agents/'+k+'.glb').then(function(r){if(!r.ok)throw new Error(k+'.glb HTTP '+r.status);return r.arrayBuffer()}).catch(function(e){delete bufs[k];throw e}))}
+  /* SKIN REPAIR (same fix as world-main.js _repairSkins): the council bodies carry zero-weight skin indices up to 255 on a 24-bone
+     skeleton. On a real GPU those read past the bone texture and the body bursts into white spikes. Point them at bone 0, renormalise. */
+  /* r128 has no getComponent and returns RAW values (no denormalise), and quantized GLBs store weights as normalized ints: work in raw
+     units scaled by FULL (255 / 65535 / 1) so a weight never truncates to 0. getX..setW also cover interleaved attributes. */
+  var GET=['getX','getY','getZ','getW'],SET=['setX','setY','setZ','setW'];
+  function fullOf(a){if(!a.normalized)return 1;var r=a.array;return r instanceof Uint8Array?255:r instanceof Uint16Array?65535:r instanceof Int8Array?127:r instanceof Int16Array?32767:1}
+  function repairSkins(root){var fixed=0;root.traverse(function(o){if(!o.isSkinnedMesh||!o.skeleton)return;var n=o.skeleton.bones.length,si=o.geometry.attributes.skinIndex,sw=o.geometry.attributes.skinWeight;if(!si||!sw)return;
+    var FULL=fullOf(sw),hit=false;
+    for(var v=0;v<si.count;v++){var bad=false,sum=0,w=[0,0,0,0],b=[0,0,0,0];
+      for(var j=0;j<4;j++){b[j]=si[GET[j]](v);w[j]=sw[GET[j]](v);if(b[j]>=n||!o.skeleton.bones[b[j]]){w[j]=0;bad=true}sum+=w[j]}
+      if(!bad)continue;hit=true;fixed++;
+      for(var k=0;k<4;k++){if(b[k]>=n||!o.skeleton.bones[b[k]])si[SET[k]](v,0);var nw=sum>0?w[k]/sum*FULL:(k===0?FULL:0);sw[SET[k]](v,FULL===1?nw:Math.round(nw))}}
+    if(hit){(si.data||si).needsUpdate=true;(sw.data||sw).needsUpdate=true}});
+    if(fixed)console.info('[forge] skin repair:',fixed,'vertices');return fixed}
+  function parseBody(buf){return new Promise(function(res,rej){var L=new THREE.GLTFLoader();if(window.MeshoptDecoder)L.setMeshoptDecoder(window.MeshoptDecoder);L.parse(buf.slice(0),'/assets/agents/',function(g){try{repairSkins(g.scene)}catch(e){console.warn('[forge] skin repair',e)}res(g)},rej)})}
+  function fitBody(g,height){var root=g.scene,mixer=new THREE.AnimationMixer(root),A=g.animations||[];
+    var pick=function(re){for(var i=0;i<A.length;i++)if(re.test(A[i].name))return A[i];return null};
+    var idle=pick(/idle/i)||pick(/breath|stand/i),walk=pick(/^walk/i);if(idle){mixer.clipAction(idle).play();mixer.update(0)}
+    root.updateMatrixWorld(true);var box=new THREE.Box3(),v=new THREE.Vector3(),n=0;
+    root.traverse(function(o){if(o.isBone){o.getWorldPosition(v);box.expandByPoint(v);n++}});   // bone-union: raw bounds lie on Meshy rigs (repo rule)
+    if(!n)box.setFromObject(root);
+    var span=box.max.y-box.min.y||1,h=n?span*1.15:span,s=height/h,c=box.getCenter(new THREE.Vector3());   // ankle->head bone is ~87% of full height
+    root.scale.setScalar(s);root.position.set(-c.x*s,(-box.min.y+(n?span*.045:0))*s,-c.z*s);
+    root.traverse(function(o){if(o.isMesh){o.frustumCulled=false;o.userData.realMat=o.material;o.userData.holoMat=holoSkin(o.isSkinnedMesh)}});
+    var wrap=new THREE.Group();wrap.add(root);return {root:wrap,mixer:mixer,idleA:idle&&mixer.clipAction(idle),walkA:walk&&mixer.clipAction(walk)}}
+  function setReal(on){if(!body.root)return;body.real=on;body.root.traverse(function(o){if(o.isMesh)o.material=on?o.userData.realMat:o.userData.holoMat})}
+  function setBot(bb){if(botBody.root)bot.remove(botBody.root);botBody=bb||{root:null};if(bb){bb.root.traverse(function(o){if(o.isMesh)o.material=o.userData.realMat});bot.add(bb.root)}}
+  function showBody(k){var tok=++loadTok;
+    if(!BODY_ROLE[k]){if(body.root)fig.remove(body.root);body.root=null;setBot(null);hum.visible=k!=='wheeled';whl.visible=k==='wheeled';bodyNote('');return}
+    if(body.root){fig.remove(body.root);body.root=null}hum.visible=true;whl.visible=false;   // the hologram stands in while the new body streams
+    bodyNote(k==='ZEROX'?'Loading ZEROX. It is the largest body (13 MB), so it takes a moment.':'Loading the '+title(k)+' body.');
+    fetchBody(k).then(function(buf){return Promise.all([parseBody(buf),parseBody(buf)])}).then(function(gs){if(tok!==loadTok)return;
+      if(body.root)fig.remove(body.root);var b=fitBody(gs[0],3.1);body.root=b.root;body.mixer=b.mixer;body.readyAt=0;fig.add(b.root);setReal(false);hum.visible=false;
+      setBot(fitBody(gs[1],3.1));bodyNote(title(k)+' body ready. This is the body your agent wears in Shaddai World.')})
+    .catch(function(e){if(tok!==loadTok)return;console.warn('[forge] body load failed',e);if(body.root){fig.remove(body.root);body.root=null}setBot(null);hum.visible=true;
+      bodyNote('The '+title(k)+' body did not load, so the hologram stands in. Your choice is still saved.')})}
+
   /* vault */
   var VX=12.5,VZ=-8,vault=new THREE.Group();vault.position.set(VX,0,VZ);vault.rotation.y=-.38;scene.add(vault);
   var wall=new THREE.Mesh(new THREE.BoxGeometry(11,10,1.6),dark(0x0c121c));wall.position.set(0,5,-.9);vault.add(wall);
@@ -352,9 +404,8 @@ function buildWorld(){
   var buildTarget=-1,figKind='humanoid',laborP=0,vaultOpen=0,coinStart=-1,arrived=0,pLv=[.35,.35,.35,.35];
   function sync(){stepNow=S.i;setGoal(S.i);
     var wantBuild=S.max>=1&&(S.i>=1);
-    if(figKind!==S.kind){figKind=S.kind;hum.visible=S.kind==='humanoid';whl.visible=S.kind==='wheeled';bh.visible=hum.visible;bw.visible=whl.visible;if(wantBuild)fm.uniforms.uBuild.value=-1}
-    buildTarget=wantBuild?3.7:-1;
-    bh.visible=S.kind==='humanoid';bw.visible=S.kind==='wheeled'}
+    if(figKind!==S.kind){figKind=S.kind;setReal(false);showBody(S.kind);if(wantBuild)fm.uniforms.uBuild.value=-1}
+    buildTarget=wantBuild?3.7:-1}
   function clamp(x,a,b){return Math.max(a,Math.min(b,x))}
   function ease(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2}
   var last=performance.now(),acc=0,nF=0,lowT=0,t0=last;
@@ -381,6 +432,10 @@ function buildWorld(){
     /* figure build */
     var fb=fm.uniforms.uBuild.value;if(buildTarget<0)fm.uniforms.uBuild.value=lerp(Math.min(fb,3.7),-1,1-Math.exp(-dt*6));else fm.uniforms.uBuild.value=Math.min(buildTarget,(fb<-.5?0:fb)+dt*1.7);
     var bv=fm.uniforms.uBuild.value;fig.visible=bv>0;scan.visible=bv>0&&bv<3.6;scan.position.y=bv-.6+.6;scan.position.y=bv;fig.rotation.y=Math.sin(T*.35)*.5;
+    /* real body: once the scan finishes, materialise (hologram -> textures) with a light flare; any rebuild goes back to hologram */
+    if(body.root){if(bv>3.6){if(!body.real){if(!body.readyAt)body.readyAt=T+.45;else if(T>=body.readyAt){setReal(true);pedLight.intensity=5.5}}}else{body.readyAt=0;if(body.real)setReal(false)}
+      body.mixer.update(dt*sp)}
+    pedLight.intensity=lerp(pedLight.intensity,1.3,1-Math.exp(-dt*2.5));
     if(S.finish==='auto')figCol.copy(cA);
     helix.visible=bv>3.5;helix.rotation.y=T*.7;helix.material.opacity=.55+.35*Math.sin(T*2);
     ward.visible=S.max>=2&&S.i>=2&&bv>3.5;ward.rotation.y=T*.5;if(ward.userData.sh)ward.userData.sh.rotation.y=-T*.9;
@@ -392,7 +447,9 @@ function buildWorld(){
     var prog=clamp(S.i,0,3)/3;for(var i=0;i<LN;i++){var u2=i/(LN-1),on=u2<=prog+.001;var pulse=.6+.4*Math.sin(T*5-i*.5);var c=on?cT:cA;var m=on?1:.28;lc[i*3]=c.r*m*pulse;lc[i*3+1]=c.g*m*pulse;lc[i*3+2]=c.b*m*pulse}lg.attributes.color.needsUpdate=true;
     /* labor */
     if(S.labor===1){laborP=Math.min(1,laborP+dt/4.2)}
-    var showBot=S.i>=3;bot.visible=showBot;bh.visible=S.kind==='humanoid'&&showBot;bw.visible=S.kind==='wheeled'&&showBot;bm.uniforms.uBuild.value=1e5;
+    var showBot=S.i>=3,realBot=!!botBody.root;bot.visible=showBot;bh.visible=!realBot&&S.kind!=='wheeled'&&showBot;bw.visible=!realBot&&S.kind==='wheeled'&&showBot;bm.uniforms.uBuild.value=1e5;
+    if(realBot&&showBot){var walking=S.labor===1;if(botBody.walkA&&botBody.idleA&&walking!==botBody.walking){botBody.walking=walking;var on=walking?botBody.walkA:botBody.idleA,off=walking?botBody.idleA:botBody.walkA;on.reset().fadeIn(.3).play();off.fadeOut(.3)}
+      botBody.mixer.update(dt*sp)}
     var bx=FX-7+(laborP)*13,row=Math.floor(laborP*ROWS*.999);var zz=FZ-2.6+Math.min(ROWS-1,row)*1.3+.65;bot.position.set(bx,.3,zz);bot.rotation.y=Math.PI/2;
     for(var i=0;i<COLS*ROWS;i++){var col=i%COLS,rw=(i/COLS)|0;var gr=S.labor===0?.18:clamp((laborP*1.5-col/COLS*.9)*2.2,0,1);if(S.labor===2)gr=1;var sc=.35+.65*gr+.04*Math.sin(T*2+i);
       cd.position.set(FX-5.4+col*.98,.25,FZ-2.6+rw*1.3);cd.scale.set(sc,sc*(.6+.5*gr),sc);cd.updateMatrix();crops.setMatrixAt(i,cd.matrix)}
@@ -443,9 +500,10 @@ function render(){
     '<label class="f">What it is for<select id="f-purpose">'+['Research and summaries','Writing and threads','Design briefs','Market scanning'].map(function(o){return '<option'+(o===S.purpose?' selected':'')+'>'+o+'</option>'}).join('')+'</select></label>'+
     '<label class="chk"><input type="checkbox" id="f-oath"'+(S.oath?' checked':'')+'><span>It acts only through SHADDAI tools, within the spend cap I set, and I can pause it at any time.</span></label>'+
     '<div class="row"><button class="btn primary grow" id="nx" type="button"><span>Seal the oath</span></button></div>'}
-  else if(S.i===1){h='<h2>Body</h2><p>Pick a frame and a finish. The hologram is built live on the pedestal.</p>'+
-    '<div class="opts" role="radiogroup" aria-label="Frame">'+['humanoid','wheeled'].map(function(k){return '<label class="opt"><input type="radio" name="kind" value="'+k+'"'+(S.kind===k?' checked':'')+'><span>'+(k==='humanoid'?'Humanoid':'Wheeled')+'</span></label>'}).join('')+'</div>'+
-    '<div class="row" role="group" aria-label="Finish"><span class="fine">Finish</span>'+[['auto','Theme'],['gold','#E6B84A'],['violet','#8B6BFF'],['green','#4CC96A'],['cyan','#2FD6FF']].map(function(f){return '<button type="button" class="sw" data-fin="'+f[0]+'" aria-label="'+f[0]+'" aria-pressed="'+(S.finish===f[0])+'" style="background:'+(f[0]==='auto'?'conic-gradient(var(--accent),var(--trim),var(--accent))':f[1])+'"></button>'}).join('')+'</div>'+
+  else if(S.i===1){h='<h2>Body</h2><p>Choose the body your agent wears in Shaddai World. It builds on the pedestal, then takes its real form.</p>'+
+    '<div class="opts" role="radiogroup" aria-label="Body">'+BODIES.map(function(k){return '<label class="opt"><input type="radio" name="kind" value="'+k+'"'+(S.kind===k?' checked':'')+'><span>'+title(k)+' <small class="fine">'+BODY_ROLE[k]+'</small></span></label>'}).join('')+'</div>'+
+    '<p class="fine" id="bodyNote" aria-live="polite">'+esc(bodyNoteText)+'</p>'+
+    '<div class="row" role="group" aria-label="Hologram tint"><span class="fine">Hologram tint</span>'+[['auto','Theme'],['gold','#E6B84A'],['violet','#8B6BFF'],['green','#4CC96A'],['cyan','#2FD6FF']].map(function(f){return '<button type="button" class="sw" data-fin="'+f[0]+'" aria-label="'+f[0]+'" aria-pressed="'+(S.finish===f[0])+'" style="background:'+(f[0]==='auto'?'conic-gradient(var(--accent),var(--trim),var(--accent))':f[1])+'"></button>'}).join('')+'</div>'+
     navRow('Lock the form')}
   else if(S.i===2){var n=Object.keys(S.skills).length;h='<h2>License</h2><p>Choose what it may do. Each skill is checked by PIKADON before it can run.</p>'+
     '<div class="opts" role="group" aria-label="Skills">'+SKILLS.map(function(k){var on=!!S.skills[k];return '<label class="opt"><input type="checkbox" data-sk="'+k+'"'+(on?' checked':'')+(!on&&n>=CAP?' disabled':'')+'><span>'+k+'</span></label>'}).join('')+'</div>'+
@@ -455,8 +513,8 @@ function render(){
     (run===2?'<div class="receipt"><b>RECEIPT (example)</b><br>Job: '+esc(S.job)+'<br>Agent: '+esc(S.name||'Unnamed')+'<br>Cost: 0 Sparks, first workflow free<br>Logged to your ledger</div>':'')+
     '<div class="row">'+(S.i>0?'<button class="ghost" id="bk" type="button">Back</button>':'')+(run===2?'<button class="btn primary grow" id="nx" type="button"><span>Go to the vault</span></button>':'<button class="btn primary grow'+(run===1?' loading':'')+'" id="runjob" type="button"'+(run===1?' disabled':'')+'><span>'+(run===1?'Working in the field':'Run first job')+'</span></button>')+'</div>'}
   else{var v=S.vault;h='<h2>PayBox</h2><p>'+(v===0?'Your wallet is created and owner-controlled. Opening it releases your starter Sparks.':v===1?'Opening the vault.':'The vault is open. Your first job cost nothing, so all 100 Sparks are yours.')+'</p>'+
-    '<div class="row">'+(v===0?'<button class="ghost" id="bk" type="button">Back</button><button class="btn primary grow" id="openv" type="button"><span>Open the vault</span></button>':v===2?'<button class="btn primary grow" type="button" disabled><span>Enter the office</span></button>':'<button class="btn primary grow loading" type="button" disabled><span>Releasing Sparks</span></button>')+'</div>'+
-    (v===2?'<p class="fine">The office scene is the next part of the build. Sparks stay inside SHADDAI; there is no cash-out.</p>':'')}
+    '<div class="row">'+(v===0?'<button class="ghost" id="bk" type="button">Back</button><button class="btn primary grow" id="openv" type="button"><span>Open the vault</span></button>':v===2?'<button class="ghost" id="again" type="button">Forge another</button><button class="btn primary grow" id="enter" type="button"><span>Enter Shaddai World</span></button>':'<button class="btn primary grow loading" type="button" disabled><span>Releasing Sparks</span></button>')+'</div>'+
+    (v===2?'<p class="fine" id="regNote" aria-live="polite">'+esc(S.name||'Your agent')+' will wear the '+title(S.kind)+' body in the world. Sparks stay inside SHADDAI; there is no cash-out.</p>':'')}
   panel.innerHTML=h;wire();if(W)W.resize()
 }
 function navRow(label){return '<div class="row">'+(S.i>0?'<button class="ghost" id="bk" type="button">Back</button>':'')+'<button class="btn primary grow" id="nx" type="button"><span>'+label+'</span></button></div>'}
@@ -472,7 +530,22 @@ function wire(){var q=function(s){return panel.querySelector(s)},qa=function(s){
   if(S.i===2&&nx)nx.disabled=Object.keys(S.skills).length<1;
   qa('input[name=job]').forEach(function(r){r.onchange=function(){S.job=r.value}});
   var rj=q('#runjob');if(rj)rj.onclick=function(){S.labor=1;W&&W.runLabor();if(!W){setTimeout(UI.laborDone,1200)}render()};
-  var ov=q('#openv');if(ov)ov.onclick=function(){S.vault=1;if(!W)UI.sparks(100);render()}}
+  var ov=q('#openv');if(ov)ov.onclick=function(){S.vault=1;if(!W)UI.sparks(100);render()};
+  var ag=q('#again');if(ag)ag.onclick=function(){location.hash='#nointro';location.reload()};
+  var en=q('#enter');if(en)en.onclick=function(){var note=q('#regNote'),who=S.name||'Your agent';
+    if(en.dataset.go){location.href='/SHADDAI-WORLD-3D.html';return}
+    en.disabled=true;en.classList.add('loading');en.firstChild.textContent='Registering '+who;
+    enterWorld().then(function(){note.textContent=who+' is registered and wears the '+title(S.kind)+' body. Opening the world.';setTimeout(function(){location.href='/SHADDAI-WORLD-3D.html'},900)})
+    .catch(function(e){en.disabled=false;en.classList.remove('loading');en.dataset.go='1';en.firstChild.textContent='Enter the world anyway';
+      note.textContent='The server did not answer ('+e.message+'), so '+who+' is saved on this device only. Try again after you sign in.'})}}
+/* FINISH: register the operative with the same endpoint forge.html uses. The server sets the owner from the session (never the client)
+   and validates `model` against the 7 council bodies, so this record is what makes the agent appear in Shaddai World. */
+function enterWorld(){
+  var rec={codename:(S.name||'Unnamed').slice(0,24),archetype:S.kind.toLowerCase(),model:S.kind,look:{archetype:S.kind.toLowerCase(),model:S.kind},
+    brain:{tier:'free',persona:'You are '+(S.name||'an operative')+', a SHADDAI operative. Purpose: '+S.purpose+'.'},tools:Object.keys(S.skills)};
+  try{localStorage.setItem('shd_forge_demo_agent_v1',JSON.stringify(Object.assign({savedAt:Date.now(),firstJob:S.job},rec)))}catch(e){}
+  return fetch('/api/operatives',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(rec)})
+    .then(function(r){return r.json().catch(function(){return {}}).then(function(d){if(!r.ok||d.ok===false)throw new Error((d&&d.error)||('HTTP '+r.status));return d})})}
 
 function mount(){
   var pal=$('pal');Object.keys(PAL).forEach(function(k){var b=document.createElement('button');b.type='button';b.textContent=PAL[k].n;b.setAttribute('aria-pressed',k===S.pal);b.onclick=function(){S.pal=k;W?W.setPal(k):0;[].forEach.call(pal.children,function(x){x.setAttribute('aria-pressed',x===b)})};pal.appendChild(b)});

@@ -17,6 +17,7 @@
   function modePill() { var b = [].slice.call(document.querySelectorAll('button,div')).filter(function (e) { return e.children.length < 3 && /^\W*(CURSOR|PLAY) MODE\W*$/i.test((e.textContent || '').trim()); }); return b[0] || null; }
   function show(el, on) { if (el) el.style.visibility = on ? '' : 'hidden'; }
   function apply() {
+    if (uiOff) return;                                                                        // F2 hide-all owns visibility until restored
     var f = Date.now() < flash;
     show(document.getElementById('hint'), P.controls || f);
     show(document.getElementById('helpChip'), P.helpChip);
@@ -33,6 +34,43 @@
   addEventListener('keydown', function (e) { if (e.code !== 'Escape') return; var m = document.querySelectorAll('[data-shd-modal]'); if (m.length) { m[m.length - 1].remove(); e.stopImmediatePropagation(); } }, true);
   setInterval(function () { var A = root.__colosseumArena, inside = !!(A && A.group && A.group.visible) || root._currentInterior === 'COLOSSEUM';
     if (!inside) [].forEach.call(document.querySelectorAll('[data-shd-modal="colo"]'), function (n) { n.remove(); }); }, 800);
+  // F2 = HIDE ALL UI (2026-11-05, owner: "hide buttons ... make sure nothing is in the way ... help menus or notices can be removed/hidden").
+  // Hides every small fixed/absolute overlay (chips, pills, minimap, notices, touch buttons). Big panels the player opened on purpose
+  // (Navi, dossier, shops: >40% of the viewport), the 3D canvas, the loading screen and the error box are left alone. Session-only (a
+  // fresh load never starts blank); F2 again restores exactly what was showing. ?hideui=0 disables the key.
+  var uiOff = false, KEEP = { c3d: 1, intro: 1, errBox: 1, labels: 1, shdUiToast: 1, dossier: 1, district: 1, navi: 1, shdDeath: 1, shdWater: 1 },
+    FULLSCREEN_HUD = { hudV4: 1 };   // full-viewport HUD layers (HP / stamina) that are chrome, not a panel; verified in-world 2026-11-05
+  function toast(msg) {
+    var t = document.getElementById('shdUiToast');
+    if (!t) { t = document.createElement('div'); t.id = 'shdUiToast'; t.setAttribute('role', 'status');
+      t.style.cssText = 'position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:100000;pointer-events:none;padding:8px 14px;border-radius:10px;' +
+        'background:linear-gradient(180deg,rgba(12,18,30,.92),rgba(5,8,15,.96));border:1px solid rgba(232,196,92,.34);color:#e9f4ee;' +
+        "font:600 11px/1 'Chakra Petch','IBM Plex Mono',ui-monospace,sans-serif;letter-spacing:.1em;transition:opacity .35s;opacity:0";
+      document.body.appendChild(t); }
+    t.textContent = msg; t.style.opacity = '1'; clearTimeout(t._h); t._h = setTimeout(function () { t.style.opacity = '0'; }, 2200);
+  }
+  function sweepUi() {
+    if (!uiOff || !document.body) return;
+    var vw = innerWidth, vh = innerHeight, kids = document.body.children;
+    for (var i = 0; i < kids.length; i++) {
+      var e = kids[i]; if (KEEP[e.id] || e.tagName === 'SCRIPT' || e.tagName === 'STYLE' || e.tagName === 'CANVAS' || e.hasAttribute('data-shd-uioff')) continue;
+      var s = getComputedStyle(e); if ((s.position !== 'fixed' && s.position !== 'absolute') || s.display === 'none' || s.visibility === 'hidden') continue;
+      var r = e.getBoundingClientRect(); if (r.width * r.height > vw * vh * 0.4 && !FULLSCREEN_HUD[e.id]) continue;   // an opened panel: the player asked for it
+      e.setAttribute('data-shd-uioff', e.style.visibility || '-'); e.style.visibility = 'hidden';
+    }
+  }
+  function setUiOff(on) {
+    uiOff = !!on;
+    if (uiOff) sweepUi();
+    else [].forEach.call(document.querySelectorAll('[data-shd-uioff]'), function (e) { var v = e.getAttribute('data-shd-uioff'); e.style.visibility = v === '-' ? '' : v; e.removeAttribute('data-shd-uioff'); });
+    if (!uiOff) apply();                                                                    // re-assert the per-piece prefs above
+    toast(uiOff ? 'UI HIDDEN · F2 TO SHOW' : 'UI SHOWN');
+  }
+  if (!/[?&]hideui=0/.test(location.search)) addEventListener('keydown', function (e) {
+    if (e.code !== 'F2' || e.repeat) return; var t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    e.preventDefault(); setUiOff(!uiOff);
+  });
+  setInterval(sweepUi, 700);                                                                  // notices/toasts that pop up while hidden stay hidden
   setInterval(apply, 1500);                                                                   // late-built elements (chat button, pill) get the rule too
   if (document.readyState !== 'loading') apply(); else addEventListener('DOMContentLoaded', apply);
   root.WorldHudPrefs = { get: function () { return Object.assign({}, P); }, set: set, apply: apply, LABELS: LABELS };

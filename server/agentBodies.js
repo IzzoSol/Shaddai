@@ -53,8 +53,17 @@ function yieldFor(grant) {
 }
 function levelOf(w) { return 1 + Math.floor(((w && w.shifts) || 0) / 3); }
 function presenceOf(g) { return (g.workState && g.workState.shiftEndAt > Date.now()) ? 'working' : 'home'; }
+// BODY FRAMES (owner 2026-11-05: Grok/imported bots choose a wheel bot or a humanoid bot; no wheels in the Athenaeum or the Colosseum
+// unless races come back - enforced in the world by WorldBots.frameAllowed). Ids match public/world-bots.js ROSTER.
+const FRAMES = { humanoid: ['scrap', 'lanky', 'tinker', 'warden', 'drifter'], wheeled: ['unicycle', 'porter', 'clerk', 'analyst', 'herald'] };
+function pickFrame(b) {
+  const frame = FRAMES[b && b.frame] ? b.frame : 'humanoid';
+  const kind = FRAMES[frame].includes(b && b.bodyKind) ? b.bodyKind : FRAMES[frame][0];
+  return { frame, bodyKind: kind };
+}
 function view(g, op) {
   return { grantId: g.grantId, operativeId: g.operativeId, characterId: g.characterId, claimedAt: g.claimedAt, archetype: g.archetype, rarity: g.rarity, tools: g.tools, roomKey: g.roomKey,
+    frame: g.frame || 'humanoid', bodyKind: g.bodyKind || 'scrap',
     presence: presenceOf(g), level: levelOf(g.workState), workState: g.workState, yieldPerShift: yieldFor(g),
     identity: op ? { codename: op.codename, model: op.model, portrait: op.portrait || null, kind: op.kind || 'forged', provider: op.provider || null, wallet: op.wallet ? { chain: op.wallet.chain, address: op.wallet.address } : null } : null };
 }
@@ -86,10 +95,25 @@ router.post('/claim', guard(async (req, res) => {
     if (Object.values(db).some(g => g.operativeId === operativeId)) return fail(res, 409, 'already stationed');
     if (Object.values(db).filter(g => g.characterId === ch.id).length >= MAX_BODIES) return fail(res, 400, 'max ' + MAX_BODIES + ' bodies per character');
     const grantId = 'grant_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-    const grant = { grantId, operativeId, characterId: ch.id, claimedAt: new Date().toISOString(), archetype: op.archetype || null, rarity: op.rarity || 'common', tools: (op.tools || []).slice(0, 12),
+    const fr = pickFrame(req.body);   // humanoid (default) or wheeled + which body; unknown values fall back to a valid one, never stored raw
+    const grant = { grantId, operativeId, characterId: ch.id, claimedAt: new Date().toISOString(), archetype: op.archetype || null, rarity: op.rarity || 'common', tools: (op.tools || []).slice(0, 12), frame: fr.frame, bodyKind: fr.bodyKind,
       roomKey: (op.room && op.room.key) || ('op_' + slug(op.codename)), workState: { shiftEndAt: 0, shifts: 0, source: null }, idem: {} };
     db[grantId] = grant; saveBodies(db);
     res.json({ success: true, grant: view(grant, op) });
+  });
+}));
+
+// POST /agent/bodies/:grantId/frame {frame, bodyKind}: switch a stationed agent between a humanoid and a wheel body (owner-only, not mid-shift)
+router.post('/bodies/:grantId/frame', guard(async (req, res, next) => {
+  const uid = uidOf(req); if (!uid) return fail(res, 401, 'sign in first');
+  const ch = ensureChar(uid);
+  return withLock('char:' + ch.id, async () => {
+    const db = bodies(), g = db[String(req.params.grantId || '')];
+    if (!g) return next();
+    if (g.characterId !== ch.id) return fail(res, 403, 'that body is not yours');
+    if (presenceOf(g) === 'working') return fail(res, 409, 'it is on a shift - switch bodies when it is home');
+    const fr = pickFrame(req.body); g.frame = fr.frame; g.bodyKind = fr.bodyKind; saveBodies(db);
+    res.json({ success: true, grant: view(g, operativeStore().get(g.operativeId)) });
   });
 }));
 
