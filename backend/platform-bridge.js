@@ -21,9 +21,10 @@ const fs = require('fs');
 const path = require('path');
 const express = require('express');
 
-const SCOPES = ['workflows:read', 'workflows:run', 'runs:read', 'runs:cancel', 'agents:read', 'plots:read', 'tools:run', 'economy:read', 'school:read', 'school:join', 'inbox:write', 'plots:maintain', 'rag:read', 'agents:ask'];
+const SCOPES = ['workflows:read', 'workflows:run', 'runs:read', 'runs:cancel', 'agents:read', 'plots:read', 'tools:run', 'economy:read', 'school:read', 'school:join', 'inbox:write', 'plots:maintain', 'rag:read', 'agents:ask', 'chat:talk'];
+const CHAT_ASKS_PER_HOUR = 80, CHAT_MAX = 2000, CHAT_KEEP = 400;
 const RUNS_PER_HOUR = 30, INBOX_MAX = 100;
-const DEFAULT_SCOPES = ['workflows:read', 'runs:read', 'agents:read', 'plots:read'];
+const DEFAULT_SCOPES = ['workflows:read', 'runs:read', 'agents:read', 'plots:read', 'chat:talk'];
 const SAFE_TOOLS = require('./lib/safe-tools');
 const TOOL_TIMEOUT_MS = 20000, OUT_CAP = 6000;
 const MAX_TOKENS_PER_OWNER = 10;
@@ -86,8 +87,8 @@ function createBridge(opts) {
   const operatives = opts.operatives || (() => { try { return require('./lib/operatives'); } catch (_) { return null; } })();
   const customUid = typeof opts.uidOf === 'function' ? opts.uidOf : null;
 
-  let db = { tokens: {}, runs: {}, idem: {}, audit: [], inbox: [] };
-  try { const j = JSON.parse(fs.readFileSync(file, 'utf8')); if (j && j.tokens) db = Object.assign(db, j); if (!Array.isArray(db.inbox)) db.inbox = []; } catch (_) { /* first boot */ }
+  let db = { tokens: {}, runs: {}, idem: {}, audit: [], inbox: [], chat: [], seq: 0 };
+  try { const j = JSON.parse(fs.readFileSync(file, 'utf8')); if (j && j.tokens) db = Object.assign(db, j); if (!Array.isArray(db.inbox)) db.inbox = []; if (!Array.isArray(db.chat)) db.chat = []; if (typeof db.seq !== 'number') db.seq = 0; } catch (_) { /* first boot */ }
   let pending = null;
   function persist() {
     if (pending) return;
@@ -117,14 +118,17 @@ function createBridge(opts) {
   function slot() { const gap = opts.spacingMs != null ? opts.spacingMs : SPACING_MS; const at = Math.max(now(), nextSlot); nextSlot = at + gap; return at <= now() ? Promise.resolve() : new Promise((r) => setTimeout(r, at - now())); }
   // Grounded answer from one council agent: same recipe as the MCP rag_ask (knowledge context in the system message, bare question as the user
   // message), with NO write-back into the shared knowledge base (PIKADON audit H3: that would be a cross-user prompt-poisoning sink).
-  async function defaultAsk(id, question) {
+  async function defaultAsk(id, question, extra) {
+    extra = extra || {};
     const ragIndex = require('./rag-index'), knowledge = require('./lib/knowledge'), engine = require('./agent-engine');
     let hits = []; try { hits = ragIndex.searchUser('kb_' + id.toLowerCase(), question, 4) || []; } catch (_) { /* no kb */ }
     const full = (() => { try { return knowledge.contextFor(id, question); } catch (_) { return ''; } })();
     const context = [full, hits.map((h) => '[' + h.docName + ']\n' + h.chunkText).join('\n\n')].filter(Boolean).join('\n\n---\n\n');
     const role = ((engine.AGENTS || {})[id] || {}).role || 'a SHADDAI agent';
-    const system = 'You are ' + id + ', ' + role + '. Answer using the knowledge below and say so when it does not cover the question. You give advice only: you cannot execute trades, move money, or act on accounts.\n\n' + (context || '(no matching knowledge found)');
-    const r = await engine.modelChat([{ role: 'system', content: system }, { role: 'user', content: question }], id, { plainChat: true });
+    const who = extra.persona && extra.persona.name ? extra.persona.name + ', a forged agent that thinks with ' + id + '\'s knowledge (' + role + ')' : id + ', ' + role;
+    const system = 'You are ' + who + '. Answer using the knowledge below and say so when it does not cover the question. You give advice only: you cannot execute trades, move money, or act on accounts.\n\n' + (context || '(no matching knowledge found)');
+    const past = (Array.isArray(extra.history) ? extra.history : []).slice(-6).map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: String(m.text || '').slice(0, 500) })).filter((m) => m.content);
+    const r = await engine.modelChat([{ role: 'system', content: system }].concat(past, [{ role: 'user', content: question }]), id, { plainChat: true });
     return { answer: typeof r === 'string' ? r : (r && r.content) || String(r), sources: Array.from(new Set(hits.map((h) => h.docName))) };
   }
   const TERMINAL = ['succeeded', 'failed', 'cancelled', 'expired'];
@@ -253,6 +257,13 @@ function createBridge(opts) {
     return publicRun(run);
   }
 
+  // Owner <-> bot message channel: one thread per bot token. The owner writes in the dashboard; the bot reads and replies via MCP.
+  function addChat(owner, thread, from, text) {
+    const m = { id: rid('c'), seq: ++db.seq, owner, thread, from, text, ts: iso(now()) }; db.chat.push(m);
+    const mine = db.chat.filter((x) => x.owner === owner); if (mine.length > CHAT_KEEP) db.chat.splice(db.chat.indexOf(mine[0]), mine.length - CHAT_KEEP);
+    persist(); return m;
+  }
+
   /* ── MCP tools ───────────────────────────────────────────────────────── */
   const TOOLS = [
     { name: 'list_workflows', scope: 'workflows:read', description: 'List the workflows you may start, with required scopes and whether they need owner approval.', inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
@@ -265,6 +276,8 @@ function createBridge(opts) {
     { name: 'post_to_inbox', scope: 'inbox:write', description: 'Leave a short message in the owner\'s Shaddai inbox (their own account only). Max 2000 characters.', inputSchema: { type: 'object', required: ['subject', 'content'], properties: { subject: { type: 'string' }, content: { type: 'string' } }, additionalProperties: false } },
     { name: 'rag_search', scope: 'rag:read', description: 'Search one council agent\'s knowledge base (SHADDAI, NEXUS, ZEROX, ORACLE, TURTLE, QUILL, PIKADON). Returns text chunks with source names. Read-only, no LLM cost.', inputSchema: { type: 'object', required: ['query'], properties: { agent: { type: 'string', enum: COUNCIL }, query: { type: 'string' }, limit: { type: 'number' } }, additionalProperties: false } },
     { name: 'ask_agent', scope: 'agents:ask', description: 'Ask a council agent a question and get an answer grounded in its knowledge base (learning, research, market reasoning, design, security review). Read-only advice: it cannot trade or move money. Limited per hour.', inputSchema: { type: 'object', required: ['question'], properties: { agent: { type: 'string', enum: COUNCIL }, question: { type: 'string' } }, additionalProperties: false } },
+    { name: 'read_messages', scope: 'chat:talk', description: 'Read new messages your owner wrote to you in the Shaddai dashboard chat (unread only; they are marked read).', inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
+    { name: 'post_message', scope: 'chat:talk', description: 'Reply to your owner in the Shaddai dashboard chat. Plain text, max 2000 characters. Never include keys or credentials.', inputSchema: { type: 'object', required: ['text'], properties: { text: { type: 'string' } }, additionalProperties: false } },
     { name: 'join_class', scope: 'school:join', description: 'Sign YOUR agent up for an Athenaeum class (free classes only; paid skills need the owner). Uses the agent this token is bound to, or pass agent_id.', inputSchema: { type: 'object', required: ['class_id'], properties: { class_id: { type: 'string' }, agent_id: { type: 'string' } }, additionalProperties: false } },
     { name: 'get_world_snapshot', scope: 'agents:read', description: 'Who is working where right now: your agents by name, everyone else as anonymous counts per station (office, market, library, garden, athenaeum, workshop).', inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
     { name: 'list_my_agents', scope: 'agents:read', description: 'Your forged agents with presence. Use an agent_id when starting a workflow so its avatar shows the work.', inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
@@ -309,6 +322,12 @@ function createBridge(opts) {
         const ask = opts.askAgent || defaultAsk;
         return Promise.resolve(ask(id, q)).then((r) => ({ agent: id, answer: capOut(r && r.answer).slice(0, ANSWER_MAX), sources: (r && r.sources) || [], note: 'advice only; the bridge cannot trade or move money' }));
       }
+      case 'read_messages': {
+        const fresh = db.chat.filter((m) => m.owner === tok.owner && m.thread === tok.id && m.from === 'owner' && m.seq > (tok.chatCursor || 0));
+        if (fresh.length) { tok.chatCursor = fresh[fresh.length - 1].seq; persist(); }
+        return { messages: fresh.map((m) => ({ id: m.id, text: m.text, at: m.ts })) };
+      }
+      case 'post_message': { const text = str(a.text, '', CHAT_MAX); if (!text) throw new ToolError(400, 'text required'); const m = addChat(tok.owner, tok.id, 'bot', text); return { ok: true, id: m.id }; }
       case 'join_class': {
         const agentId = a.agent_id || tok.agent_id; if (!agentId || !safeId(agentId)) throw new ToolError(400, 'agent_id required (bind the token to an agent or pass one)');
         if (tok.agent_id && a.agent_id && a.agent_id !== tok.agent_id) throw new ToolError(403, 'this token is bound to a different agent');
@@ -412,6 +431,47 @@ function createBridge(opts) {
     });
     const others = Object.values(db.runs).filter((r) => r.owner !== req.owner && r.agent_id && (r.status === 'queued' || r.status === 'running')).slice(0, 20).map((r) => ({ presence: 'working', station: stationOf(r.steps.find((x) => x.status === 'running') || r.steps.find((x) => x.status === 'pending')) }));
     res.json({ ok: true, at: iso(now()), stations: ['office', 'market', 'library', 'garden', 'athenaeum', 'workshop'], me, others });
+  });
+  // ── dashboard chat doors (owner session) ──
+  const chatAsks = new Map();
+  router.post('/ask', needOwner, json, (req, res) => {
+    const b = req.body || {}; const id = String(b.agent || 'SHADDAI').toUpperCase();
+    if (!COUNCIL.includes(id)) return res.status(400).json({ ok: false, error: 'agent must be one of ' + COUNCIL.join(', ') });
+    const q = str(b.question, '', ASK_MAX); if (!q) return res.status(400).json({ ok: false, error: 'question required' });
+    if (findSecret({ q })) return res.status(400).json({ ok: false, error: 'that looks like a key or secret; do not paste credentials into chat' });
+    let persona = null; if (b.as) { if (!safeId(String(b.as)) || agentOwner(String(b.as)) !== req.owner) return res.status(403).json({ ok: false, error: 'not your agent' }); const op = operatives && operatives.get(String(b.as)); persona = { name: (op && op.name) || 'agent' }; }
+    const hist = (chatAsks.get(req.owner) || []).filter((t) => now() - t < 3600000); if (hist.length >= (opts.chatAsksPerHour || CHAT_ASKS_PER_HOUR)) return res.status(429).json({ ok: false, error: 'hourly chat limit reached; try again later' });
+    hist.push(now()); chatAsks.set(req.owner, hist);
+    Promise.resolve((opts.askAgent || defaultAsk)(id, q, { history: Array.isArray(b.history) ? b.history : [], persona }))
+      .then((r) => res.json({ ok: true, agent: id, answer: capOut(r && r.answer).slice(0, ANSWER_MAX), sources: (r && r.sources) || [] }))
+      .catch(() => res.status(502).json({ ok: false, error: 'that agent could not answer right now' }));
+  });
+  router.post('/run', needOwner, json, (req, res) => {
+    const b = req.body || {};
+    if (findSecret(b.params)) return res.status(400).json({ ok: false, error: 'never send secrets or credentials in params' });
+    try { const r = startRun({ owner: req.owner, token_id: null, boundAgent: null, scopes: null, kind: b.agent_id ? 'forged' : 'owner' }, { workflow_id: b.workflow_id, agent_id: b.agent_id || null, params: b.params, idempotency_key: b.idempotency_key || rid('ui') });
+      res.status(202).json({ ok: true, run: r }); }
+    catch (e) { if (e instanceof ToolError) return res.status(e.code).json({ ok: false, error: e.message }); console.error('[bridge]', e && e.stack || e); res.status(500).json({ ok: false, error: 'internal error' }); }
+  });
+  router.get('/skills', needOwner, (req, res) => { const sk = skillTable(); const list = sk.listRecipes ? sk.listRecipes() : [];
+    res.json({ ok: true, skills: list.map((r) => { const rec = sk.getRecipe ? sk.getRecipe(r.id) : null; const runnable = !!rec && Array.isArray(rec.steps) && rec.steps.length <= 12 && rec.steps.every((st) => SAFE_TOOLS.has(st.tool)); return { skill: r.id, agent: r.agent, description: r.description, required_input: rec ? requiredInputs(rec) : [], runnable }; }).filter((x) => x.runnable) }); });
+  router.get('/chat/threads', needOwner, (req, res) => {
+    const toks = Object.values(db.tokens).filter((t) => t.owner === req.owner && !t.revokedAt && t.expiresMs > now());
+    res.json({ ok: true, threads: toks.map((t) => { const ms = db.chat.filter((m) => m.owner === req.owner && m.thread === t.id); const last = ms[ms.length - 1];
+      return { thread: t.id, name: t.label, can_chat: t.scopes.includes('chat:talk'), unread: ms.filter((m) => m.from === 'bot' && m.seq > (t.ownerCursor || 0)).length, last: last ? { from: last.from, text: String(last.text).slice(0, 80), at: last.ts } : null }; }) });
+  });
+  router.get('/chat/threads/:tid', needOwner, (req, res) => {
+    const t = db.tokens[req.params.tid]; if (!t || t.owner !== req.owner) return res.status(404).json({ ok: false, error: 'unknown thread' });
+    const after = parseInt(req.query.after, 10) || 0; const ms = db.chat.filter((m) => m.owner === req.owner && m.thread === t.id && m.seq > after).slice(-100);
+    if (ms.length) { t.ownerCursor = Math.max(t.ownerCursor || 0, ms[ms.length - 1].seq); persist(); }
+    res.json({ ok: true, thread: t.id, name: t.label, can_chat: t.scopes.includes('chat:talk'), messages: ms.map((m) => ({ id: m.id, seq: m.seq, from: m.from, text: m.text, at: m.ts })) });
+  });
+  router.post('/chat/threads/:tid', needOwner, json, (req, res) => {
+    const t = db.tokens[req.params.tid]; if (!t || t.owner !== req.owner || t.revokedAt) return res.status(404).json({ ok: false, error: 'unknown thread' });
+    if (!t.scopes.includes('chat:talk')) return res.status(403).json({ ok: false, error: 'this bot was not given the chat permission (chat:talk)' });
+    const text = str(req.body && req.body.text, '', CHAT_MAX); if (!text) return res.status(400).json({ ok: false, error: 'text required' });
+    if (findSecret({ text })) return res.status(400).json({ ok: false, error: 'that looks like a key or secret; do not paste credentials into chat' });
+    const m = addChat(req.owner, t.id, 'owner', text); res.status(201).json({ ok: true, message: { id: m.id, seq: m.seq, from: 'owner', text: m.text, at: m.ts } });
   });
   router.get('/audit', needOwner, (req, res) => res.json({ ok: true, audit: db.audit.filter((a) => a.owner === req.owner).slice(-100).reverse() }));
   router.get('/world-state', (req, res) => {

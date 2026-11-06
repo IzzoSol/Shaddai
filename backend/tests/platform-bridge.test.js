@@ -17,7 +17,7 @@ const ops = { a1: { id: 'a1', name: 'Bolt', owner: 'alice', skills: [] }, b1: { 
 const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id) ? ops[id] : null), listByOwner: (o) => Object.values(ops).filter((x) => x.owner === o) };
 
 (async () => {
-  const calls = [];
+  const calls = []; let lastAskExtra = null;
   const tools = {
     fetch_price: { description: 'price', schema: { symbol: 'string' }, execute: async ({ symbol }) => { calls.push('fetch_price:' + symbol); await new Promise((r) => setTimeout(r, 450)); return { symbol, usd: 100 }; } },
     get_fear_greed: { description: 'fg', execute: async () => ({ value: 55 }) },
@@ -31,7 +31,7 @@ const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id)
   const skills = { getRecipe: (id) => recipes[id], listRecipes: () => Object.keys(recipes).map((id) => ({ id, agent: recipes[id].agent, description: recipes[id].description, params: recipes[id].params })), interpolate: (t, input) => (typeof t === 'string' ? t.replace(/\{\{input\.(\w+)(?:\|\|(\w+))?\}\}/g, (_, k, d) => ((input && input[k]) || d || '')) : t) };
   const academy = { classes: { join: ({ classId, agentId }) => (classId === 'cls_full' ? { ok: false, error: 'class is full' } : classId === 'cls_open' ? { ok: true, member: { agentId } } : { ok: false, error: 'unknown class' }) } };
   const internal = { agents: async () => [{ agent_id: 'a1' }], plots: async () => [], balance: async () => ({ sparks: 42 }), classes: async () => [] };
-  const bridge = createBridge({ file: path.join(tmp, 'bridge.json'), plotsFile, operatives, tools, internal, skills, academy, asksPerHour: 3, ragSearch: (id, q, n) => [{ docName: 'doc-' + id, score: 0.9, chunkText: 'chunk about ' + q + ' key sk-' + 'w'.repeat(30) }].slice(0, n), askAgent: async (id, q) => ({ answer: id + ' says: ' + q, sources: ['doc-' + id] }), stepMs: 60, spacingMs: 0, retryMs: 5, uidOf: (req) => req.headers['x-uid'] || '' });
+  const bridge = createBridge({ file: path.join(tmp, 'bridge.json'), plotsFile, operatives, tools, internal, skills, academy, asksPerHour: 3, ragSearch: (id, q, n) => [{ docName: 'doc-' + id, score: 0.9, chunkText: 'chunk about ' + q + ' key sk-' + 'w'.repeat(30) }].slice(0, n), askAgent: async (id, q, extra) => { lastAskExtra = extra; return { answer: id + ' says: ' + q, sources: ['doc-' + id] }; }, chatAsksPerHour: 3, stepMs: 60, spacingMs: 0, retryMs: 5, uidOf: (req) => req.headers['x-uid'] || '' });
   const app = express(); app.use('/b', bridge);
   const server = await new Promise((r) => { const s = app.listen(0, () => r(s)); });
   const base = 'http://127.0.0.1:' + server.address().port + '/b';
@@ -219,6 +219,39 @@ const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id)
   assert.strictEqual((await tool(wk.token, 'start_workflow', { workflow_id: 'sap.plot.water', idempotency_key: 'w-0' })).status, 403, 'plots:maintain required');
   const wr = out(await tool(brain.token, 'start_workflow', { workflow_id: 'sap.plot.water', agent_id: 'a1', plot_id: 'p-alice', idempotency_key: 'w-1' })); const wd = await wait(brain.token, wr.run_id);
   assert.strictEqual(wd.status, 'succeeded'); assert.strictEqual(watered.owner, 'alice'); assert.strictEqual(watered.agent_id, 'a1'); assert.strictEqual(watered.plot_id, 'p-alice'); assert.ok(wd.receipt);
+
+  // ── DASHBOARD CHAT: council + forged agents via owner doors; two-way channel with outside bots ──
+  assert.strictEqual((await http('POST', '/ask', { body: { agent: 'ZEROX', question: 'hi' } })).status, 401, 'chat needs sign-in');
+  assert.strictEqual((await http('POST', '/ask', { uid: 'alice', body: { agent: 'EVIL', question: 'hi' } })).status, 400);
+  const a1r = await http('POST', '/ask', { uid: 'alice', body: { agent: 'TURTLE', question: 'review my login page', history: [{ role: 'user', text: 'earlier' }, { role: 'assistant', text: 'ok' }], as: 'a1' } });
+  assert.strictEqual(a1r.status, 200); assert.strictEqual(a1r.json.answer, 'TURTLE says: review my login page'); assert.strictEqual(lastAskExtra.persona.name, 'Bolt'); assert.strictEqual(lastAskExtra.history.length, 2);
+  assert.strictEqual((await http('POST', '/ask', { uid: 'alice', body: { agent: 'TURTLE', question: 'x', as: 'b1' } })).status, 403, 'cannot speak as someone else agent');
+  assert.strictEqual((await http('POST', '/ask', { uid: 'alice', body: { agent: 'TURTLE', question: 'my key is sk-' + 'k'.repeat(30) } })).status, 400, 'no secrets in chat');
+  assert.strictEqual((await http('POST', '/ask', { uid: 'alice', body: { agent: 'NEXUS', question: 'again' } })).status, 200);
+  assert.strictEqual((await http('POST', '/ask', { uid: 'alice', body: { agent: 'NEXUS', question: 'and again' } })).status, 200);
+  assert.strictEqual((await http('POST', '/ask', { uid: 'alice', body: { agent: 'NEXUS', question: 'one too many' } })).status, 429, 'hourly chat limit');
+  const orun = await http('POST', '/run', { uid: 'alice', body: { workflow_id: 'demo.ping' } }); assert.strictEqual(orun.status, 202); assert.strictEqual(orun.json.run.actor.kind, 'owner');
+  assert.strictEqual((await http('POST', '/run', { uid: 'alice', body: { workflow_id: 'demo.ping', params: { apiKey: 'abc' } } })).status, 400);
+  const sk2 = (await http('GET', '/skills', { uid: 'alice' })).json.skills; assert.ok(sk2.some((x) => x.skill === 'price-check') && !sk2.some((x) => x.skill === 'bad-skill'), 'only runnable skills are offered to the chat');
+
+  const talker = await mint('alice', { label: 'Grok Bot', scopes: ['chat:talk', 'runs:read'] });
+  const ttid = (await http('GET', '/tokens', { uid: 'alice' })).json.tokens.find((t) => t.label === 'Grok Bot').id;
+  assert.strictEqual((await tool(talker.token, 'read_messages', {})).status, 200); assert.deepStrictEqual(out(await tool(talker.token, 'read_messages', {})).messages, [], 'no messages yet');
+  assert.strictEqual((await http('POST', '/chat/threads/' + ttid, { uid: 'alice', body: { text: 'hello bot, please check BTC' } })).status, 201);
+  assert.strictEqual((await http('POST', '/chat/threads/' + ttid, { uid: 'bob', body: { text: 'hi' } })).status, 404, 'cannot write into another user bot thread');
+  assert.strictEqual((await http('GET', '/chat/threads/' + ttid, { uid: 'bob' })).status, 404);
+  assert.strictEqual((await http('POST', '/chat/threads/' + ttid, { uid: 'alice', body: { text: 'key sk-' + 'm'.repeat(30) } })).status, 400, 'owner cannot paste a key to a bot');
+  const got = out(await tool(talker.token, 'read_messages', {})).messages; assert.strictEqual(got.length, 1); assert.strictEqual(got[0].text, 'hello bot, please check BTC');
+  assert.deepStrictEqual(out(await tool(talker.token, 'read_messages', {})).messages, [], 'messages are delivered once');
+  assert.strictEqual((await tool(talker.token, 'post_message', { text: 'BTC is 6k, fear index 28' })).status, 200);
+  assert.strictEqual((await tool(talker.token, 'post_message', { text: 'my key is sk-' + 'z'.repeat(30) })).status, 400, 'a bot cannot post secrets either');
+  const thr = (await http('GET', '/chat/threads', { uid: 'alice' })).json.threads.find((t) => t.thread === ttid); assert.strictEqual(thr.unread, 1); assert.strictEqual(thr.can_chat, true);
+  const conv = (await http('GET', '/chat/threads/' + ttid, { uid: 'alice' })).json.messages; assert.deepStrictEqual(conv.map((m) => m.from), ['owner', 'bot']); assert.ok(conv[0].seq < conv[1].seq);
+  assert.strictEqual((await http('GET', '/chat/threads', { uid: 'alice' })).json.threads.find((t) => t.thread === ttid).unread, 0, 'reading the thread clears unread');
+  assert.strictEqual((await http('GET', '/chat/threads/' + ttid + '?after=' + conv[1].seq, { uid: 'alice' })).json.messages.length, 0, 'polling with ?after only returns new messages');
+  const mute = await mint('alice', { label: 'mute', scopes: ['runs:read'] }); const mtid = (await http('GET', '/tokens', { uid: 'alice' })).json.tokens.find((t) => t.label === 'mute').id;
+  assert.strictEqual((await http('POST', '/chat/threads/' + mtid, { uid: 'alice', body: { text: 'hi' } })).status, 403, 'a bot without chat:talk cannot be chatted with');
+  assert.strictEqual((await tool(mute.token, 'post_message', { text: 'hi' })).status, 403);
 
   // 7. revocation takes effect on the next call
   const info = (await http('GET', '/tokens', { uid: 'alice' })).json.tokens.find((t) => t.label === 'runner');

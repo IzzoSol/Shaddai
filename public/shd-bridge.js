@@ -29,7 +29,7 @@
   var SCOPE_HELP = {
     'workflows:read': 'See which workflows exist', 'workflows:run': 'Start workflows (demo ones for now)', 'runs:read': 'Read run status and receipts',
     'runs:cancel': 'Cancel its own runs', 'agents:read': 'See your agents\' presence', 'plots:read': 'Read plots you own or that are free',
-    'tools:run': 'Use the read-only data tools and dashboard skills', 'economy:read': 'Read your Sparks balance (no spending)', 'school:read': 'See Athenaeum classes', 'school:join': 'Sign its agent up for free classes', 'inbox:write': 'Leave messages in your inbox'
+    'tools:run': 'Use the read-only data tools and dashboard skills', 'economy:read': 'Read your Sparks balance (no spending)', 'school:read': 'See Athenaeum classes', 'school:join': 'Sign its agent up for free classes', 'inbox:write': 'Leave messages in your inbox', 'chat:talk': 'Chat with you in the dashboard (read your messages, reply)', 'plots:maintain': 'Maintain your plots (SAP, when enabled)', 'rag:read': 'Search the council knowledge bases', 'agents:ask': 'Ask council agents questions (limited per hour)'
   };
 
   window.shdBridgeBox = function () {
