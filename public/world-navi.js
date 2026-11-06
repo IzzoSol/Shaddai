@@ -524,6 +524,32 @@
 
   var COUNCIL = [['SHADDAI', 'Orchestrator · strategy and final calls'], ['NEXUS', 'Architect · servers, tools, workflows'], ['ZEROX', 'Revenue · pricing, markets, signals'],
     ['ORACLE', 'Research · data, trends, intel'], ['TURTLE', 'Design · worlds, UI, art'], ['QUILL', 'Writing · docs, copy, lore'], ['PIKADON', 'Security · audits, permissions']];
+  // WORLD <-> DASHBOARD (2026-11-06, world-dashboard-link.js): live agent tasks + academy tiers come from the server; offline = says so.
+  function WL() { return window.WorldLink || null; }
+  function openDash(tab) { var L = WL(); if (L) L.openDashboard(tab); else window.open('/dashboard#worlds/' + tab, '_blank'); }
+  function liveAgent(name) { var L = WL(); return L ? L.agentFor(name) : null; }
+  function liveAgentHtml(name) {
+    var L = WL(), ag = L ? L.agents() : null, la = liveAgent(name);
+    if (!ag || ag.state === 'offline' || ag.state === 'idle') return '<div class="empty">Live tasks: offline. Give tasks on the dashboard (Worlds → Agents).</div>';
+    if (!la) return '<div class="empty">Not in the world right now.</div>';
+    var where = la.place ? (la.place.pin ? 'at ' + esc(la.place.pin) : 'in the field') : '';
+    return '<div style="margin:6px 0;color:' + THEME.gold + '">' + esc(String(la.state || 'idle').toUpperCase()) + (la.task && la.task.label ? ' · ' + esc(la.task.label) : '') + (where ? ' · ' + where : '') + '</div>' + (la.place ? '<button class="b" data-a="wp">WAYPOINT TO ' + esc(name) + '</button>' : '');
+  }
+  function tierRings(a, tiers) {   // 7 concentric rings: filled = passed, dashed = current (owner ref "The AI Universe")
+    var n = tiers.length || 7, h = '<svg viewBox="0 0 120 120" width="120" height="120" aria-hidden="true">';
+    for (var i = n; i >= 1; i--) {
+      var r = 8 + (i - 1) * (50 / n), passed = a.passed.indexOf(i) >= 0, cur = a.current === i;
+      h += '<circle cx="60" cy="60" r="' + r.toFixed(1) + '" fill="none" stroke="' + (passed ? THEME.gold : (cur ? THEME.cyan : 'rgba(0,212,255,.22)')) + '" stroke-width="' + (passed || cur ? 4 : 2) + '"' + (cur ? ' stroke-dasharray="5 4"' : '') + '/>';
+    }
+    return h + '</svg>';
+  }
+  function progressHtml() {
+    var L = WL(), P = L ? L.progress() : { state: 'offline', agents: [], tiers: [] }, T = P.tiers && P.tiers.length ? P.tiers : (L ? L.TIERS : []);
+    var legend = '<div style="font-size:12px;line-height:1.6;margin-top:6px">' + T.map(function (t) { return t.n + ' · ' + esc(t.name); }).join('<br>') + '</div>';
+    if (P.state !== 'ready') return '<h3>Agent progress</h3><div class="empty">' + (P.state === 'loading' || P.state === 'idle' ? 'Loading progress…' : 'Progress is offline right now.') + ' Tiers 1-7, centre ring first.</div>' + legend;
+    if (!P.agents.length) return '<h3>Agent progress</h3><div class="empty">No agent has started yet. Tier 1 is always open.</div>' + legend;
+    return '<h3>Agent progress</h3><div style="display:flex;flex-wrap:wrap;gap:8px">' + P.agents.map(function (a) { return '<div style="text-align:center;font-size:12px">' + tierRings(a, T) + '<div>' + esc(a.name) + '</div><em>' + a.passed.length + '/' + T.length + (a.current ? ' · on ' + a.current : '') + '</em></div>'; }).join('') + '</div>' + legend;
+  }
   M.bots = function () {
     var WB = window.WorldBots; if (!WB) return { title: 'BOTS', list: [], empty: 'Bots module not loaded.', detail: function () { return ''; } };
     var st = WB.state(), zone = window.__botZone ? window.__botZone() : 'wilderness';
@@ -531,11 +557,11 @@
     var botRows = WB.ROSTER.map(function (d) { return { id: d.id, t: d.name, s: (d.kind === 'humanoid' ? 'humanoid' : 'wheeled · city only'), tag: tag(d) }; });
     return {
       title: 'AGENTS · BOTS ' + WB.ROSTER.filter(function (d) { return WB.rec(d.id); }).length + '/10',
-      list: [{ head: 'COUNCIL · 7' }].concat(COUNCIL.map(function (c) { return { id: 'ag:' + c[0], t: c[0], s: c[1], tag: 'TALK' }; }), [{ head: 'YOUR BOTS' }], botRows),
+      list: [{ head: 'COUNCIL · 7' }].concat(COUNCIL.map(function (c) { var la = liveAgent(c[0]); return { id: 'ag:' + c[0], t: c[0], s: la && la.task && la.task.label ? la.task.label : c[1], tag: la ? String(la.state || '').toUpperCase() || 'TALK' : 'TALK' }; }), [{ head: 'YOUR BOTS' }], botRows),
       empty: '',
       detail: function (id) {
         if (/^ag:/.test(id || '')) { var c = COUNCIL.filter(function (x) { return x[0] === id.slice(3); })[0]; if (!c) return '';
-          return '<h3>' + esc(c[0]) + '</h3><div style="height:170px;margin:4px 0 8px;border:1px solid rgba(0,212,255,.45);background:#050814 center/cover no-repeat url(/assets/agents/' + c[0] + '-portrait.png?v=faces-20261106)"></div><div>' + esc(c[1]) + '</div><button class="b g" data-a="talk">TALK TO ' + esc(c[0]) + '</button>'; }
+          return '<h3>' + esc(c[0]) + '</h3><div style="height:170px;margin:4px 0 8px;border:1px solid rgba(0,212,255,.45);background:#050814 center/cover no-repeat url(/assets/agents/' + c[0] + '-portrait.png?v=faces-20261106)"></div><div>' + esc(c[1]) + '</div>' + liveAgentHtml(c[0]) + '<button class="b g" data-a="talk">TALK TO ' + esc(c[0]) + '</button><button class="b" data-a="dash">TASKS ON DASHBOARD</button>'; }
         var d = WB.def(id); if (!d) return '<div class="empty">Choose your first bot: SCRAP (humanoid) or UNI-9 (wheeled). The other eight are earned.</div>';
         var r = WB.rec(id), h = '<h3>' + esc(d.name) + '</h3><div>' + esc(d.blurb) + '</div><div style="margin:6px 0;color:' + THEME.cyan + '">' + (d.kind === 'humanoid' ? 'HUMANOID · walks, fights, follows, carries' : 'WHEELED · talk here or call in a city · never in the wilds or fights') + '</div>';
         if (!r) {
@@ -552,7 +578,9 @@
         return h;
       },
       act: function (id, a) {
-        if (/^ag:/.test(id || '')) { if (a === 'talk') window.open('/agents.html', '_blank'); return; }
+        if (/^ag:/.test(id || '')) { if (a === 'talk') window.open('/agents.html', '_blank'); if (a === 'dash') openDash('agents');
+          if (a === 'wp') { var la = liveAgent(id.slice(3)), pl = la && la.place; if (pl && typeof pl.x === 'number') setWaypoint({ x: pl.x, z: pl.z, label: id.slice(3), kind: 'Agent' }); else if (pl && pl.pin) { var pp = knownPins().filter(function (q) { return q.id === pl.pin; })[0]; if (pp) setWaypoint({ x: pp.x, z: pp.z, label: id.slice(3) + ' · ' + pp.t, kind: 'Agent' }); } }
+          return; }
         var d = WB.def(id); if (!d) { if (a === 'imp') toast('Grok import: coming with the Forge'); return; }
         if (a === 'pick') { var g = WB.pickStarter(id); toast(g.ok ? d.name + ' is yours' : g.why); }
         else if (a === 'call') { var c = WB.call(id, zone); toast(c.ok ? d.name + ' is with you' : c.why); }
@@ -607,7 +635,7 @@
   ];
   M.academy = function () {
     var AC = window.ShdAcademyCode;
-    var list = [{ id: 'hall', t: 'The Athenaeum · class hall', s: AC ? 'Sign-in code ' + AC.current() : 'Open the class hall' }, { head: 'CLASSES · ' + HALL_CLASSES.length }].concat(HALL_CLASSES);
+    var list = [{ id: 'hall', t: 'The Athenaeum · class hall', s: AC ? 'Sign-in code ' + AC.current() : 'Open the class hall' }, { id: 'progress', t: 'Agent progress', s: 'tiers 1-7 · AI to Agentic AI', tag: 'RINGS' }, { head: 'CLASSES · ' + HALL_CLASSES.length }].concat(HALL_CLASSES);
     return {
       title: 'ACADEMY', list: list, empty: 'No classes scheduled.', selId: 'hall',
       detail: function (id) {
@@ -617,6 +645,7 @@
             '<div class="empty">Changes in <span id="nvCodeLeft">' + Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0') + '</span>. Enter it at the class hall to take a seat. Only valid on this device.</div>' +
             '<button class="b g" data-a="hall">OPEN THE CLASS HALL</button><button class="b" data-a="wp">SET WAYPOINT</button>';
         }
+        if (id === 'progress') return progressHtml() + '<button class="b g" data-a="dash">OPEN ON DASHBOARD</button>';
         var c = HALL_CLASSES.filter(function (x) { return x.id === id; })[0];
         if (!c) return '<div class="empty">Pick a class. All of them meet in the Athenaeum.</div><button class="b" data-a="wp">WAYPOINT TO THE ATHENAEUM</button>';
         return '<h3>' + esc(c.t) + '</h3><div>' + esc(c.s) + (c.teacher ? ' · ' + esc(c.teacher) : '') + '</div><div class="empty">Meets in the Athenaeum. Take a seat with your sign-in code.</div>' +
@@ -625,6 +654,7 @@
       act: function (id, a) {
         if (a === 'hall') { window.open('/athenaeum-class.html', '_blank'); return; }
         if (a === 'wp') setWaypoint(ATHENAEUM);
+        if (a === 'dash') openDash('academy');
       }
     };
   };
@@ -721,6 +751,8 @@
   window.Navi = {
     open: open, close: close, toggle: toggle, setModule: setModule, setWaypoint: setWaypoint, clearWaypoint: clearWaypoint,
     registerPin: function (p) { S.pins = S.pins.filter(function (x) { return x.id !== p.id; }); S.pins.push(p); },
+    unregisterPin: function (id) { S.pins = S.pins.filter(function (x) { return x.id !== id; }); },
+    pins: function () { return knownPins(); },
     toast: function (m) { var c = document.getElementById('naviToasts'); if (!c) return; var d = document.createElement('div'); d.textContent = m; c.appendChild(d); while (c.children.length > 3) c.firstChild.remove(); setTimeout(function () { d.remove(); }, 4000); },
     on: function (ev, fn) { (listeners[ev] = listeners[ev] || []).push(fn); },
     enableSlot: function (name, fn) { S.flags.slots[name] = fn || function () { }; if (root) render(); },
@@ -730,5 +762,6 @@
     chatName: myName
   };
   toast = function (m) { window.Navi.toast(m); };
+  (function hookLink(n) { var L = window.WorldLink; if (L) L.on(function () { if (S.open && (S.module === 'bots' || S.module === 'academy')) render(); }); else if (n < 40) setTimeout(function () { hookLink(n + 1); }, 500); })(0);
   if (document.body) build(); else addEventListener('DOMContentLoaded', build);
 })();
