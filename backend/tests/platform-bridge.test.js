@@ -19,7 +19,7 @@ const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id)
 (async () => {
   const calls = [];
   const tools = {
-    fetch_price: { description: 'price', schema: { symbol: 'string' }, execute: async ({ symbol }) => { calls.push('fetch_price:' + symbol); await new Promise((r) => setTimeout(r, 200)); return { symbol, usd: 100 }; } },
+    fetch_price: { description: 'price', schema: { symbol: 'string' }, execute: async ({ symbol }) => { calls.push('fetch_price:' + symbol); await new Promise((r) => setTimeout(r, 450)); return { symbol, usd: 100 }; } },
     get_fear_greed: { description: 'fg', execute: async () => ({ value: 55 }) },
     get_trending: { description: 'tr', execute: async () => ['a', 'b'] },
     search_web: { description: 'web', execute: async ({ query }) => 'results for ' + query + ' key sk-' + 'z'.repeat(30) },
@@ -28,10 +28,10 @@ const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id)
     write_file: { description: 'NEVER', execute: async () => { calls.push('WRITE!'); return 'wrote'; } }
   };
   const recipes = { 'price-check': { agent: 'ZEROX', description: 'price and mood', params: ['symbol'], steps: [{ tool: 'fetch_price', params: { symbol: '{{input.symbol||bitcoin}}' } }, { tool: 'get_fear_greed', params: {} }] }, 'bad-skill': { agent: 'NEXUS', description: 'runs code', params: [], steps: [{ tool: 'run_js', params: {} }] } };
-  const skills = { getRecipe: (id) => recipes[id], listRecipes: () => Object.keys(recipes).map((id) => ({ id, agent: recipes[id].agent, description: recipes[id].description, params: recipes[id].params })), interpolate: (t, input) => (typeof t === 'string' ? t.replace(/{{input.(w+)||(w+)}}/g, (_, k, d) => (input && input[k]) || d) : t) };
+  const skills = { getRecipe: (id) => recipes[id], listRecipes: () => Object.keys(recipes).map((id) => ({ id, agent: recipes[id].agent, description: recipes[id].description, params: recipes[id].params })), interpolate: (t, input) => (typeof t === 'string' ? t.replace(/\{\{input\.(\w+)(?:\|\|(\w+))?\}\}/g, (_, k, d) => ((input && input[k]) || d || '')) : t) };
   const academy = { classes: { join: ({ classId, agentId }) => (classId === 'cls_full' ? { ok: false, error: 'class is full' } : classId === 'cls_open' ? { ok: true, member: { agentId } } : { ok: false, error: 'unknown class' }) } };
   const internal = { agents: async () => [{ agent_id: 'a1' }], plots: async () => [], balance: async () => ({ sparks: 42 }), classes: async () => [] };
-  const bridge = createBridge({ file: path.join(tmp, 'bridge.json'), plotsFile, operatives, tools, internal, skills, academy, stepMs: 60, uidOf: (req) => req.headers['x-uid'] || '' });
+  const bridge = createBridge({ file: path.join(tmp, 'bridge.json'), plotsFile, operatives, tools, internal, skills, academy, asksPerHour: 3, ragSearch: (id, q, n) => [{ docName: 'doc-' + id, score: 0.9, chunkText: 'chunk about ' + q + ' key sk-' + 'w'.repeat(30) }].slice(0, n), askAgent: async (id, q) => ({ answer: id + ' says: ' + q, sources: ['doc-' + id] }), stepMs: 60, spacingMs: 0, retryMs: 5, uidOf: (req) => req.headers['x-uid'] || '' });
   const app = express(); app.use('/b', bridge);
   const server = await new Promise((r) => { const s = app.listen(0, () => r(s)); });
   const base = 'http://127.0.0.1:' + server.address().port + '/b';
@@ -56,7 +56,7 @@ const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id)
   assert.strictEqual((await rpc('shdb_' + 'x'.repeat(40), 'tools/list')).status, 401);
 
   // scopes that outside bots must never get
-  for (const s of ['admin:*', 'treegens:pay', 'sparks_ledger:spend', 'plots:maintain']) {
+  for (const s of ['admin:*', 'treegens:pay', 'sparks_ledger:spend', 'trade:execute', 'wallet:transfer']) {
     assert.strictEqual((await http('POST', '/tokens', { uid: 'alice', body: { scopes: [s] } })).status, 400, s + ' must not be grantable');
   }
   assert.strictEqual((await http('POST', '/tokens', { uid: 'alice', body: { agent_id: 'b1' } })).status, 403, 'cannot bind to someone else\'s agent');
@@ -80,8 +80,7 @@ const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id)
   await sleep(40);
   assert.strictEqual(out(await tool(run.token, 'read_agent_state', { agent_id: 'a1' })).presence, 'working', 'avatar shows working');
   assert.ok((await http('GET', '/world-state')).json.agents.some((a) => a.agent_id === 'a1' && a.presence === 'working'));
-  await sleep(300);
-  const done = out(await tool(run.token, 'get_run_status', { run_id: runId }));
+  let done; for (let i = 0; i < 60; i++) { await sleep(50); done = out(await tool(run.token, 'get_run_status', { run_id: runId })); if (['succeeded', 'failed', 'cancelled', 'expired'].includes(done.status)) break; }
   assert.strictEqual(done.status, 'succeeded'); assert.ok(done.receipt && done.receipt.steps.length === 3 && done.receipt.money.class === 'none');
   assert.strictEqual(out(await tool(run.token, 'read_agent_state', { agent_id: 'a1' })).presence, 'celebrating');
 
@@ -119,8 +118,8 @@ const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id)
   assert.strictEqual((await http('POST', '/runs/' + w.run_id + '/approve', { uid: 'bob' })).status, 404, 'another user cannot approve');
   assert.strictEqual(out(await tool(run.token, 'read_agent_state', { agent_id: 'a1' })).presence, 'awaiting_approval');
   assert.strictEqual((await http('POST', '/runs/' + w.run_id + '/approve', { uid: 'alice' })).status, 200);
-  await sleep(300);
-  const ap = out(await tool(run.token, 'get_run_status', { run_id: w.run_id })); assert.strictEqual(ap.status, 'succeeded'); assert.strictEqual(ap.receipt.approvals[0].by, 'user:alice');
+  let ap; for (let i = 0; i < 60; i++) { await sleep(50); ap = out(await tool(run.token, 'get_run_status', { run_id: w.run_id })); if (ap.status === 'succeeded' || ap.status === 'failed') break; }
+   assert.strictEqual(ap.status, 'succeeded'); assert.strictEqual(ap.receipt.approvals[0].by, 'user:alice');
   const w2 = out(await tool(run.token, 'start_workflow', { workflow_id: 'demo.needs-approval', agent_id: 'a1', idempotency_key: 'job-4' })); await sleep(200);
   assert.strictEqual((await http('POST', '/runs/' + w2.run_id + '/deny', { uid: 'alice' })).status, 200);
   assert.strictEqual(out(await tool(run.token, 'get_run_status', { run_id: w2.run_id })).status, 'failed', 'denied runs fail, they never proceed');
@@ -162,22 +161,22 @@ const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id)
   assert.strictEqual(sl.find((x) => x.skill === 'price-check').runnable, true); assert.strictEqual(sl.find((x) => x.skill === 'bad-skill').runnable, false, 'skills needing unsafe tools are marked not runnable');
   assert.strictEqual((await tool(sk.token, 'start_workflow', { workflow_id: 'skill.run', idempotency_key: 'sk-bad', params: { skill: 'bad-skill' } })).status, 400, 'unsafe skill refused');
   assert.strictEqual((await tool(sk.token, 'start_workflow', { workflow_id: 'skill.run', idempotency_key: 'sk-none', params: { skill: 'nope' } })).status, 400);
-  const sr = out(await tool(sk.token, 'start_workflow', { workflow_id: 'skill.run', agent_id: 'a1', idempotency_key: 'sk-1', params: { skill: 'price-check', input: { symbol: 'solana' } } }));
+  const sr = out(await tool(sk.token, 'start_workflow', { workflow_id: 'skill.run', agent_id: 'a1', idempotency_key: 'sk-1', params: { skill: 'price-check', input: { symbol: 'polkadot' } } }));
   await sleep(25);
   const cityWorking = (await http('GET', '/city', { uid: 'alice' })).json.me.find((m) => m.id === 'a1');
   assert.strictEqual(cityWorking.presence, 'working'); assert.strictEqual(cityWorking.station, 'market', 'a price lookup walks the agent to the market');
   assert.ok((await http('GET', '/city', { uid: 'bob' })).json.me.every((m) => m.id !== 'a1'), 'other users do not see your agent by name'); assert.ok((await http('GET', '/city', { uid: 'bob' })).json.others.length >= 1, 'but they see anonymous activity');
   const srDone = await wait(sk.token, sr.run_id);
-  assert.strictEqual(srDone.status, 'succeeded'); assert.ok(calls.includes('fetch_price:solana'), 'skill input was interpolated into the tool call'); assert.deepStrictEqual(Object.keys(srDone.outputs), ['1. fetch_price', '2. get_fear_greed']);
-  const botRun = out(await tool(sk.token, 'start_workflow', { workflow_id: 'skill.run', idempotency_key: 'sk-2', params: { skill: 'price-check' } })); await sleep(25);
-  assert.ok((await http('GET', '/city', { uid: 'alice' })).json.me.some((m) => m.kind === 'bot' && m.name === 'skiller' && m.station === 'market'), 'an outside bot without an avatar appears by its token name'); await wait(sk.token, botRun.run_id);
+  assert.strictEqual(srDone.status, 'succeeded'); assert.ok(calls.filter((c) => c === 'fetch_price:polkadot').length >= 1 && !calls.some((c) => /undefined/.test(c)), 'skill input was interpolated into the tool call'); assert.ok(/polkadot/.test(srDone.outputs['1. fetch_price']), 'the skill result reflects the interpolated input'); assert.deepStrictEqual(Object.keys(srDone.outputs), ['1. fetch_price', '2. get_fear_greed']);
+  const botRun = out(await tool(sk.token, 'start_workflow', { workflow_id: 'skill.run', idempotency_key: 'sk-2', params: { skill: 'price-check', input: { symbol: 'cardano' } } })); await sleep(25);
+   assert.ok((await http('GET', '/city', { uid: 'alice' })).json.me.some((m) => m.kind === 'bot' && m.name === 'skiller' && m.station === 'market'), 'an outside bot without an avatar appears by its token name'); await wait(sk.token, botRun.run_id);
   assert.strictEqual((await tool(ro.token, 'post_to_inbox', { subject: 'x', content: 'y' })).status, 403, 'inbox:write required');
   assert.strictEqual((await tool(sk.token, 'post_to_inbox', { subject: 'Report', content: 'BTC is 100' })).status, 200);
   assert.strictEqual((await tool(sk.token, 'post_to_inbox', { subject: 'k', content: 'key sk-' + 'q'.repeat(30) })).status, 400, 'no secrets in messages');
   const inbox = (await http('GET', '/inbox', { uid: 'alice' })).json.messages; assert.strictEqual(inbox.length, 1); assert.strictEqual(inbox[0].from, 'skiller');
   assert.strictEqual((await http('GET', '/inbox', { uid: 'bob' })).json.messages.length, 0, 'inbox is private to its owner');
   assert.strictEqual((await http('DELETE', '/inbox/' + inbox[0].id, { uid: 'bob' })).status, 404);
-  const tiny = createBridge({ file: path.join(tmp, 'tiny.json'), plotsFile, operatives, tools, internal, skills, stepMs: 5, runsPerHour: 2, uidOf: (req) => req.headers['x-uid'] || '' });
+  const tiny = createBridge({ file: path.join(tmp, 'tiny.json'), plotsFile, operatives, tools, internal, skills, stepMs: 5, spacingMs: 0, runsPerHour: 2, uidOf: (req) => req.headers['x-uid'] || '' });
   const app2 = express(); app2.use('/t', tiny); const srv2 = await new Promise((r) => { const x = app2.listen(0, () => r(x)); });
   const b2 = 'http://127.0.0.1:' + srv2.address().port + '/t';
   const tk2 = (await (await fetch(b2 + '/tokens', { method: 'POST', headers: { 'content-type': 'application/json', 'x-uid': 'alice' }, body: JSON.stringify({ scopes: ['workflows:run'] }) })).json()).token;
@@ -194,6 +193,32 @@ const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id)
   assert.strictEqual((await tool(loose.token, 'join_class', { class_id: 'cls_open', agent_id: 'b1' })).status, 403, 'not your agent');
   assert.strictEqual((await tool(ro.token, 'join_class', { class_id: 'cls_open' })).status, 403, 'school:join scope required');
   const snap = out(await tool(bound.token, 'get_world_snapshot', {})); assert.ok(Array.isArray(snap.mine) && snap.others_by_station && typeof snap.others_by_station === 'object');
+
+  // identical read-only lookups share one upstream call (protects shared API quotas)
+  const cacheA = out(await tool(wk.token, 'start_workflow', { workflow_id: 'tool.run', idempotency_key: 'c-1', params: { tool: 'fetch_price', args: { symbol: 'dogecoin' } } })); await wait(wk.token, cacheA.run_id);
+  const cacheB = out(await tool(wk.token, 'start_workflow', { workflow_id: 'tool.run', idempotency_key: 'c-2', params: { tool: 'fetch_price', args: { symbol: 'dogecoin' } } })); const cacheBd = await wait(wk.token, cacheB.run_id);
+  assert.strictEqual(calls.filter((c) => c === 'fetch_price:dogecoin').length, 1, 'second identical lookup came from the cache'); assert.strictEqual(cacheBd.status, 'succeeded');
+
+  // ── headless council: knowledge search + grounded answers; skill input validation; extension point ──
+  const brain = await mint('alice', { label: 'brain', scopes: ['rag:read', 'agents:ask', 'workflows:run', 'runs:read', 'tools:run', 'plots:maintain'] });
+  const rg = out(await tool(brain.token, 'rag_search', { agent: 'turtle', query: 'login page', limit: 2 })); assert.strictEqual(rg.agent, 'TURTLE'); assert.ok(rg.hits.length === 1 && !/sk-w/.test(JSON.stringify(rg)), 'rag hits are redacted');
+  assert.strictEqual((await tool(brain.token, 'rag_search', { agent: 'EVIL', query: 'x' })).status, 400, 'only council agents');
+  assert.strictEqual((await tool(ro.token, 'rag_search', { query: 'x' })).status, 403, 'rag:read required');
+  assert.strictEqual(out(await tool(brain.token, 'ask_agent', { agent: 'ZEROX', question: 'is BTC overbought?' })).answer, 'ZEROX says: is BTC overbought?');
+  assert.strictEqual((await tool(ro.token, 'ask_agent', { question: 'x' })).status, 403, 'agents:ask required');
+  await tool(brain.token, 'ask_agent', { question: 'two' }); await tool(brain.token, 'ask_agent', { question: 'three' });
+  assert.strictEqual((await tool(brain.token, 'ask_agent', { question: 'four' })).status, 429, 'hourly question quota');
+  assert.strictEqual((await tool(brain.token, 'start_workflow', { workflow_id: 'skill.run', idempotency_key: 'need-in', params: { skill: 'price-check', input: {} } })).status, 200, 'skill with a default input runs without it');
+  recipes['needs-topic'] = { agent: 'ORACLE', description: 'needs topic', params: ['topic'], steps: [{ tool: 'search_web', params: { query: '{{input.topic}}' } }] };
+  assert.strictEqual((await tool(brain.token, 'start_workflow', { workflow_id: 'skill.run', idempotency_key: 'need-2', params: { skill: 'needs-topic' } })).status, 400, 'missing required skill input is refused up front');
+  assert.deepStrictEqual(out(await tool(brain.token, 'list_skills', { query: 'needs' })).items[0].required_input, ['topic']);
+  // SAP (or any module) plugs workflows in; plot maintenance is a normal run with a receipt, scoped by plots:maintain
+  let watered = null; bridge.registerWorkflow('sap.plot.water', { title: 'Water a plot', required_scopes: ['workflows:run', 'plots:maintain'], build: () => [{ name: 'water', fn: async (c) => { watered = c; return { ok: true, moisture: 0.8 }; } }] });
+  assert.throws(() => bridge.registerWorkflow('sap.plot.water', { required_scopes: ['workflows:run'], build: () => [] }), /duplicate/);
+  assert.throws(() => bridge.registerWorkflow('x.bad-scope', { required_scopes: ['admin:*'], build: () => [] }), /unknown scope/);
+  assert.strictEqual((await tool(wk.token, 'start_workflow', { workflow_id: 'sap.plot.water', idempotency_key: 'w-0' })).status, 403, 'plots:maintain required');
+  const wr = out(await tool(brain.token, 'start_workflow', { workflow_id: 'sap.plot.water', agent_id: 'a1', plot_id: 'p-alice', idempotency_key: 'w-1' })); const wd = await wait(brain.token, wr.run_id);
+  assert.strictEqual(wd.status, 'succeeded'); assert.strictEqual(watered.owner, 'alice'); assert.strictEqual(watered.agent_id, 'a1'); assert.strictEqual(watered.plot_id, 'p-alice'); assert.ok(wd.receipt);
 
   // 7. revocation takes effect on the next call
   const info = (await http('GET', '/tokens', { uid: 'alice' })).json.tokens.find((t) => t.label === 'runner');

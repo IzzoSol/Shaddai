@@ -16,7 +16,7 @@ const { StreamableHTTPClientTransport } = require(path.join(sdkDir, 'node_module
 (async () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'bridge-sdk-'));
   const ops = { a1: { id: 'a1', name: 'Bolt', owner: 'alice', skills: [] } };
-  const bridge = createBridge({ file: path.join(tmp, 'b.json'), plotsFile: path.join(tmp, 'none.json'), stepMs: 30,
+  const bridge = createBridge({ file: path.join(tmp, 'b.json'), plotsFile: path.join(tmp, 'none.json'), stepMs: 30, spacingMs: 0,
     operatives: { get: (id) => ops[id] || null, listByOwner: (o) => Object.values(ops).filter((x) => x.owner === o) },
     tools: { fetch_price: { description: 'price', execute: async ({ symbol }) => ({ symbol, usd: 1 }) }, get_fear_greed: { description: 'fg', execute: async () => ({ value: 50 }) }, get_trending: { description: 't', execute: async () => [] } }, internal: { agents: async () => [], plots: async () => [], balance: async () => ({ sparks: 7 }), classes: async () => [] },
     academy: { classes: { join: () => ({ ok: true }) } }, uidOf: (req) => req.headers['x-uid'] || '' });
