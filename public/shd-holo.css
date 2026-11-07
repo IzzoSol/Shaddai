@@ -297,3 +297,15 @@ html body .card-head{position:relative;padding:2px 0 10px!important;margin-botto
 html body .card-head::after{content:'';position:absolute;left:0;bottom:-1px;width:56px;height:2px;background:var(--accent,#00e5a0);box-shadow:0 0 10px var(--accent,#00e5a0);border-radius:2px}
 html body .card-title{font-family:'Orbitron','Rajdhani',sans-serif!important;letter-spacing:.14em!important;font-size:11px!important}
 @media (prefers-reduced-motion:reduce){html body .card{transition:none}}
+
+/* ── Add API window ── */
+.ap-wrap{display:flex;flex-direction:column;gap:14px;min-width:min(520px,86vw)}
+.ap-lead{font-size:13px;line-height:1.5;color:var(--text-secondary,#b8c9e6)}
+.ap-chips{display:flex;flex-wrap:wrap;gap:8px}
+.ap-chip{min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--border,rgba(255,255,255,.22));background:rgba(255,255,255,.03);color:var(--text-primary,#e8eefc);font:700 11px 'Orbitron',sans-serif;letter-spacing:.04em;cursor:pointer}
+.ap-chip:hover,.ap-chip.on{border-color:var(--accent,#00e5a0);color:var(--accent,#00e5a0);background:color-mix(in srgb,var(--accent,#00e5a0) 10%,transparent)}
+.ap-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ap-f{display:flex;flex-direction:column;gap:5px;min-width:0}.ap-l{font:800 10px 'Orbitron',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--accent,#00e5a0)}.ap-h{font-size:11px;line-height:1.4;color:var(--text-muted,#7f93bd)}
+.ap-f .input,.ap-f .select{min-height:44px;width:100%;box-sizing:border-box}
+.ap-box{padding:14px;border-radius:12px;border:1px solid var(--border,rgba(255,255,255,.14));background:rgba(255,255,255,.025);display:flex;flex-direction:column;gap:12px}.ap-boxt{font:800 11px 'Orbitron',sans-serif;letter-spacing:.12em;color:#fff}
+@media (max-width:560px){.ap-grid{grid-template-columns:1fr}}

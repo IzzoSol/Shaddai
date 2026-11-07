@@ -26879,35 +26879,47 @@ function updateErrorCount() {
 
 // ================== APIS ==================
 function showAddAPIModal() {
-  const content = `
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <input type="text" id="apiName" class="input" placeholder="API Name (e.g., OpenAI)">
-      <input type="text" id="apiBaseUrl" class="input" placeholder="Base URL (e.g., https://api.openai.com/v1)">
-      <select id="apiCategory" class="select">
-        <option value="AI">AI</option>
-        <option value="Finance">Finance</option>
-        <option value="Data">Data</option>
-        <option value="Social">Social</option>
-        <option value="Utility">Utility</option>
-        <option value="Custom">Custom</option>
-      </select>
-      <select id="apiAuthType" class="select">
-        <option value="bearer">Bearer Token</option>
-        <option value="apikey">API Key</option>
-        <option value="basic">Basic Auth</option>
-        <option value="none">No Auth</option>
-      </select>
-      <input type="text" id="apiAuthHeader" class="input" placeholder="Auth Header (default: Authorization)">
-      <input type="password" id="apiAuthValue" class="input" placeholder="Auth Value (NOT stored)">
-      <input type="number" id="apiCostPerCall" class="input" placeholder="Cost per call ($)" step="0.001" value="0.01">
-      <input type="text" id="apiDocsUrl" class="input" placeholder="Documentation URL (optional)">
-    </div>
-  `;
+  // Same field ids as before, so addAPI() is unchanged. Presets fill the form; the key is kept in memory for this session only.
+  const PRESETS = [
+    ['CoinGecko', 'https://api.coingecko.com/api/v3', 'Finance', 'none', '', 'https://docs.coingecko.com'],
+    ['DexScreener', 'https://api.dexscreener.com', 'Finance', 'none', '', 'https://docs.dexscreener.com'],
+    ['Hyperliquid', 'https://api.hyperliquid.xyz', 'Finance', 'none', '', 'https://hyperliquid.gitbook.io/hyperliquid-docs'],
+    ['NewsAPI', 'https://newsapi.org/v2', 'Data', 'apikey', 'X-Api-Key', 'https://newsapi.org/docs'],
+    ['Alpha Vantage', 'https://www.alphavantage.co', 'Finance', 'apikey', 'X-API-KEY', 'https://www.alphavantage.co/documentation'],
+    ['OpenAI', 'https://api.openai.com/v1', 'AI', 'bearer', 'Authorization', 'https://platform.openai.com/docs'],
+    ['ElevenLabs', 'https://api.elevenlabs.io/v1', 'AI', 'apikey', 'xi-api-key', 'https://elevenlabs.io/docs']
+  ];
+  const f = (label, hint, inner) => '<label class="ap-f"><span class="ap-l">' + label + '</span>' + inner + (hint ? '<span class="ap-h">' + hint + '</span>' : '') + '</label>';
+  const content = '<div class="ap-wrap">' +
+    '<div class="ap-lead">Connect an outside service so your agents can call it. Pick a preset or fill it in yourself.</div>' +
+    '<div class="ap-chips" role="group" aria-label="Quick picks">' + PRESETS.map((p, i) => '<button type="button" class="ap-chip" data-ap="' + i + '">' + p[0] + '</button>').join('') + '</div>' +
+    '<div class="ap-grid">' +
+      f('Name', '', '<input type="text" id="apiName" class="input" placeholder="e.g. CoinGecko" autocomplete="off">') +
+      f('Group', '', '<select id="apiCategory" class="select"><option value="AI">AI</option><option value="Finance">Finance</option><option value="Data">Data</option><option value="Social">Social</option><option value="Utility">Utility</option><option value="Custom">Custom</option></select>') +
+    '</div>' +
+    f('Base URL', 'The address every call starts from.', '<input type="text" id="apiBaseUrl" class="input" placeholder="https://api.example.com/v1" autocomplete="off">') +
+    '<div class="ap-box"><div class="ap-boxt">Sign-in</div><div class="ap-grid">' +
+      f('Type', '', '<select id="apiAuthType" class="select"><option value="none">No key needed</option><option value="bearer">Bearer token</option><option value="apikey">API key</option><option value="basic">Basic auth</option></select>') +
+      f('Header name', 'Leave blank for Authorization.', '<input type="text" id="apiAuthHeader" class="input" placeholder="Authorization" autocomplete="off">') +
+    '</div><div id="apiKeyRow">' + f('Key or token', 'Kept in memory for this session only. It is never saved, so you will paste it again after a reload.', '<input type="password" id="apiAuthValue" class="input" placeholder="Paste your key" autocomplete="off">') + '</div></div>' +
+    '<div class="ap-grid">' +
+      f('Cost per call ($)', 'Used for your usage totals.', '<input type="number" id="apiCostPerCall" class="input" step="0.001" value="0.01">') +
+      f('Docs link', 'Optional.', '<input type="text" id="apiDocsUrl" class="input" placeholder="https://docs.example.com" autocomplete="off">') +
+    '</div></div>';
 
-  showModal('Add API', content, [
+  showModal('Add an API', content, [
     { label: 'Cancel', class: 'btn-ghost', action: closeModal },
     { label: 'Add API', class: 'btn-accent', action: addAPI }
   ]);
+  setTimeout(function () {
+    const q = (id) => document.getElementById(id);
+    const sync = () => { const none = q('apiAuthType').value === 'none'; ['apiKeyRow'].forEach(function (i) { if (q(i)) q(i).style.display = none ? 'none' : ''; }); if (q('apiAuthHeader')) q('apiAuthHeader').closest('.ap-f').style.display = none ? 'none' : ''; };
+    if (q('apiAuthType')) { q('apiAuthType').addEventListener('change', sync); sync(); }
+    document.querySelectorAll('.ap-chip').forEach(function (b) { b.addEventListener('click', function () {
+      const p = PRESETS[+b.dataset.ap]; q('apiName').value = p[0]; q('apiBaseUrl').value = p[1]; q('apiCategory').value = p[2]; q('apiAuthType').value = p[3]; q('apiAuthHeader').value = p[4]; q('apiDocsUrl').value = p[5]; sync();
+      document.querySelectorAll('.ap-chip').forEach(function (x) { x.classList.toggle('on', x === b); });
+      if (p[3] !== 'none' && q('apiAuthValue')) q('apiAuthValue').focus(); }); });
+  }, 30);
 }
 
 function addAPI() {
