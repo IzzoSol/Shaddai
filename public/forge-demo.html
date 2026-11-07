@@ -145,7 +145,7 @@ var PAL={grid:{n:'The Grid',a:0x2FD6FF,t:0xE6B84A,bg:0x04101C,css:['#2FD6FF','#E
          void:{n:'Deep Void',a:0x8B6BFF,t:0xC9B6FF,bg:0x0A0716,css:['#8B6BFF','#C9B6FF','#0A0716','#16102E','#33285E','#E6DCFF','#A99BD6']}};
 var STEPS=[{k:'bind',t:'Bind',s:'Seal the oath'},{k:'body',t:'Body',s:'Shape the form'},{k:'license',t:'License',s:'Grant the right'},{k:'labor',t:'Labor',s:'Perform the work'},{k:'vault',t:'PayBox',s:'Open the vault'}];
 var STATUS=['AWAITING OATH','FORM UNSHAPED','LICENSE PENDING','NO JOB RUN','VAULT SEALED'];
-var S={i:0,max:0,name:'',purpose:'Research and summaries',oath:false,kind:'SHADDAI',finish:'auto',skills:{Research:true},job:'Summarise a document',labor:0,vault:0,sparks:0,pal:'grid'};
+var S={i:0,max:0,name:'',purpose:'Research and summaries',oath:false,kind:'SHADDAI',look:'glow',glow:'figure',acc:'none',finish:'auto',skills:{Research:true},job:'Summarise a document',labor:0,vault:0,sparks:0,pal:'grid'};
 var SKILLS=['Research','Writing','Design','Code review','Market scan','Audit'],CAP=3;
 /* The bodies a forged agent can wear in Shaddai World: the 7 council GLBs (backend/lib/operatives.js VALID_MODELS). */
 var BODY_ROLE={SHADDAI:'Sovereign',NEXUS:'Architect',ORACLE:'Seer',TURTLE:'Creative',QUILL:'Scribe',PIKADON:'Guardian',ZEROX:'Trader'},BODIES=Object.keys(BODY_ROLE);
@@ -180,21 +180,28 @@ function buildWorld(){
   var HF='uniform vec3 uA;uniform vec3 uT;uniform float uTime;uniform float uBuild;uniform float uAlpha;varying vec3 vWN;varying vec3 vV;varying float vY;void main(){if(vY>uBuild)discard;float f=pow(1.-abs(dot(normalize(vWN),normalize(vV))),2.2);float sc=.5+.5*sin(vY*46.-uTime*3.);float band=smoothstep(uBuild-.18,uBuild,vY);vec3 col=mix(uA,uT,clamp(f*.8+band*.9,0.,1.));float a=(.16+f*.85+sc*.12+band*1.2)*uAlpha;gl_FragColor=vec4(col*(1.+band),a);}';
   function holoMat(col){return new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:ADD,side:THREE.DoubleSide,uniforms:{uA:{value:col||cA},uT:{value:cT},uTime:uTime,uBuild:{value:1e5},uAlpha:{value:1}},vertexShader:HV,fragmentShader:HF})}
   function limb(a,b,r1,r2,mat){var d=V(0,0,0).subVectors(b,a),len=d.length();var m=new THREE.Mesh(new THREE.CylinderGeometry(r2,r1,len,10,1,false),mat);m.position.copy(a).addScaledVector(d,.5);m.quaternion.setFromUnitVectors(V(0,1,0),d.normalize());return m}
+  /* GLOW BOTS (2026-11-07): replace the old stick-figure placeholders. Same holo shader, soft glowing bodies: figure / orb / crystal.
+     The "wheeled" name is kept so older callers still work; it now draws the orb. */
   function humanoid(mat){var g=new THREE.Group();
-    function S2(p,r,sx,sy,sz){var m=new THREE.Mesh(new THREE.SphereGeometry(r,14,10),mat);m.position.copy(p);m.scale.set(sx||1,sy||1,sz||1);g.add(m)}
-    S2(V(0,2.88,0),.26,1,1.12,1);g.add(limb(V(0,2.55,0),V(0,2.68,0),.1,.09,mat));
-    var t=limb(V(0,1.7,0),V(0,2.5,0),.3,.44,mat);t.scale.z=.62;g.add(t);S2(V(0,1.62,0),.34,1,.7,.7);
-    [-1,1].forEach(function(s){S2(V(s*.5,2.46,0),.17);g.add(limb(V(s*.5,2.46,0),V(s*.62,1.85,.04),.12,.09,mat));S2(V(s*.62,1.85,.04),.09);g.add(limb(V(s*.62,1.85,.04),V(s*.6,1.28,.12),.09,.07,mat));S2(V(s*.6,1.26,.12),.08);
-      g.add(limb(V(s*.2,1.55,0),V(s*.23,.82,.02),.18,.12,mat));S2(V(s*.23,.82,.02),.12);g.add(limb(V(s*.23,.82,.02),V(s*.23,.12,0),.12,.09,mat));
-      var f=new THREE.Mesh(new THREE.BoxGeometry(.2,.1,.4),mat);f.position.set(s*.23,.06,.08);g.add(f)});
+    var b=new THREE.Mesh(new THREE.SphereGeometry(.6,24,18),mat);b.position.set(0,1.75,0);b.scale.set(1,1.5,.8);g.add(b);
+    var h=new THREE.Mesh(new THREE.SphereGeometry(.34,20,14),mat);h.position.set(0,3.02,0);g.add(h);
+    var r=new THREE.Mesh(new THREE.TorusGeometry(.62,.035,8,40),mat);r.rotation.x=Math.PI/2;r.position.y=.2;g.add(r);
     return g}
   function wheeled(mat){var g=new THREE.Group();
-    var b=limb(V(0,1,0),V(0,2.3,0),.55,.48,mat);b.scale.z=.8;g.add(b);
-    var h=new THREE.Mesh(new THREE.SphereGeometry(.36,16,12),mat);h.position.set(0,2.72,0);h.scale.set(1,.85,.95);g.add(h);
-    var vz=new THREE.Mesh(new THREE.BoxGeometry(.44,.08,.1),mat);vz.position.set(0,2.74,.33);g.add(vz);
-    [-1,1].forEach(function(s){g.add(limb(V(s*.62,2.1,0),V(s*.85,1.35,.22),.1,.07,mat));
-      var w=new THREE.Mesh(new THREE.TorusGeometry(.38,.12,8,24),mat);w.rotation.y=Math.PI/2;w.position.set(s*.62,.42,0);g.add(w)});
-    var base=new THREE.Mesh(new THREE.CylinderGeometry(.6,.7,.3,18),mat);base.position.y=.78;g.add(base);
+    var o=new THREE.Mesh(new THREE.SphereGeometry(.92,28,20),mat);o.position.y=1.9;g.add(o);
+    var r=new THREE.Mesh(new THREE.TorusGeometry(1.25,.04,8,48),mat);r.position.y=1.9;r.rotation.x=1.15;r.rotation.y=.35;g.add(r);
+    return g}
+  function crystal(mat){var g=new THREE.Group();
+    var c=new THREE.Mesh(new THREE.OctahedronGeometry(1,0),mat);c.position.y=2;c.scale.set(.8,1.45,.8);g.add(c);
+    [-1,1].forEach(function(sd){var m=new THREE.Mesh(new THREE.OctahedronGeometry(.2,0),mat);m.position.set(sd*.95,2.3+sd*.2,0);g.add(m)});
+    return g}
+  var GLOW_TOP={figure:3.4,orb:2.9,crystal:3.5};
+  function accessory(mat,acc,kind){var g=new THREE.Group();if(!acc||acc==='none')return g;var y=GLOW_TOP[kind]||3.2;
+    if(acc==='halo'){var h=new THREE.Mesh(new THREE.TorusGeometry(.5,.04,8,36),mat);h.rotation.x=Math.PI/2;h.position.y=y+.1;g.add(h)}
+    else if(acc==='ring'){var r=new THREE.Mesh(new THREE.TorusGeometry(1.5,.04,8,48),mat);r.rotation.x=1.35;r.rotation.z=-.25;r.position.y=y-1;g.add(r)}
+    else if(acc==='hat'){var c=new THREE.Mesh(new THREE.ConeGeometry(.42,.8,18),mat);c.position.y=y+.35;g.add(c)}
+    else if(acc==='antenna'){var a=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,.8,8),mat);a.position.y=y+.3;g.add(a);var t=new THREE.Mesh(new THREE.SphereGeometry(.1,12,8),mat);t.position.y=y+.75;g.add(t)}
+    else if(acc==='crown'){var cr=new THREE.Mesh(new THREE.CylinderGeometry(.42,.34,.3,5,1,true),mat);cr.position.y=y+.15;g.add(cr);for(var i=0;i<5;i++){var an=i/5*6.2832,sp=new THREE.Mesh(new THREE.ConeGeometry(.07,.28,6),mat);sp.position.set(Math.cos(an)*.4,y+.42,Math.sin(an)*.4);g.add(sp)}}
     return g}
 
   /* floor */
@@ -245,7 +252,9 @@ function buildWorld(){
   glow(PX,.7,0,9,cA,.5);
   var fig=new THREE.Group();ped.add(fig);fig.position.y=.6;
   var fm=holoMat(figCol);fm.uniforms.uBuild.value=-1;
-  var hum=humanoid(fm),whl=wheeled(fm);fig.add(hum);fig.add(whl);whl.visible=false;
+  var hum=humanoid(fm),whl=wheeled(fm),crs=crystal(fm),accG=new THREE.Group();fig.add(hum);fig.add(whl);fig.add(crs);fig.add(accG);whl.visible=false;crs.visible=false;
+  function setGlowVis(k){hum.visible=k==='figure';whl.visible=k==='orb';crs.visible=k==='crystal'}
+  var accKey='';function rebuildAcc(){var k=S.look==='glow'?S.glow+'|'+S.acc:'';if(k===accKey)return;accKey=k;while(accG.children.length)accG.remove(accG.children[0]);if(S.look==='glow')accG.add(accessory(fm,S.acc,S.glow))}
   var scan=ring(1.5,.03,bA(1,cT),64);scan.rotation.x=Math.PI/2;scan.visible=false;fig.add(scan);
   var helix=(function(){var n=200,a=new Float32Array(n*3);for(var i=0;i<n;i++){var s=i%2?Math.PI:0,t=i/n*14+s;a[i*3]=Math.cos(t)*(1.5+.25*Math.sin(i));a[i*3+1]=i/n*3.4;a[i*3+2]=Math.sin(t)*(1.5+.25*Math.sin(i))}
     var g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(a,3));var p=new THREE.Points(g,new THREE.PointsMaterial({size:.08,transparent:true,opacity:.9,blending:ADD,depthWrite:false}));share(p.material,'color',cA);p.visible=false;fig.add(p);return p})();
@@ -291,7 +300,7 @@ function buildWorld(){
   var crops=new THREE.InstancedMesh(cone,cropM,COLS*ROWS),cd=new THREE.Object3D(),ccol=new THREE.Color();
   for(var i=0;i<COLS*ROWS;i++){ccol.setHSL(.22+.08*((i*37)%10)/10,.9,.5);crops.setColorAt(i,ccol)}
   scene.add(crops);glow(FX,1,FZ,20,cA,.04);
-  var bm=holoMat(cT);var bot=new THREE.Group();var bh=humanoid(bm),bw=wheeled(bm);bw.visible=false;bot.add(bh);bot.add(bw);bot.scale.setScalar(.55);bot.position.set(FX-7,.3,FZ-3.3);bot.rotation.y=Math.PI/2;scene.add(bot);bot.visible=false;
+  var bm=holoMat(cT);var bot=new THREE.Group();var bh=humanoid(bm),bw=wheeled(bm),bc=crystal(bm);bw.visible=false;bc.visible=false;bot.add(bh);bot.add(bw);bot.add(bc);bot.scale.setScalar(.55);bot.position.set(FX-7,.3,FZ-3.3);bot.rotation.y=Math.PI/2;scene.add(bot);bot.visible=false;
 
   /* REAL BODIES (2026-11-05, owner: "finishing the models"): the chosen council GLB is built on the pedestal with the same scan-line
      hologram (a skinned twin of the holo shader sharing uBuild), then materialises into its real textures and idles. The field bot is a
@@ -329,14 +338,15 @@ function buildWorld(){
   function setReal(on){if(!body.root)return;body.real=on;body.root.traverse(function(o){if(o.isMesh)o.material=on?o.userData.realMat:o.userData.holoMat})}
   function setBot(bb){if(botBody.root)bot.remove(botBody.root);botBody=bb||{root:null};if(bb){bb.root.traverse(function(o){if(o.isMesh)o.material=o.userData.realMat});bot.add(bb.root)}}
   function showBody(k){var tok=++loadTok;
+    if(S.look==='glow'){if(body.root){fig.remove(body.root);body.root=null}setBot(null);setGlowVis(S.glow);rebuildAcc();bodyNote('Your glow bot. Change its shape and accessory below; its role is '+title(S.kind)+'.');return}
     if(!BODY_ROLE[k]){if(body.root)fig.remove(body.root);body.root=null;setBot(null);hum.visible=k!=='wheeled';whl.visible=k==='wheeled';bodyNote('');return}
-    if(body.root){fig.remove(body.root);body.root=null}hum.visible=true;whl.visible=false;   // the hologram stands in while the new body streams
+    if(body.root){fig.remove(body.root);body.root=null}setGlowVis(S.glow);   // the glow bot stands in while the new body streams
     bodyNote(k==='ZEROX'?'Loading ZEROX. It is the largest body (13 MB), so it takes a moment.':'Loading the '+title(k)+' body.');
     fetchBody(k).then(function(buf){return Promise.all([parseBody(buf),parseBody(buf)])}).then(function(gs){if(tok!==loadTok)return;
-      if(body.root)fig.remove(body.root);var b=fitBody(gs[0],3.1);body.root=b.root;body.mixer=b.mixer;body.readyAt=0;fig.add(b.root);setReal(false);hum.visible=false;
+      if(body.root)fig.remove(body.root);var b=fitBody(gs[0],3.1);body.root=b.root;body.mixer=b.mixer;body.readyAt=0;fig.add(b.root);setReal(false);setGlowVis(null);
       setBot(fitBody(gs[1],3.1));bodyNote(title(k)+' body ready. This is the body your agent wears in Shaddai World.')})
-    .catch(function(e){if(tok!==loadTok)return;console.warn('[forge] body load failed',e);if(body.root){fig.remove(body.root);body.root=null}setBot(null);hum.visible=true;
-      bodyNote('The '+title(k)+' body did not load, so the hologram stands in. Your choice is still saved.')})}
+    .catch(function(e){if(tok!==loadTok)return;console.warn('[forge] body load failed',e);if(body.root){fig.remove(body.root);body.root=null}setBot(null);setGlowVis(S.glow);
+      bodyNote('The '+title(k)+' body did not load, so the glow bot stands in. Your choice is still saved.')})}
 
   /* vault */
   var VX=12.5,VZ=-8,vault=new THREE.Group();vault.position.set(VX,0,VZ);vault.rotation.y=-.38;scene.add(vault);
@@ -365,9 +375,9 @@ function buildWorld(){
   /* "you" silhouette: dark cloak with rim light, placed camera-relative */
   var you=new THREE.Group();
   var YM=new THREE.ShaderMaterial({uniforms:{rc:{value:cT}},vertexShader:'varying vec3 n;varying vec3 v;void main(){vec4 wp=modelMatrix*vec4(position,1.);n=normalize(mat3(modelMatrix)*normal);v=normalize(cameraPosition-wp.xyz);gl_Position=projectionMatrix*viewMatrix*wp;}',fragmentShader:'uniform vec3 rc;varying vec3 n;varying vec3 v;void main(){float f=pow(1.-max(dot(normalize(n),normalize(v)),0.),3.);gl_FragColor=vec4(vec3(.012,.02,.03)+rc*f*1.1,1.);}'});
-  var cloak=new THREE.Mesh(new THREE.LatheGeometry([[0,0],[.75,0],[.62,1.2],[.5,2],[.42,2.55],[.0,2.6]].map(function(p){return new THREE.Vector2(p[0],p[1])}),24),YM);you.add(cloak);
-  var sh=new THREE.Mesh(new THREE.SphereGeometry(.55,16,10),YM);sh.scale.set(1.25,.5,.75);sh.position.y=2.45;you.add(sh);
-  var hd=new THREE.Mesh(new THREE.SphereGeometry(.27,16,12),YM);hd.position.y=2.98;you.add(hd);
+  var GOLD=new THREE.Color(0xf0b429),gym=holoMat(GOLD);gym.uniforms.uT={value:new THREE.Color(0xffe08a)};gym.uniforms.uBuild.value=1e5;
+  you.add(humanoid(gym));var gyr=new THREE.Mesh(new THREE.TorusGeometry(.95,.04,8,40),gym);gyr.rotation.x=Math.PI/2;gyr.position.y=.12;you.add(gyr);
+  (function(){var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:GT,transparent:true,opacity:.35,blending:ADD,depthWrite:false,fog:false,color:0xf0b429}));sp.position.y=1.8;sp.scale.set(5,5,1);you.add(sp)})();
   scene.add(you);
 
   /* post */
@@ -403,9 +413,9 @@ function buildWorld(){
   /* state sync */
   var buildTarget=-1,figKind='humanoid',laborP=0,vaultOpen=0,coinStart=-1,arrived=0,pLv=[.35,.35,.35,.35];
   function sync(){stepNow=S.i;setGoal(S.i);
-    var wantBuild=S.max>=1&&(S.i>=1);
-    if(figKind!==S.kind){figKind=S.kind;setReal(false);showBody(S.kind);if(wantBuild)fm.uniforms.uBuild.value=-1}
-    buildTarget=wantBuild?3.7:-1}
+    var wantBuild=(S.max>=1&&S.i>=1)||(S.look==='glow'&&S.i>=1);
+    var fk=S.kind+'|'+S.look+'|'+S.glow;if(figKind!==fk){figKind=fk;setReal(false);showBody(S.kind);if(wantBuild)fm.uniforms.uBuild.value=-1}
+    rebuildAcc();buildTarget=wantBuild?3.7:-1}
   function clamp(x,a,b){return Math.max(a,Math.min(b,x))}
   function ease(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2}
   var last=performance.now(),acc=0,nF=0,lowT=0,t0=last;
@@ -447,7 +457,7 @@ function buildWorld(){
     var prog=clamp(S.i,0,3)/3;for(var i=0;i<LN;i++){var u2=i/(LN-1),on=u2<=prog+.001;var pulse=.6+.4*Math.sin(T*5-i*.5);var c=on?cT:cA;var m=on?1:.28;lc[i*3]=c.r*m*pulse;lc[i*3+1]=c.g*m*pulse;lc[i*3+2]=c.b*m*pulse}lg.attributes.color.needsUpdate=true;
     /* labor */
     if(S.labor===1){laborP=Math.min(1,laborP+dt/4.2)}
-    var showBot=S.i>=3,realBot=!!botBody.root;bot.visible=showBot;bh.visible=!realBot&&S.kind!=='wheeled'&&showBot;bw.visible=!realBot&&S.kind==='wheeled'&&showBot;bm.uniforms.uBuild.value=1e5;
+    var showBot=S.i>=3,realBot=!!botBody.root;bot.visible=showBot;var gk=S.look==='glow'?S.glow:(S.kind==='wheeled'?'orb':'figure');bh.visible=!realBot&&gk==='figure'&&showBot;bw.visible=!realBot&&gk==='orb'&&showBot;bc.visible=!realBot&&gk==='crystal'&&showBot;bm.uniforms.uBuild.value=1e5;
     if(realBot&&showBot){var walking=S.labor===1;if(botBody.walkA&&botBody.idleA&&walking!==botBody.walking){botBody.walking=walking;var on=walking?botBody.walkA:botBody.idleA,off=walking?botBody.idleA:botBody.walkA;on.reset().fadeIn(.3).play();off.fadeOut(.3)}
       botBody.mixer.update(dt*sp)}
     var bx=FX-7+(laborP)*13,row=Math.floor(laborP*ROWS*.999);var zz=FZ-2.6+Math.min(ROWS-1,row)*1.3+.65;bot.position.set(bx,.3,zz);bot.rotation.y=Math.PI/2;
@@ -500,7 +510,11 @@ function render(){
     '<label class="f">What it is for<select id="f-purpose">'+['Research and summaries','Writing and threads','Design briefs','Market scanning'].map(function(o){return '<option'+(o===S.purpose?' selected':'')+'>'+o+'</option>'}).join('')+'</select></label>'+
     '<label class="chk"><input type="checkbox" id="f-oath"'+(S.oath?' checked':'')+'><span>It acts only through SHADDAI tools, within the spend cap I set, and I can pause it at any time.</span></label>'+
     '<div class="row"><button class="btn primary grow" id="nx" type="button"><span>Seal the oath</span></button></div>'}
-  else if(S.i===1){h='<h2>Body</h2><p>Choose the body your agent wears in Shaddai World. It builds on the pedestal, then takes its real form.</p>'+
+  else if(S.i===1){h='<h2>Body</h2><p>Your agent is a glow bot. Pick its shape and accessory, or switch to a council body.</p>'+
+    '<div class="opts" role="radiogroup" aria-label="Look">'+[['glow','Glow bot'],['council','Council body']].map(function(k){return '<label class="opt"><input type="radio" name="look" value="'+k[0]+'"'+(S.look===k[0]?' checked':'')+'><span>'+k[1]+'</span></label>'}).join('')+'</div>'+
+    '<div class="opts" role="radiogroup" aria-label="Glow shape">'+[['figure','Figure'],['orb','Orb'],['crystal','Crystal']].map(function(k){return '<label class="opt"><input type="radio" name="glow" value="'+k[0]+'"'+(S.glow===k[0]?' checked':'')+'><span>'+k[1]+'</span></label>'}).join('')+'</div>'+
+    '<div class="opts" role="radiogroup" aria-label="Accessory">'+['none','halo','ring','hat','antenna','crown'].map(function(k){return '<label class="opt"><input type="radio" name="acc" value="'+k+'"'+(S.acc===k?' checked':'')+'><span>'+title(k)+'</span></label>'}).join('')+'</div>'+
+    '<p class="fine">Role (also the council body if you pick one):</p>'+
     '<div class="opts" role="radiogroup" aria-label="Body">'+BODIES.map(function(k){return '<label class="opt"><input type="radio" name="kind" value="'+k+'"'+(S.kind===k?' checked':'')+'><span>'+title(k)+' <small class="fine">'+BODY_ROLE[k]+'</small></span></label>'}).join('')+'</div>'+
     '<p class="fine" id="bodyNote" aria-live="polite">'+esc(bodyNoteText)+'</p>'+
     '<div class="row" role="group" aria-label="Hologram tint"><span class="fine">Hologram tint</span>'+[['auto','Theme'],['gold','#E6B84A'],['violet','#8B6BFF'],['green','#4CC96A'],['cyan','#2FD6FF']].map(function(f){return '<button type="button" class="sw" data-fin="'+f[0]+'" aria-label="'+f[0]+'" aria-pressed="'+(S.finish===f[0])+'" style="background:'+(f[0]==='auto'?'conic-gradient(var(--accent),var(--trim),var(--accent))':f[1])+'"></button>'}).join('')+'</div>'+
@@ -524,6 +538,7 @@ function wire(){var q=function(s){return panel.querySelector(s)},qa=function(s){
   if(q('#f-name')){var nm=q('#f-name'),oa=q('#f-oath'),pu=q('#f-purpose');var chk=function(){S.name=nm.value.trim();S.oath=oa.checked;S.purpose=pu.value;nx.disabled=!(S.name.length>=2&&S.oath)};chk();
     nm.oninput=chk;oa.onchange=chk;pu.onchange=chk;nx.onclick=function(){chk();if(!nx.disabled)UI.next()};nm.onkeydown=function(e){if(e.key==='Enter'&&!nx.disabled)UI.next()}}
   qa('input[name=kind]').forEach(function(r){r.onchange=function(){S.kind=r.value;W&&W.sync()}});
+  ['look','glow','acc'].forEach(function(n){qa('input[name='+n+']').forEach(function(r){r.onchange=function(){S[n]=r.value;W&&W.sync()}})});
   qa('[data-fin]').forEach(function(b){b.onclick=function(){S.finish=b.dataset.fin;W&&W.finish(S.finish);qa('[data-fin]').forEach(function(x){x.setAttribute('aria-pressed',x===b)})}});
   qa('[data-sk]').forEach(function(c){c.onchange=function(){if(c.checked)S.skills[c.dataset.sk]=true;else delete S.skills[c.dataset.sk];var n=Object.keys(S.skills).length;nx.disabled=n<1;
     qa('[data-sk]').forEach(function(o){o.disabled=!o.checked&&n>=CAP});q('#skn').textContent=n+' of '+CAP+' skills. The cap here is an example; the real limit per tier is read from prices.json.'}});
@@ -541,7 +556,7 @@ function wire(){var q=function(s){return panel.querySelector(s)},qa=function(s){
 /* FINISH: register the operative with the same endpoint forge.html uses. The server sets the owner from the session (never the client)
    and validates `model` against the 7 council bodies, so this record is what makes the agent appear in Shaddai World. */
 function enterWorld(){
-  var rec={codename:(S.name||'Unnamed').slice(0,24),archetype:S.kind.toLowerCase(),model:S.kind,look:{archetype:S.kind.toLowerCase(),model:S.kind},
+  var rec={codename:(S.name||'Unnamed').slice(0,24),archetype:S.kind.toLowerCase(),model:S.kind,look:Object.assign({archetype:S.kind.toLowerCase(),model:S.kind},S.look==='glow'?{orb:(function(){var G={auto:['#00e5a0','#00b4ff'],gold:['#f0b429','#fb923c'],violet:['#a78bfa','#f43f5e'],green:['#34d399','#fde047'],cyan:['#00f0ff','#7c3aed']}[S.finish]||['#00e5a0','#00b4ff'];return {form:S.glow,c1:G[0],c2:G[1],acc:S.acc,glow:1}})()}:{}),
     brain:{tier:'free',persona:'You are '+(S.name||'an operative')+', a SHADDAI operative. Purpose: '+S.purpose+'.'},tools:Object.keys(S.skills)};
   try{localStorage.setItem('shd_forge_demo_agent_v1',JSON.stringify(Object.assign({savedAt:Date.now(),firstJob:S.job},rec)))}catch(e){}
   return fetch('/api/operatives',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(rec)})
