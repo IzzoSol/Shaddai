@@ -2186,7 +2186,10 @@ app.use('/x402/academy', _academyRoutes.paylabRouter); // merchant: sell the pay
 // The bot-side /xagent surface stays OFF until an agentAuth is passed in (Grok Bot bridge - see docs/V119-WORKLIST.md WP7).
 try {
   const _schoolInst = require('./lib/academy/academy-instance');
-  app.use('/api/school', softAuth, require('./academy-school-routes').createSchoolRouter({
+  // shdx_ bot bearers are not user sessions: skip softAuth for them (no wasted verification). With no agentAuth passed below they
+  // are treated as anonymous, so the bot side stays OFF until WP7 signs it off (owner decision in V119-WORKLIST).
+  const _schoolAuth = (req, res, next) => (/^Bearer\s+shdx_/.test(String(req.headers.authorization || '')) ? next() : softAuth(req, res, next));
+  app.use('/api/school', _schoolAuth, require('./academy-school-routes').createSchoolRouter({
     academy: _schoolInst.getAcademy(), operatives: require('./lib/operatives'), runner: _schoolInst.getRunner(), uidOf: _schoolInst.uidFromReq
   }));
   console.log('[prod] school mounted (/api/school)');
