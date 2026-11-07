@@ -170,10 +170,39 @@
     '@keyframes nvfloatL{0%,100%{translate:0 0}50%{translate:0 -6px}}@keyframes nvfloatR{0%,100%{translate:0 -6px}50%{translate:0 0}}@keyframes nvsheen{from{background-position:200% 0}to{background-position:-60% 0}}' +
     '#navi .swivel{transform:translateX(-50%) rotateX(calc(var(--nvTilt,14deg) * .6))}' +
     '@media (prefers-reduced-motion:reduce){#navi .plate{animation:none}#navi .plate:before{animation:none}}';
+  /* NAVI STYLES (2026-11-07, owner: "different navi styles"): one data-style attribute on #navi, pure CSS overrides, saved in
+   * localStorage 'shd_navi_style'. holo = the HOLO ARC above (default) · hex = HEX DECK (hex orbs, square rings, no tilt, gold rails)
+   * · clean = CLEAN (flat, no grid / scanlines / sheen / float: also the cheapest to draw) · wrist = WRIST (compact deck docked low). */
+  var STYLES = [['holo', 'HOLO ARC', 'curved glass panels, tilted orb ring, pointer swivel'], ['hex', 'HEX DECK', 'hex orbs, cut-corner gold-rail panels, flat ring'],
+    ['clean', 'CLEAN', 'flat and calm: no grid, scanlines, sheen or float (fastest)'], ['wrist', 'WRIST', 'compact: smaller ring, short side panels, world stays visible']];
+  var HEXP = 'polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)';
+  css += '#navi[data-style=hex] .orbwrap,#navi[data-style=clean] .orbwrap{transform:translate(-50%,-50%)}' +
+    '#navi[data-style=hex] .node{border-radius:0;clip-path:' + HEXP + ';border:0;background:linear-gradient(180deg,rgba(140,230,255,.55),rgba(14,40,92,.95) 45%,rgba(3,10,28,.98))}' +
+    '#navi[data-style=hex] .node:before,#navi[data-style=hex] .node.act::after{display:none}' +
+    '#navi[data-style=hex] .node.act,#navi[data-style=hex] .node:hover{background:linear-gradient(180deg,rgba(255,225,160,.9),rgba(160,90,10,.85) 45%,rgba(40,20,0,.95));transform:scale(1.14)}' +
+    '#navi[data-style=hex] .ring{border-radius:22%}#navi[data-style=hex] .ring.r2{border-radius:30%}#navi[data-style=hex] .ring.r3{border-radius:14%}' +
+    '#navi[data-style=hex] .plate.pl,#navi[data-style=hex] .plate.pr{transform:none;animation:none;clip-path:polygon(22px 0,100% 0,100% calc(100% - 22px),calc(100% - 22px) 100%,0 100%,0 22px);border-color:rgba(245,166,35,.6);border-width:1px 1px 1px 4px}' +
+    '#navi[data-style=hex] .plate.pr{border-width:1px 4px 1px 1px}#navi[data-style=hex] .swivel{transform:translateX(-50%)}' +
+    '#navi[data-style=clean] .bg:before,#navi[data-style=clean] .bg:after,#navi[data-style=clean] .scan,#navi[data-style=clean] .ring.r2,#navi[data-style=clean] .ring.r3,' +
+    '#navi[data-style=clean] .core:before,#navi[data-style=clean] .node:before,#navi[data-style=clean] .node.act::after,#navi[data-style=clean] .plate:before,#navi[data-style=clean] .hx:before{display:none}' +
+    '#navi[data-style=clean] .plate.pl,#navi[data-style=clean] .plate.pr{transform:none;animation:none;background:rgba(5,12,30,.94);box-shadow:none;backdrop-filter:none}' +
+    '#navi[data-style=clean] .node{background:rgba(5,14,34,.92);box-shadow:none;transform:none}#navi[data-style=clean] .node.act,#navi[data-style=clean] .node:hover{transform:none;box-shadow:0 0 0 2px ' + THEME.gold + '}' +
+    '#navi[data-style=clean] .core{background:rgba(6,18,44,.96);box-shadow:none}#navi[data-style=clean] .core svg{animation:none}#navi[data-style=clean] .ring{animation:none;box-shadow:none}' +
+    '#navi[data-style=clean] .swivel{transform:translateX(-50%)}#navi[data-style=clean] .hx{filter:none}#navi[data-style=clean] .kpi span{text-shadow:none}' +
+    '#navi[data-style=wrist] .orbwrap{top:auto;bottom:4%;left:50%;width:min(30vh,26vw);height:min(30vh,26vw);transform:translate(-50%,0) rotateX(var(--nvTilt,14deg))}' +
+    '#navi[data-style=wrist] .node{--nd:clamp(30px,calc(min(30vh,26vw) * .17),46px)}#navi[data-style=wrist] .core b{font-size:10px}' +
+    '#navi[data-style=wrist] .plate{top:auto;bottom:4%;height:42vh;width:min(24vw,300px)}#navi[data-style=wrist] .bg{background:radial-gradient(ellipse at 50% 100%,rgba(5,8,20,.7),rgba(5,8,20,.15) 70%)}' +
+    '#navi[data-style=wrist] .swivel{bottom:auto;top:3%}#navi[data-style=wrist] .kpis{top:13%;bottom:auto}#navi[data-style=wrist] .bg:after{display:none}';
+  function getStyle() { var v = null; try { v = localStorage.getItem('shd_navi_style'); } catch (e) { } return STYLES.some(function (s) { return s[0] === v; }) ? v : 'holo'; }
+  function setStyle(v) {
+    if (!STYLES.some(function (s) { return s[0] === v; })) return false;
+    try { localStorage.setItem('shd_navi_style', v); } catch (e) { }
+    if (root) root.setAttribute('data-style', v); emit('style'); return true;
+  }
   var root, elL, elR, elSw, elKp, elNodes, elCore, modalEl;
   function build() {
     var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
-    root = document.createElement('div'); root.id = 'navi';
+    root = document.createElement('div'); root.id = 'navi'; root.setAttribute('data-style', getStyle());
     root.innerHTML = '<div class="bg"></div><div class="scan"></div><div class="stage">' +
       '<div class="orbwrap"><div class="ring"></div><div class="ring r2"></div><div class="ring r3"></div><div class="core">' +
       '<svg viewBox="0 0 64 64" fill="none" stroke="' + THEME.cyan + '" stroke-width="3"><path d="M10 8l18 6 4 42-14-10zM54 8L36 14l-4 42 14-10z"/></svg><b>SHADDAI NAVI</b><i id="nvAgent"></i></div><div id="nvNodes"></div></div>' +
@@ -395,16 +424,20 @@
   /* SETTINGS (2026-10-23): clean-screen toggles + camera feel + the full controls list (world-hud-clean.js owns the prefs). */
   M.settings = function () {
     var H = window.WorldHudPrefs, p = H ? H.get() : {}, list = [];
+    var cs = getStyle(), cst = STYLES.filter(function (s) { return s[0] === cs; })[0];
+    list.push({ id: 'st-navistyle', t: 'Navi style', s: cst[1] + ' · ' + cst[2], tag: 'STYLE' });
     list.push({ id: 'st-controls-list', t: 'Controls', s: 'every key, in one place (F1 flashes them in game)', tag: 'VIEW' });
     list.push({ id: 'st-cam', t: 'Camera', s: 'look speed x' + (p.lookSens || 1).toFixed(1) + (p.invertY ? ' · inverted' : ''), tag: 'TUNE' });
     if (H) Object.keys(H.LABELS).forEach(function (k) { list.push({ id: 'st-' + k, t: H.LABELS[k], s: p[k] ? 'shown' : 'hidden', tag: p[k] ? 'ON' : 'OFF' }); });
     return { title: 'SETTINGS', list: list, empty: 'Settings are loading.',
       detail: function (id) {
+        if (id === 'st-navistyle') return '<h3>NAVI STYLE</h3>' + STYLES.map(function (s) { return '<div style="margin:8px 0"><button class="b' + (s[0] === getStyle() ? ' g' : '') + '" data-a="style:' + s[0] + '">' + s[1] + (s[0] === getStyle() ? ' ✓' : '') + '</button><div style="font-size:12px;opacity:.8">' + s[2] + '</div></div>'; }).join('');
         if (id === 'st-controls-list') return '<h3>CONTROLS</h3><div style="line-height:1.9">' + [['W A S D', 'move'], ['Shift', 'run'], ['Space', 'jump'], ['Mouse', 'look'], ['E', 'interact / doors / lifts'], ['V', 'camera (1st / 3rd person)'], ['O', 'hoverboard'], ['I', 'mounts & travel'], ['U', 'maglev'], ['Y', 'NAVI'], ['H', 'map'], ['Tab', 'cursor'], ['B', 'venue board (Colosseum / Garage)'], ['L', 'Listening Room (on the ring)'], ['F1', 'flash these controls'], ['Esc', 'menu']].map(function (r) { return '<b>' + r[0] + '</b> &nbsp;' + r[1]; }).join('<br>') + '</div>';
         if (id === 'st-cam') return '<h3>CAMERA</h3><div>Look speed: x' + (p.lookSens || 1).toFixed(1) + '</div><button class="b" data-a="slow">SLOWER</button> <button class="b" data-a="fast">FASTER</button><div style="margin-top:8px">Invert Y: ' + (p.invertY ? 'on' : 'off') + '</div><button class="b" data-a="inv">TOGGLE INVERT</button>';
         var k = String(id).slice(3); return H && H.LABELS[k] ? '<h3>' + esc(H.LABELS[k]) + '</h3><div>' + (p[k] ? 'Shown on screen.' : 'Hidden for a clean screen.') + '</div><button class="b g" data-a="tog">' + (p[k] ? 'HIDE' : 'SHOW') + '</button>' : '';
       },
       act: function (id, a) {
+        if (/^style:/.test(a)) { setStyle(a.slice(6)); render(); return; }
         if (!H) return; var q = H.get();
         if (id === 'st-cam') { if (a === 'slow') H.set('lookSens', Math.max(0.3, Math.round((q.lookSens - 0.1) * 10) / 10)); if (a === 'fast') H.set('lookSens', Math.min(3, Math.round((q.lookSens + 0.1) * 10) / 10)); if (a === 'inv') H.set('invertY', !q.invertY); }
         else if (a === 'tog') { var k = String(id).slice(3); H.set(k, !q[k]); }
@@ -751,6 +784,7 @@
   window.Navi = {
     open: open, close: close, toggle: toggle, setModule: setModule, setWaypoint: setWaypoint, clearWaypoint: clearWaypoint,
     registerPin: function (p) { S.pins = S.pins.filter(function (x) { return x.id !== p.id; }); S.pins.push(p); },
+    STYLES: STYLES.map(function (x) { return x[0]; }), style: getStyle, setStyle: setStyle,
     unregisterPin: function (id) { S.pins = S.pins.filter(function (x) { return x.id !== id; }); },
     pins: function () { return knownPins(); },
     toast: function (m) { var c = document.getElementById('naviToasts'); if (!c) return; var d = document.createElement('div'); d.textContent = m; c.appendChild(d); while (c.children.length > 3) c.firstChild.remove(); setTimeout(function () { d.remove(); }, 4000); },
