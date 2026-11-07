@@ -21,6 +21,7 @@
     { say: ['define', 'definition', 'meaning', 'what does'], title: 'Definition', tool: 'get_word_definition', hint: 'define garden', need: 'a word, e.g. /define garden', params: function (r) { var w = r.words.filter(function (x) { return x !== 'word'; })[0]; return w ? { word: w } : null; } },
     { say: ['calc', 'calculate', 'math', 'compute'], title: 'Calculator', tool: 'calculate', hint: 'calc 12 * (3 + 4)', need: 'an expression, e.g. /calc 12 * 7', params: function (r) { return r.raw ? { expression: r.raw } : null; } },
     { say: ['sol', 'balance', 'sol balance', 'solana balance', 'wallet'], title: 'SOL balance (read-only)', tool: 'get_sol_balance', hint: 'sol <address>', need: 'a Solana address (public, 32-44 characters), e.g. /sol 9xQe...', params: function (r) { var a = (r.owords || r.words).filter(function (x) { return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(x); })[0]; return a ? { address: a } : null; } },
+    { say: ['hl', 'hyperliquid'], title: 'Hyperliquid (read-only)', tool: 'hl_prices', hint: 'hl btc eth  or  hl 0x…', params: function (r) { var a = (r.owords || r.words).filter(function (x) { return /^0x[0-9a-fA-F]{40}$/.test(x); })[0]; if (a) return { __tool: 'hl_account', address: a }; return { coins: r.words.map(function (w) { return w.toUpperCase(); }).join(',') || 'BTC,ETH,SOL' }; } },
     { say: ['joke', 'laugh'], title: 'A joke', tool: 'get_joke', hint: 'joke', params: function () { return {}; } },
     { say: ['quote', 'inspire', 'inspiration'], title: 'A quote', tool: 'get_random_quote', hint: 'quote', params: function () { return {}; } }
   ];
@@ -68,7 +69,7 @@
   function resolve(text) {
     var p = parseInput(text); if (!p.plain.length && !Object.keys(p.kv).length) return Promise.resolve({ ok: false, message: 'Say what you want, for example: price btc, news, research mangroves.', suggestions: hints() });
     var fm = friendlyMatch(p);
-    if (fm) { var prm = fm.f.params(fm.r); if (prm === null) return Promise.resolve({ ok: false, message: 'That needs ' + fm.f.need + '.', suggestions: [] }); var out = { ok: true, title: fm.f.title, via: 'friendly' }; if (fm.f.tool) { out.wf = 'tool.run'; out.params = { tool: fm.f.tool, args: prm }; } else { out.wf = fm.f.wf; out.params = prm; } return Promise.resolve(out); }
+    if (fm) { var prm = fm.f.params(fm.r); if (prm === null) return Promise.resolve({ ok: false, message: 'That needs ' + fm.f.need + '.', suggestions: [] }); var out = { ok: true, title: fm.f.title, via: 'friendly' }; if (fm.f.tool) { var tn = fm.f.tool; if (prm && prm.__tool) { tn = prm.__tool; delete prm.__tool; out.title = 'Hyperliquid account (read-only)'; } out.wf = 'tool.run'; out.params = { tool: tn, args: prm }; } else { out.wf = fm.f.wf; out.params = prm; } return Promise.resolve(out); }
     var q = p.plain.map(function (w) { return w.toLowerCase().replace(/[^a-z0-9]/g, ''); }).filter(function (w) { return w && !FILLER[w]; });
     if (!q.length) return Promise.resolve({ ok: false, message: 'Say what you want to run, for example: run crypto analysis.', suggestions: hints() });
     return load().then(function (cands) {

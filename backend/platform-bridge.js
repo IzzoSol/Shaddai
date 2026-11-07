@@ -199,7 +199,17 @@ function createBridge(opts) {
   function readPlots() { try { const j = JSON.parse(fs.readFileSync(plotsFile, 'utf8')); return (j && j.plots) || {}; } catch (_) { return {}; } }
 
   /* ── executing steps: vetted read-only tools + the owner's own dashboard data ───────────── */
-  function toolTable() { if (opts.tools) return opts.tools; try { return require('./agent-engine').TOOLS; } catch (_) { return {}; } }
+  // Hyperliquid reads (AGENTS.md R1: no HTTP route may trade): only POST /info on the fixed public host, with a public address. Nothing signs, nothing places orders.
+  const HL_URL = 'https://api.hyperliquid.xyz/info';
+  const hlFetch = opts.hlFetch || (async (body) => { const r = await fetch(HL_URL, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), redirect: 'error', signal: AbortSignal.timeout(8000) }); if (!r.ok) throw new Error('Hyperliquid answered ' + r.status); const t = await r.text(); if (t.length > 400000) throw new Error('Hyperliquid answer too large'); return JSON.parse(t); });
+  const BRIDGE_TOOLS = {
+    hl_prices: { description: 'Hyperliquid mid prices for a few coins (read-only).', schema: { coins: 'string, comma separated, e.g. BTC,ETH,SOL (max 10)' },
+      execute: async (a) => { const want = String((a && a.coins) || 'BTC,ETH,SOL').toUpperCase().split(/[ ,]+/).filter((x) => /^[A-Z0-9]{1,12}$/.test(x)).slice(0, 10); if (!want.length) throw new Error('give coin symbols like BTC,ETH'); const mids = await hlFetch({ type: 'allMids' }), out = {}; want.forEach((c) => { out[c] = mids && mids[c] != null ? mids[c] : 'not listed'; }); return { venue: 'hyperliquid', mids: out }; } },
+    hl_account: { description: 'Hyperliquid account summary for a PUBLIC address: perps account value, open positions, spot balances (read-only).', schema: { address: 'string, 0x… public address (never a private key)' },
+      execute: async (a) => { const addr = String((a && a.address) || '').trim(); if (!/^0x[0-9a-fA-F]{40}$/.test(addr)) throw new Error('give a public 0x address (42 characters)'); const [perp, spot] = await Promise.all([hlFetch({ type: 'clearinghouseState', user: addr }), hlFetch({ type: 'spotClearinghouseState', user: addr })]);
+        const ms = (perp && perp.marginSummary) || {}; return { venue: 'hyperliquid', address: addr, perps: { account_value: ms.accountValue != null ? ms.accountValue : null, withdrawable: perp && perp.withdrawable != null ? perp.withdrawable : null, open_positions: ((perp && perp.assetPositions) || []).slice(0, 10).map((p) => { const x = p.position || {}; return { coin: x.coin, size: x.szi, entry: x.entryPx, unrealized_pnl: x.unrealizedPnl }; }) }, spot: ((spot && spot.balances) || []).filter((b) => Number(b.total) > 0).slice(0, 20).map((b) => ({ coin: b.coin, total: b.total, on_hold: b.hold })) }; } }
+  };
+  function toolTable() { let base = opts.tools; if (!base) { try { base = require('./agent-engine').TOOLS; } catch (_) { base = {}; } } return Object.assign({}, base, BRIDGE_TOOLS); }
   function redactOut(v) { return String(v).replace(/\b(sk-[A-Za-z0-9]{16,}|xai-[A-Za-z0-9]{16,}|gsk_[A-Za-z0-9]{16,}|shdb_[A-Za-z0-9_-]{20,}|AIza[0-9A-Za-z_-]{30,})\b/g, '[redacted]'); }
   function capOut(v) { let t; try { t = typeof v === 'string' ? v : JSON.stringify(v); } catch (_) { t = String(v); } t = redactOut(t || ''); return t.length > OUT_CAP ? t.slice(0, OUT_CAP) + '…[truncated]' : t; }
   function execTool(name, args) {

@@ -21,5 +21,5 @@ module.exports = new Set([
   'get_eth_balance', 'get_exchange_rates', 'get_github_trending', 'get_reddit_posts', 'get_arxiv_papers',
   'get_gas_price', 'get_nft_floor', 'analyze_sentiment', 'format_data', 'hash_text', 'base64_codec',
   'extract_keywords', 'markdown_to_html', 'translate_text', 'count_tokens', 'search_npm', 'get_weather',
-  'get_token_info', 'calculate'
+  'get_token_info', 'calculate', 'hl_prices', 'hl_account'
 ]);
