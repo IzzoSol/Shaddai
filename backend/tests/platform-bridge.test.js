@@ -24,6 +24,7 @@ const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id)
     get_trending: { description: 'tr', execute: async () => ['a', 'b'] },
     search_web: { description: 'web', execute: async ({ query }) => 'results for ' + query + ' key sk-' + 'z'.repeat(30) },
     wikipedia_search: { description: 'wiki', execute: async () => { throw new Error('wiki down'); } },
+    get_moon_phase: { description: 'moon', execute: async () => { calls.push('moon'); return { phase: 'waxing crescent' }; } },
     execute_trade: { description: 'NEVER', execute: async () => { calls.push('TRADE!'); return 'traded'; } },
     write_file: { description: 'NEVER', execute: async () => { calls.push('WRITE!'); return 'wrote'; } }
   };
@@ -36,6 +37,8 @@ const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id)
     { id: 'price-pulse', name: 'price-pulse', description: 'Price and mood', requires: [], steps: [{ tool: 'zerox_price', args: { symbol: '{{context.coin}}' } }, { tool: 'zerox_sentiment', args: {} }] },
     { id: 'multi-price', name: 'multi-price', description: 'Several tickers', requires: [], steps: [{ tool: 'zerox_price', args: { symbols: 'BTC,ETH,SOL' } }] },
     { id: 'no-symbol', name: 'no-symbol', description: 'forgot the symbol', requires: [], steps: [{ tool: 'zerox_price', args: {} }] },
+    { id: 'calc-pack', name: 'calc-pack', description: 'Business math', requires: [], steps: [{ tool: 'roi', args: { gain: 120, cost: 100 } }, { tool: 'profit_margin', args: { revenue: 1000, cost: 100 } }, { tool: 'ltv_cac', args: { ltv: 600, cac: 200 } }, { tool: 'turtle_palette', args: { mood: 'sacred', count: 5 } }, { tool: 'hall_moon', args: {} }, { tool: 'csv_stats', args: { csv: 'a,b\n1,2\n3,4', column: 'a' } }, { tool: 'json_format', args: { json: '{"a":1}' } }] },
+    { id: 'bad-math', name: 'bad-math', description: 'division by zero', requires: [], steps: [{ tool: 'roi', args: { gain: 5, cost: 0 } }] },
     { id: 'arena-game', name: 'arena-game', description: 'Needs a game tool', requires: [], steps: [{ tool: 'hall_arena', args: {} }] },
     { id: 'admin-thing', name: 'admin-thing', description: 'Admin-ish', requires: [], steps: [{ tool: 'shaddai_create_agent', args: {} }] }
   ], asksPerHour: 3, ragSearch: (id, q, n) => [{ docName: 'doc-' + id, score: 0.9, chunkText: 'chunk about ' + q + ' key sk-' + 'w'.repeat(30) }].slice(0, n), askAgent: async (id, q, extra) => { lastAskExtra = extra; return { answer: id + ' says: ' + q, sources: ['doc-' + id] }; }, chatAsksPerHour: 3, stepMs: 60, spacingMs: 0, retryMs: 5, uidOf: (req) => req.headers['x-uid'] || '' });
@@ -275,6 +278,11 @@ const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id)
   assert.ok(calls.indexOf('fetch_price:bitcoin') > -1 && calls.indexOf('fetch_price:ethereum') > -1 && calls.indexOf('fetch_price:solana') > -1, 'a symbols list (BTC,ETH,SOL) fetches EACH asset, mapped to coin ids');
   assert.strictEqual(JSON.parse(mpd.outputs['1. zerox_price']).length, 3);
   const ns = out(await tool(libTok.token, 'start_workflow', { workflow_id: 'lib.no-symbol', idempotency_key: 'lb5', params: {} })); const nsd = await wait(libTok.token, ns.run_id); assert.strictEqual(nsd.status, 'failed'); assert.ok(/needs symbols/.test(nsd.error), 'a missing symbol fails clearly instead of silently returning bitcoin');
+  const cp = out(await tool(libTok.token, 'start_workflow', { workflow_id: 'lib.calc-pack', idempotency_key: 'nat1', params: {} })); const cpd = await wait(libTok.token, cp.run_id); assert.strictEqual(cpd.status, 'succeeded', cpd.error);
+  const o1 = (k) => JSON.parse(cpd.outputs[k]); assert.strictEqual(o1('1. roi').roi_percent, 20); assert.strictEqual(o1('2. profit_margin').margin_percent, 90); assert.strictEqual(o1('3. ltv_cac').ratio, 3); assert.ok(/healthy/.test(o1('3. ltv_cac').verdict));
+  assert.strictEqual(o1('4. turtle_palette').colors.length, 5); assert.ok(o1('4. turtle_palette').colors.every((c) => /^#[0-9a-f]{6}$/.test(c)), 'palette colors are valid hex'); assert.ok(calls.indexOf('moon') > -1, 'hall_moon maps to the allowlisted get_moon_phase');
+  assert.deepStrictEqual([o1('6. csv_stats').count, o1('6. csv_stats').sum, o1('6. csv_stats').mean], [2, 4, 2], 'csv helper reads escaped newlines'); assert.ok(/"a": 1/.test(cpd.outputs['7. json_format']), 'json_format pretty prints');
+  const bm = out(await tool(libTok.token, 'start_workflow', { workflow_id: 'lib.bad-math', idempotency_key: 'nat3', params: {} })); const bmd = await wait(libTok.token, bm.run_id); assert.strictEqual(bmd.status, 'failed'); assert.ok(/cost cannot be zero/.test(bmd.error), 'bad input fails clearly');
   const noRag = await mint('bob', { label: 'norag', scopes: ['workflows:run', 'tools:run', 'agents:ask'] }); assert.strictEqual((await tool(noRag.token, 'start_workflow', { workflow_id: 'lib.research-brief', idempotency_key: 'lb3', params: { context: { q: 'x' } } })).status, 403, 'scopes follow the tools a workflow uses');
   assert.ok((await http('GET', '/library?q=price', { uid: 'bob' })).json.workflows.some((x) => x.workflow_id === 'lib.price-pulse'), 'owner door lists the library for the dashboard chat');
 

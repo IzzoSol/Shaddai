@@ -515,7 +515,7 @@ function createBridge(opts) {
       used_this_hour: { runs: runsUsed, bot_questions: hour(asks.get(req.owner) || []), chat_questions: hour(chatAsks.get(req.owner) || []) }, balance,
       recent: db.usage.filter((u) => u.owner === req.owner).slice(-20).reverse().map((u) => ({ at: u.ts, kind: u.kind, sparks: fmtSparks(u.cents) })) });
   });
-  router.get('/library', needOwner, (req, res) => res.json({ ok: true, total: libMeta.length, workflows: librarySearch(req.query.q, req.query.limit) }));
+  router.get('/library', needOwner, (req, res) => res.json({ ok: true, total: libMeta.length, workflows: librarySearch(req.query.q, req.query.limit, 400) }));
   router.get('/audit', needOwner, (req, res) => res.json({ ok: true, audit: db.audit.filter((a) => a.owner === req.owner).slice(-100).reverse() }));
   router.get('/world-state', (req, res) => {
     const ids = new Set(Object.values(db.runs).filter((r) => r.agent_id).map((r) => r.agent_id));
@@ -571,6 +571,18 @@ function createBridge(opts) {
   // Only workflows made entirely of tools we can run safely are included (154 of 1,633); the rest need game/payment/file tools. Data only: no code from that repo runs here.
   // Unified tool names map onto what the bridge already does: rag_search, shaddai_<agent>/shaddai_run_agent/rag_ask -> ask_agent, web_search -> search_web, zerox_price -> fetch_price, zerox_sentiment -> get_fear_greed; allowlisted engine tools run as-is.
   const TICKERS = { btc: 'bitcoin', eth: 'ethereum', sol: 'solana', doge: 'dogecoin', ada: 'cardano', xrp: 'ripple', bnb: 'binancecoin', avax: 'avalanche-2', dot: 'polkadot', matic: 'matic-network', link: 'chainlink', ltc: 'litecoin', wif: 'dogwifcoin', bonk: 'bonk', trx: 'tron', atom: 'cosmos', near: 'near', sui: 'sui', apt: 'aptos', arb: 'arbitrum', op: 'optimism', pepe: 'pepe', shib: 'shiba-inu' };
+  // Pure, side-effect-free helpers that unified-MCP workflows call. They never touch the network, disk or any account.
+  const num = (v, name) => { const n = Number(v); if (!isFinite(n)) throw new Error(name + ' must be a number'); return n; };
+  const hex = (h2, sat, lig) => { h2 = ((h2 % 360) + 360) % 360; const a = sat * Math.min(lig, 1 - lig), f = (n) => { const k = (n + h2 / 30) % 12, c = lig - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); return Math.round(255 * c).toString(16).padStart(2, '0'); }; return '#' + f(0) + f(8) + f(4); };
+  const MOODS = { cyber: 180, sacred: 45, calm: 200, fire: 12, forest: 130, royal: 270, sunset: 24, ocean: 210, neon: 300, earth: 30, ice: 195, gold: 48 };
+  const NATIVE = {
+    roi: (a) => { const g = num(a.gain, 'gain'), c = num(a.cost, 'cost'); if (c === 0) throw new Error('cost cannot be zero'); return { roi_percent: +(((g - c) / c) * 100).toFixed(2), gain: g, cost: c, profit: g - c }; },
+    profit_margin: (a) => { const r = num(a.revenue, 'revenue'), c = num(a.cost, 'cost'); if (r === 0) throw new Error('revenue cannot be zero'); return { margin_percent: +(((r - c) / r) * 100).toFixed(2), profit: r - c, revenue: r, cost: c }; },
+    ltv_cac: (a) => { const l = num(a.ltv, 'ltv'), c = num(a.cac, 'cac'); if (c === 0) throw new Error('cac cannot be zero'); const ratio = +(l / c).toFixed(2); return { ratio, verdict: ratio >= 3 ? 'healthy (3x or better)' : ratio >= 1 ? 'thin (under 3x)' : 'losing money on each customer' }; },
+    json_format: (a) => { const src = a.json != null ? a.json : a.text; if (typeof src !== 'string' || src.length > 20000) throw new Error('json text required (max 20000 characters)'); try { return JSON.stringify(JSON.parse(src), null, 2); } catch (e) { return { valid: false, error: String(e.message).slice(0, 160) }; } },
+    csv_stats: (a) => { const raw = String(a.csv || '').slice(0, 50000).replace(/\\n/g, '\n'), rows = raw.split(/\r?\n/).filter(Boolean).map((r) => r.split(',').map((c) => c.trim())); if (rows.length < 2) throw new Error('csv needs a header row and at least one data row'); const col = rows[0].indexOf(String(a.column || rows[0][0])); if (col < 0) throw new Error('column not found: ' + a.column); const v = rows.slice(1).map((r) => Number(r[col])).filter((n) => isFinite(n)); if (!v.length) throw new Error('no numeric values in that column'); const sum = v.reduce((x, y) => x + y, 0); return { column: rows[0][col], count: v.length, sum, mean: +(sum / v.length).toFixed(4), min: Math.min.apply(null, v), max: Math.max.apply(null, v) }; },
+    turtle_palette: (a) => { const count = Math.max(2, Math.min(12, parseInt(a.count, 10) || 5)), mood = String(a.mood || 'cyber').toLowerCase().slice(0, 30); let base = MOODS[mood]; if (base == null) { base = 0; for (let i = 0; i < mood.length; i++) base = (base * 31 + mood.charCodeAt(i)) % 360; } const colors = []; for (let i = 0; i < count; i++) colors.push(hex(base + (i - (count - 1) / 2) * 24, 0.75 - (i % 3) * 0.08, 0.5 + ((i % 2) ? 0.08 : -0.04))); return { mood, base_hue: base, colors }; }
+  };
   const libMeta = [], libSkipped = [];
   function libInterp(str, ctxObj, outs, names) { return String(str).replace(/\{\{\s*(context\.[A-Za-z0-9_]+|step_\d+\.output)\s*\}\}/g, (_, e) => { if (e.indexOf('context.') === 0) { const v = ctxObj[e.slice(8)]; return v == null ? '' : String(v).slice(0, 300); } const n = +e.match(/\d+/)[0], v = outs[names[n - 1]]; return v == null ? '' : String(v).slice(0, 1500); }); }
   function libStep(step, names) {
@@ -584,6 +596,8 @@ function createBridge(opts) {
       if (t === 'web_search') return execTool('search_web', { query: args.query });
       if (t === 'zerox_price') { const raw = args.symbols || args.symbol || args.token || args.coin; if (!raw) throw new Error('zerox_price needs symbols'); const res = []; for (const sy of String(raw).split(/[ ,]+/).filter(Boolean).slice(0, 5)) res.push(await execTool('fetch_price', { symbol: TICKERS[sy.toLowerCase()] || sy.toLowerCase() })); return res; }
       if (t === 'zerox_sentiment') return execTool('get_fear_greed', {});
+      if (t === 'hall_moon') return execTool('get_moon_phase', {});
+      if (NATIVE[t]) return NATIVE[t](args);
       if (SAFE_TOOLS.has(t)) return execTool(t, args);
       throw new Error('unsupported step tool: ' + t);
     };
@@ -592,10 +606,10 @@ function createBridge(opts) {
     let list = opts.library; if (!list) { try { list = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'library-workflows.json'), 'utf8')); } catch (_) { list = []; } }
     (Array.isArray(list) ? list : []).forEach((w) => {
       const id = 'lib.' + String(w.id || '').toLowerCase(); if (!/^lib\.[a-z0-9._-]{1,50}$/.test(id) || WORKFLOWS[id] || !Array.isArray(w.steps) || !w.steps.length || w.steps.length > 12) return;
-      const okLib = (t) => t === 'rag_search' || t === 'rag_ask' || t === 'web_search' || t === 'zerox_price' || t === 'zerox_sentiment' || t === 'shaddai_run_agent' || /^shaddai_(shaddai|nexus|zerox|oracle|turtle|quill|pikadon)$/.test(t) || SAFE_TOOLS.has(t);
+      const okLib = (t) => !!NATIVE[t] || t === 'hall_moon' || t === 'rag_search' || t === 'rag_ask' || t === 'web_search' || t === 'zerox_price' || t === 'zerox_sentiment' || t === 'shaddai_run_agent' || /^shaddai_(shaddai|nexus|zerox|oracle|turtle|quill|pikadon)$/.test(t) || SAFE_TOOLS.has(t);
       if (!w.steps.every((st) => st && okLib(st.tool))) return;
       const tools = w.steps.map((st) => st.tool), scopes = ['workflows:run'];
-      if (tools.indexOf('rag_search') > -1) scopes.push('rag:read'); if (tools.some((t) => t === 'rag_ask' || /^shaddai_/.test(t))) scopes.push('agents:ask'); if (tools.some((t) => t !== 'rag_search' && !(t === 'rag_ask' || /^shaddai_/.test(t)))) scopes.push('tools:run');
+      if (tools.indexOf('rag_search') > -1) scopes.push('rag:read'); if (tools.some((t) => t === 'rag_ask' || /^shaddai_/.test(t))) scopes.push('agents:ask'); if (tools.some((t) => t !== 'rag_search' && !NATIVE[t] && !(t === 'rag_ask' || /^shaddai_/.test(t)))) scopes.push('tools:run');
       const needs = Array.from(new Set((JSON.stringify(w.steps).match(/\{\{\s*context\.([A-Za-z0-9_]+)\s*\}\}/g) || []).map((m) => m.replace(/[^A-Za-z0-9_.]/g, '').slice(8))));
       try { router.registerWorkflow(id, { version: 'lib', title: String(w.name || id).slice(0, 80), money_class: 'none', required_scopes: scopes,
         build: (params) => { const ctx = params && params.context && typeof params.context === 'object' ? params.context : {}, miss = needs.filter((k) => ctx[k] == null || String(ctx[k]).trim() === ''); if (miss.length) throw new Error('this workflow needs context: ' + miss.join(', ') + ' (params.context)'); const names = w.steps.map((st, i) => (i + 1) + '. ' + st.tool); return w.steps.map((st, i) => ({ name: names[i], fn: libStep(st, names) })); } });
@@ -603,7 +617,7 @@ function createBridge(opts) {
       } catch (e) { libSkipped.push(id + ': ' + (e && e.message)); }
     });
   }
-  function librarySearch(q, limit) { const needle = String(q || '').toLowerCase().slice(0, 60), n = Math.max(1, Math.min(60, parseInt(limit, 10) || 25)); return libMeta.filter((m) => !needle || (m.workflow_id + ' ' + m.name + ' ' + m.description).toLowerCase().includes(needle)).slice(0, n); }
+  function librarySearch(q, limit, cap) { const needle = String(q || '').toLowerCase().slice(0, 60), n = Math.max(1, Math.min(cap || 60, parseInt(limit, 10) || 25)); return libMeta.filter((m) => !needle || (m.workflow_id + ' ' + m.name + ' ' + m.description).toLowerCase().includes(needle)).slice(0, n); }
   setImmediate(() => { try { registerLibrary(); } catch (e) { console.warn('[bridge] library not loaded:', e && e.message); } });
   router._test = { db, WORKFLOWS, SCOPES, library: () => libMeta, libSkipped: () => libSkipped, loadLibrary: registerLibrary };
   return router;
