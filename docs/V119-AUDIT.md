@@ -60,3 +60,6 @@ Done since: the world terminal's C4 (`/api/world/agents` + tasks through the ker
 - An agent that has learned a skill/workflow runs it free and UNCOUNTED (does not use the hourly allowance). Other agents are unaffected. Chat: `/learn <words>` while talking to one of your agents.
 - OPEN: these lessons live in the same `skills` array the Athenaeum uses, but the Athenaeum's own skill ids are a different registry; reconciling "learned in the Athenaeum" with "learned here" is undecided. Tuition prices are placeholders for the owner to set. Bots cannot learn on their own (it spends the owner's Sparks); only the owner can teach.
 - Verified: `platform-bridge.sparks.test.js` covers ownership, unsafe-skill refusal, charge-once, already-known, free uncounted runs, unlearned agents still paying, refund on failure.
+
+## Grok Bot answers folded in (see MCP-LANDSCAPE.md)
+Bearer-token connection confirmed (OAuth optional, not built). Transport details unverified, so the bridge now tolerates JSON, SSE framing and session ids. `shaddai-g81x.onrender.com` is up but has no `/api/headless`. Sparks units remain UNESTABLISHED: keep `BRIDGE_METERING` off. Next read-only wallet step: Hyperliquid `/info` (public address) after the owner picks it.

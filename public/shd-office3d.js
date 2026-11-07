@@ -35,7 +35,7 @@
     market:    [{ t: 'Prices', wf: 'market.snapshot' }, { t: 'Open', open: 1 }],
     library:   [{ t: 'News', wf: 'news.digest' }, { t: 'Research…', wf: 'research.topic', ask: 'Topic to research' }, { t: 'Open', open: 1 }],
     garden:    [{ t: 'Open', open: 1 }], athenaeum: [{ t: 'Classes', open: 1 }], workshop: [{ t: 'Skills', open: 1 }, { t: 'Tasks', tasks: 1 }],
-    wallet:    [{ t: 'Open', open: 1 }], gallery: [{ t: 'Open', open: 1 }], navi: [{ t: 'Menu', open: 1 }]
+    wallet:    [{ t: 'SOL balance', sol: 1 }, { t: 'Open', open: 1 }], gallery: [{ t: 'Open', open: 1 }], navi: [{ t: 'Menu', open: 1 }]
   };
   var FORMS = ['orb', 'crystal', 'figure'], ACCS = ['none', 'halo', 'ring', 'hat', 'antenna', 'crown'];
   var GRADS = [['#00e5a0', '#00b4ff'], ['#a78bfa', '#f43f5e'], ['#f0b429', '#fb923c'], ['#00f0ff', '#7c3aed'], ['#ffffff', '#60a5fa'], ['#34d399', '#fde047']];
@@ -249,6 +249,7 @@
   }
   function holoAction(k, ac, resEl) {
     if (ac.open) { STATIONS[k].open(); return; } if (ac.tasks) { officeTab('tasks'); return; }
+    if (ac.sol) { var saved = ''; try { saved = localStorage.getItem('shd_o3_sol') || ''; } catch (e) { /* ignore */ } var addr = window.prompt('Your public Solana address (read-only, never a key or seed phrase)', saved); if (!addr) return; addr = addr.trim(); if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(addr)) { resEl.textContent = 'That does not look like a Solana address.'; return; } try { localStorage.setItem('shd_o3_sol', addr); } catch (e) { /* ignore */ } runWf('tool.run', { tool: 'get_sol_balance', args: { address: addr } }, resEl); return; }
     var params = {}; if (ac.ask) { var v = window.prompt(ac.ask); if (!v) return; params.query = v; }
     runWf(ac.wf, params, resEl);
   }

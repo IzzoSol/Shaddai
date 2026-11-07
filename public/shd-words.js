@@ -7,6 +7,7 @@
   var TICKERS = { btc: 'bitcoin', eth: 'ethereum', sol: 'solana', doge: 'dogecoin', ada: 'cardano', xrp: 'ripple', bnb: 'binancecoin', avax: 'avalanche-2', dot: 'polkadot', matic: 'matic-network', link: 'chainlink', ltc: 'litecoin', wif: 'dogwifcoin', bonk: 'bonk', trx: 'tron', atom: 'cosmos', near: 'near', sui: 'sui', apt: 'aptos', arb: 'arbitrum', op: 'optimism', pepe: 'pepe', shib: 'shiba-inu' };
   var FILLER = { run: 1, do: 1, start: 1, use: 1, open: 1, the: 1, a: 1, an: 1, my: 1, me: 1, please: 1, for: 1, of: 1, on: 1, to: 1, show: 1, get: 1, give: 1, workflow: 1, skill: 1, tool: 1 };
   /* friendly commands: every phrase on the left means the thing on the right */
+  /* NOTE: Solana addresses are base58 and CASE-SENSITIVE: the /sol command reads the words exactly as typed (owords), never lowercased. */
   var FRIENDLY = [
     { say: ['price', 'prices', 'coin', 'coins', 'ticker', 'tickers'], title: 'Live prices', wf: 'market.snapshot', hint: 'price btc eth', params: function (r) { var s = r.words.map(function (w) { return TICKERS[w] || w; }); return s.length ? { symbols: s.slice(0, 5) } : {}; } },
     { say: ['market', 'markets', 'snapshot', 'market snapshot'], title: 'Market snapshot', wf: 'market.snapshot', hint: 'market', params: function (r) { var s = r.words.map(function (w) { return TICKERS[w] || w; }); return s.length ? { symbols: s.slice(0, 5) } : {}; } },
@@ -19,6 +20,7 @@
     { say: ['weather', 'forecast'], title: 'Weather', tool: 'get_weather', hint: 'weather london', need: 'a city, e.g. /weather london', params: function (r) { return r.rest ? { city: r.rest } : null; } },
     { say: ['define', 'definition', 'meaning', 'what does'], title: 'Definition', tool: 'get_word_definition', hint: 'define garden', need: 'a word, e.g. /define garden', params: function (r) { var w = r.words.filter(function (x) { return x !== 'word'; })[0]; return w ? { word: w } : null; } },
     { say: ['calc', 'calculate', 'math', 'compute'], title: 'Calculator', tool: 'calculate', hint: 'calc 12 * (3 + 4)', need: 'an expression, e.g. /calc 12 * 7', params: function (r) { return r.raw ? { expression: r.raw } : null; } },
+    { say: ['sol', 'balance', 'sol balance', 'solana balance', 'wallet'], title: 'SOL balance (read-only)', tool: 'get_sol_balance', hint: 'sol <address>', need: 'a Solana address (public, 32-44 characters), e.g. /sol 9xQe...', params: function (r) { var a = (r.owords || r.words).filter(function (x) { return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(x); })[0]; return a ? { address: a } : null; } },
     { say: ['joke', 'laugh'], title: 'A joke', tool: 'get_joke', hint: 'joke', params: function () { return {}; } },
     { say: ['quote', 'inspire', 'inspiration'], title: 'A quote', tool: 'get_random_quote', hint: 'quote', params: function () { return {}; } }
   ];
@@ -57,7 +59,7 @@
     FRIENDLY.forEach(function (f) { f.say.forEach(function (phrase) { var pw = phrase.split(' '); if (pw.length <= plain.length && pw.every(function (w, i) { return plain[i] === w; })) { if (!best || pw.length > best.len) best = { f: f, len: pw.length }; } }); });
     if (!best) return null; var restWords = plain.slice(best.len), restRaw = parsed.plain.slice(best.len).join(' ');
     var origRest = parsed.raw.split(/\s+/).slice(best.len).join(' ');
-    return { f: best.f, r: { words: restWords, rest: restRaw, raw: origRest || restRaw } };
+    return { f: best.f, r: { words: restWords, owords: parsed.plain.slice(best.len), rest: restRaw, raw: origRest || restRaw } };
   }
 
   /* resolve(text) -> Promise of one of:

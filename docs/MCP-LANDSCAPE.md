@@ -23,3 +23,15 @@ git clone https://github.com/IzzoSol/shaddai-mcp.git C:\Users\Brittany\mcp-serve
 claude mcp add shaddai-unified -- node C:\Users\Brittany\mcp-servers\shaddai-unified\mcp-unified.js
 ```
 Restart Claude Code afterwards. (A clone already exists at `%TEMP%\shaddai-mcp-unified`.) Publishing 3.3.0 to npm would make `claude mcp add shaddai -- npx -y shaddai-mcp-unified` work for everyone.
+
+## Grok Bot's answers (2026-11-06) and what they changed
+| Question | Answer | Effect |
+|---|---|---|
+| Bot auth | Custom `Authorization: Bearer <token>` headers ARE supported. OAuth is optional (pre-registered CLIENT_ID, optional CLIENT_SECRET, scopes). Exact OAuth discovery flow unverified. | The pasted-token bridge works as built. **OAuth is not needed now.** |
+| Transport | Streamable HTTP vs SSE, GET-stream behaviour, JSON-only compatibility and `Mcp-Session-Id` handling: unverified. | Bridge made tolerant: plain JSON by default, SSE framing if a client accepts only event streams, `Mcp-Session-Id` on initialize, `DELETE /mcp` OK, `GET /mcp` 405. Tested incl. the official SDK. Real Grok behaviour still unproven. |
+| Callbacks | No verified signed completion/approval webhook. | Polling stays the design (`get_run_status` about every 2 s). |
+| Unified tool schemas | `mcp-unified.js` source was not available to Grok. | The ~100 blocked library workflows stay blocked until someone with the source (you) reads their schemas. |
+| `/api/headless/*` | `https://shaddai-g81x.onrender.com/` answers (app-level JSON 404) for `/api/headless/health` and `/workflows`. | That host is **running** (my earlier "looks suspended" was wrong or outdated) but does **not** serve the headless gateway. Which service is production is still unverified. |
+| Sparks | economy-service = integer Sparks (BIGINT), closed loop, no fiat redemption. No verified "100 units = 1 Spark" or "1 Spark = $1". 10,000 welcome Sparks have no verified dollar value. | **Billing stays OFF.** The unit assumption is a placeholder. |
+| Skill ids | Registry equivalence unverified. | Lessons now store `registry`, `id`, `version` separately (plus the legacy `skillId` key used for matching). |
+| Wallet | Start with a connected Solana address and read-only balances via chain RPC; Hyperliquid reads use `POST https://api.hyperliquid.xyz/info` with `clearinghouseState` / `spotClearinghouseState` and a public address; PayBox app API/auth unverified. | Built: `/sol <address>` and the 3D office Wallet holo "SOL balance" use the allowlisted read-only `get_sol_balance` (public address only; remembered on this device). Hyperliquid read and PayBox not built. |

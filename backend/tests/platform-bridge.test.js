@@ -286,6 +286,13 @@ const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id)
   const noRag = await mint('bob', { label: 'norag', scopes: ['workflows:run', 'tools:run', 'agents:ask'] }); assert.strictEqual((await tool(noRag.token, 'start_workflow', { workflow_id: 'lib.research-brief', idempotency_key: 'lb3', params: { context: { q: 'x' } } })).status, 403, 'scopes follow the tools a workflow uses');
   assert.ok((await http('GET', '/library?q=price', { uid: 'bob' })).json.workflows.some((x) => x.workflow_id === 'lib.price-pulse'), 'owner door lists the library for the dashboard chat');
 
+  // ── transport tolerance: JSON by default, SSE framing for event-stream-only clients, session id on initialize ──
+  const rawInit = await fetch(base + '/mcp', { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', authorization: 'Bearer ' + ro.token }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }) });
+  assert.ok(/^sess_/.test(rawInit.headers.get('mcp-session-id') || ''), 'initialize returns an Mcp-Session-Id'); assert.ok(/application\/json/.test(rawInit.headers.get('content-type')), 'plain JSON when the client accepts it');
+  const sseRes = await fetch(base + '/mcp', { method: 'POST', headers: { 'content-type': 'application/json', accept: 'text/event-stream', authorization: 'Bearer ' + ro.token }, body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list' }) }); const sseText = await sseRes.text();
+  assert.ok(/text\/event-stream/.test(sseRes.headers.get('content-type')) && /^event: message\ndata: \{/.test(sseText), 'event-stream-only clients get SSE framing'); assert.ok(JSON.parse(sseText.split('data: ')[1]).result.tools.length > 0);
+  assert.strictEqual((await fetch(base + '/mcp', { method: 'DELETE' })).status, 200, 'DELETE /mcp ends a session without error'); assert.strictEqual((await fetch(base + '/mcp')).status, 405, 'GET stays 405');
+
   // 7. revocation takes effect on the next call
   const info = (await http('GET', '/tokens', { uid: 'alice' })).json.tokens.find((t) => t.label === 'runner');
   assert.strictEqual((await http('DELETE', '/tokens/' + info.id, { uid: 'bob' })).status, 404, 'cannot revoke another user\'s token');
