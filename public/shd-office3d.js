@@ -19,15 +19,15 @@
   };
   /* ── stations: desk position, hologram, what a click does ── */
   var STATIONS = {
-    office:    { x: 0,    z: 0.6,  label: 'Control',   color: null,      sub: 'crew, approvals, status', hint: 'report' },
-    market:    { x: -5,   z: -3.5, label: 'Market',    color: null,      sub: 'prices, mood, momentum', hint: 'price btc eth',   open: function () { showView('pipeline'); } },
-    library:   { x: 0,    z: -4.6, label: 'Library',   color: null,      sub: 'news and deep research', hint: 'news  ·  research mangroves',          open: function () { officeTab('library'); } },
-    garden:    { x: 5,    z: -3.5, label: 'Plots',     color: null,      sub: 'your land, growing',                open: function () { worldsTab('plots'); } },
-    athenaeum: { x: -5,   z: 3.4,  label: 'Athenaeum', color: null,      sub: 'classes and skills',         open: function () { worldsTab('athenaeum'); } },
-    workshop:  { x: 5,    z: 3.4,  label: 'Skills',    color: null,      sub: 'tools, tasks, workflows', hint: 'run crypto analysis',            open: function () { officeTab('skills'); } },
-    wallet:    { x: -7.0, z: 0.2,  label: 'Wallet',    color: '#f0b429', sub: 'Sparks and payments',          open: function () { showView('wallet'); } },
-    gallery:   { x: 7.0,  z: 0.2,  label: 'Gallery',   color: '#a78bfa', sub: 'everything you have made',           open: function () { officeTab('gallery'); } },
-    navi:      { x: 0,    z: 4.9,  label: 'Navi',      color: '#00f0ff', sub: 'your guide, in 3D',      open: function () { naviMenu(); } }
+    office:    { x: 0,    z: 0.8,  label: 'Control',   color: null,      sub: 'crew, approvals, status', hint: 'report' },
+    market:    { x: -8,   z: -5.2, label: 'Market',    color: null,      sub: 'prices, mood, momentum', hint: 'price btc eth',   open: function () { showView('pipeline'); } },
+    library:   { x: 0,    z: -6.6, label: 'Library',   color: null,      sub: 'news and deep research', hint: 'news  ·  research mangroves',          open: function () { officeTab('library'); } },
+    garden:    { x: 8,    z: -5.2, label: 'Plots',     color: null,      sub: 'your land, growing',                open: function () { worldsTab('plots'); } },
+    athenaeum: { x: -8,   z: 5.2,  label: 'Athenaeum', color: null,      sub: 'classes and skills',         open: function () { worldsTab('athenaeum'); } },
+    workshop:  { x: 8,    z: 5.2,  label: 'Skills',    color: null,      sub: 'tools, tasks, workflows', hint: 'run crypto analysis',            open: function () { officeTab('skills'); } },
+    wallet:    { x: -10.8, z: 0.2,  label: 'Wallet',    color: '#f0b429', sub: 'Sparks and payments',          open: function () { showView('wallet'); } },
+    gallery:   { x: 10.8, z: 0.2,  label: 'Gallery',   color: '#a78bfa', sub: 'everything you have made',           open: function () { officeTab('gallery'); } },
+    navi:      { x: 0,    z: 7.2,  label: 'Navi',      color: '#00f0ff', sub: 'your guide, in 3D',      open: function () { naviMenu(); } }
   };
   /* holo tab actions: wf = run a real workflow on the server (as your selected agent so you SEE it walk), open = jump to the panel */
   var HOLO = {
@@ -37,14 +37,15 @@
     garden:    [{ t: 'Open', open: 1 }], athenaeum: [{ t: 'Classes', open: 1 }], workshop: [{ t: 'Skills', open: 1 }, { t: 'Tasks', tasks: 1 }],
     wallet:    [{ t: 'SOL balance', sol: 1 }, { t: 'Hyperliquid', hl: 1 }, { t: 'Open', open: 1 }], gallery: [{ t: 'Open', open: 1 }], navi: [{ t: 'Menu', open: 1 }]
   };
+  var ROOM = { w: 26, d: 18 };   // metres; the earlier room was 18 x 13
   var FORMS = ['orb', 'crystal', 'figure'], ACCS = ['none', 'halo', 'ring', 'hat', 'antenna', 'crown'];
   var GRADS = [['#00e5a0', '#00b4ff'], ['#a78bfa', '#f43f5e'], ['#f0b429', '#fb923c'], ['#00f0ff', '#7c3aed'], ['#ffffff', '#60a5fa'], ['#34d399', '#fde047']];
   var NAVI = [['map', 'Map'], ['inv', 'Inventory'], ['bots', 'Bots'], ['wallet', 'Wallet'], ['academy', 'Academy'], ['market', 'Market'], ['chat', 'Chat'], ['settings', 'Settings']];
-  var POSTER_SLOTS = [{ x: -7.2, y: 1.75, z: -6.42, ry: 0 }, { x: 7.2, y: 1.75, z: -6.42, ry: 0 }, { x: -8.92, y: 1.75, z: -1.2, ry: Math.PI / 2 }, { x: 8.92, y: 1.75, z: -1.2, ry: -Math.PI / 2 }];
+  var POSTER_SLOTS = [{ x: -10.2, y: 1.75, z: -8.92, ry: 0 }, { x: 10.2, y: 1.75, z: -8.92, ry: 0 }, { x: -12.92, y: 1.75, z: -2.6, ry: Math.PI / 2 }, { x: 12.92, y: 1.75, z: -2.6, ry: -Math.PI / 2 }];
 
   var T = null, card, host, hud, panel, prompt, holoLayer, dock, listEl, qBtn, recBtn, renderer, scene, camera, raf = 0, running = false, W = 0, H = 0, _v = null;
   var agents = {}, ops = [], runs = [], player, nearKey = null, simT = 0, camX = 0, camZ = 1.2, camYaw = 0, quality = 'high', dust = null, pulses = [], rec = null, keys = {};
-  var target = null, pending = null, yaw = 0, dist = 13.5, poll = null, lastT = 0, labelCache = {}, full = false, sel = null, follow = null, focus = null, themeKey = 'neon', room = { theme: 'neon', posters: [null, null, null, null] };
+  var target = null, pending = null, yaw = 0, dist = 17.5, poll = null, lastT = 0, labelCache = {}, full = false, sel = null, follow = null, focus = null, themeKey = 'neon', room = { theme: 'neon', posters: [null, null, null, null] };
   var hasPending = false, stationObjs = {}, holos = {}, posterMeshes = [], spinners = [], holoState = {};
 
   function h(tag, attrs, kids) {
@@ -91,7 +92,7 @@
     x.fillStyle = t.floor; x.fillRect(0, 0, 1024, 740); x.strokeStyle = ac; x.globalAlpha = 0.16; x.lineWidth = 2;
     for (var i = 0; i < 46; i++) { var px = Math.floor(R() * 32) * 32, py = Math.floor(R() * 23) * 32; x.beginPath(); x.moveTo(px, py); for (var k = 0; k < 3 + Math.floor(R() * 3); k++) { if (R() < 0.5) px += (R() < 0.5 ? -1 : 1) * 32 * (1 + Math.floor(R() * 3)); else py += (R() < 0.5 ? -1 : 1) * 32 * (1 + Math.floor(R() * 3)); x.lineTo(px, py); } x.stroke(); x.fillStyle = ac; x.beginPath(); x.arc(px, py, 4, 0, 7); x.fill(); }
     x.globalAlpha = 1;
-    Object.keys(STATIONS).forEach(function (k) { var s = STATIONS[k], cx = (s.x + 9) / 18 * 1024, cy = (s.z + 6.5) / 13 * 740, c = sColor(k), g = x.createRadialGradient(cx, cy, 6, cx, cy, 150); g.addColorStop(0, c + '55'); g.addColorStop(1, c + '00'); x.fillStyle = g; x.fillRect(cx - 160, cy - 160, 320, 320); x.strokeStyle = c; x.globalAlpha = 0.5; x.lineWidth = 3; x.beginPath(); x.arc(cx, cy, k === 'office' ? 74 : 56, 0, 7); x.stroke(); x.globalAlpha = 0.22; x.beginPath(); x.arc(cx, cy, k === 'office' ? 96 : 76, 0, 7); x.stroke(); x.globalAlpha = 1; });
+    Object.keys(STATIONS).forEach(function (k) { var s = STATIONS[k], cx = (s.x + ROOM.w / 2) / ROOM.w * 1024, cy = (s.z + ROOM.d / 2) / ROOM.d * 740, c = sColor(k), g = x.createRadialGradient(cx, cy, 6, cx, cy, 150); g.addColorStop(0, c + '55'); g.addColorStop(1, c + '00'); x.fillStyle = g; x.fillRect(cx - 160, cy - 160, 320, 320); x.strokeStyle = c; x.globalAlpha = 0.5; x.lineWidth = 3; x.beginPath(); x.arc(cx, cy, k === 'office' ? 74 : 56, 0, 7); x.stroke(); x.globalAlpha = 0.22; x.beginPath(); x.arc(cx, cy, k === 'office' ? 96 : 76, 0, 7); x.stroke(); x.globalAlpha = 1; });
     return new T.CanvasTexture(cv);
   }
   function skylineTexture(t) {
@@ -140,20 +141,20 @@
 
   /* ── the room ── */
   function buildScene() {
-    var t = th(); scene = new T.Scene(); scene.background = new T.Color(t.bg); scene.fog = new T.Fog(t.bg, 20, 44); camera = camera || new T.PerspectiveCamera(48, 1, 0.1, 120);
+    var t = th(); scene = new T.Scene(); scene.background = new T.Color(t.bg); scene.fog = new T.Fog(t.bg, 26, 60); camera = camera || new T.PerspectiveCamera(48, 1, 0.1, 120);
     stationObjs = {}; posterMeshes = []; spinners = [];
-    var sp = new Float32Array(240 * 3); for (var i = 0; i < 240; i++) { var r = 40 + Math.random() * 10, a = Math.random() * Math.PI * 2, e = Math.random() * 0.9; sp[i * 3] = Math.cos(a) * r * Math.cos(e); sp[i * 3 + 1] = Math.sin(e) * r + 2; sp[i * 3 + 2] = Math.sin(a) * r * Math.cos(e) - 10; }
+    var sp = new Float32Array(240 * 3); for (var i = 0; i < 240; i++) { var r = 50 + Math.random() * 12, a = Math.random() * Math.PI * 2, e = Math.random() * 0.9; sp[i * 3] = Math.cos(a) * r * Math.cos(e); sp[i * 3 + 1] = Math.sin(e) * r + 2; sp[i * 3 + 2] = Math.sin(a) * r * Math.cos(e) - 10; }
     var sg = new T.BufferGeometry(); sg.setAttribute('position', new T.BufferAttribute(sp, 3)); scene.add(new T.Points(sg, new T.PointsMaterial({ color: 0xffffff, size: 0.12, transparent: true, opacity: 0.7, fog: false })));
-    var floor = new T.Mesh(new T.PlaneGeometry(18, 13), new T.MeshBasicMaterial({ map: floorTexture(t) })); floor.rotation.x = -Math.PI / 2; scene.add(floor); stationObjs._floor = floor;
-    var grid = new T.GridHelper(18, 36, t.grid[0], t.grid[1]); grid.scale.z = 13 / 18; grid.position.y = 0.012; grid.material.transparent = true; grid.material.opacity = 0.5; scene.add(grid);
-    var trim = new T.LineSegments(new T.EdgesGeometry(new T.BoxGeometry(18, 3.6, 13)), new T.LineBasicMaterial({ color: t.trim, transparent: true, opacity: 0.7 })); trim.position.y = 1.8; scene.add(trim);
+    var floor = new T.Mesh(new T.PlaneGeometry(ROOM.w, ROOM.d), new T.MeshBasicMaterial({ map: floorTexture(t) })); floor.rotation.x = -Math.PI / 2; scene.add(floor); stationObjs._floor = floor;
+    var grid = new T.GridHelper(ROOM.w, ROOM.w * 2, t.grid[0], t.grid[1]); grid.scale.z = ROOM.d / ROOM.w; grid.position.y = 0.012; grid.material.transparent = true; grid.material.opacity = 0.5; scene.add(grid);
+    var trim = new T.LineSegments(new T.EdgesGeometry(new T.BoxGeometry(ROOM.w, 3.6, ROOM.d)), new T.LineBasicMaterial({ color: t.trim, transparent: true, opacity: 0.7 })); trim.position.y = 1.8; scene.add(trim);
     var wallMat = function () { return new T.MeshBasicMaterial({ color: t.wall, transparent: true, opacity: 0.5, side: T.DoubleSide }); };
-    var wb = new T.Mesh(new T.PlaneGeometry(18, 3.6), wallMat()); wb.position.set(0, 1.8, -6.5); scene.add(wb);
-    var wl = new T.Mesh(new T.PlaneGeometry(13, 3.6), wallMat()); wl.rotation.y = Math.PI / 2; wl.position.set(-9, 1.8, 0); scene.add(wl);
-    var wr = new T.Mesh(new T.PlaneGeometry(13, 3.6), wallMat()); wr.rotation.y = -Math.PI / 2; wr.position.set(9, 1.8, 0); scene.add(wr);
-    var sky = new T.Mesh(new T.PlaneGeometry(9.4, 2.35), new T.MeshBasicMaterial({ map: skylineTexture(t) })); sky.position.set(0, 1.85, -6.44); scene.add(sky);
-    var skyFrame = new T.LineSegments(new T.EdgesGeometry(new T.PlaneGeometry(9.4, 2.35)), new T.LineBasicMaterial({ color: t.trim })); skyFrame.position.copy(sky.position); scene.add(skyFrame);
-    [[-8.6, -6.1], [8.6, -6.1], [-8.6, 6.1], [8.6, 6.1]].forEach(function (p) { var pl = new T.Mesh(new T.CylinderGeometry(0.07, 0.07, 3.6, 8), new T.MeshBasicMaterial({ color: t.trim, transparent: true, opacity: 0.8 })); pl.position.set(p[0], 1.8, p[1]); scene.add(pl); var gl = new T.Sprite(new T.SpriteMaterial({ map: glowTex(t.accent), blending: T.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0.35 })); gl.scale.set(2.2, 4.2, 1); gl.position.set(p[0], 1.8, p[1]); scene.add(gl); });
+    var wb = new T.Mesh(new T.PlaneGeometry(ROOM.w, 3.6), wallMat()); wb.position.set(0, 1.8, -ROOM.d / 2); scene.add(wb);
+    var wl = new T.Mesh(new T.PlaneGeometry(ROOM.d, 3.6), wallMat()); wl.rotation.y = Math.PI / 2; wl.position.set(-ROOM.w / 2, 1.8, 0); scene.add(wl);
+    var wr = new T.Mesh(new T.PlaneGeometry(ROOM.d, 3.6), wallMat()); wr.rotation.y = -Math.PI / 2; wr.position.set(ROOM.w / 2, 1.8, 0); scene.add(wr);
+    var sky = new T.Mesh(new T.PlaneGeometry(13.6, 2.35), new T.MeshBasicMaterial({ map: skylineTexture(t) })); sky.position.set(0, 1.85, -ROOM.d / 2 + 0.06); scene.add(sky);
+    var skyFrame = new T.LineSegments(new T.EdgesGeometry(new T.PlaneGeometry(13.6, 2.35)), new T.LineBasicMaterial({ color: t.trim })); skyFrame.position.copy(sky.position); scene.add(skyFrame);
+    [[-12.6, -8.6], [12.6, -8.6], [-12.6, 8.6], [12.6, 8.6], [0, -8.7]].forEach(function (p) { var pl = new T.Mesh(new T.CylinderGeometry(0.07, 0.07, 3.6, 8), new T.MeshBasicMaterial({ color: t.trim, transparent: true, opacity: 0.8 })); pl.position.set(p[0], 1.8, p[1]); scene.add(pl); var gl = new T.Sprite(new T.SpriteMaterial({ map: glowTex(t.accent), blending: T.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0.35 })); gl.scale.set(2.2, 4.2, 1); gl.position.set(p[0], 1.8, p[1]); scene.add(gl); });
     POSTER_SLOTS.forEach(function (ps, idx) {
       var m = new T.Mesh(new T.PlaneGeometry(1.8, 2.4), new T.MeshBasicMaterial({ map: posterPlaceholder(t) })); m.position.set(ps.x, ps.y, ps.z); m.rotation.y = ps.ry; m.userData.poster = idx; scene.add(m);
       var fr = new T.LineSegments(new T.EdgesGeometry(new T.PlaneGeometry(1.9, 2.5)), new T.LineBasicMaterial({ color: t.trim })); fr.position.copy(m.position); fr.rotation.y = ps.ry; scene.add(fr); posterMeshes.push(m);
@@ -178,7 +179,7 @@
     });
     var pl = new T.Group(), pc = new T.Mesh(new T.SphereGeometry(0.34, 20, 14), new T.MeshBasicMaterial({ color: 0xffffff })); pc.position.y = 0.7; pl.add(pc);
     var pg = new T.Sprite(new T.SpriteMaterial({ map: glowTex('#ffffff'), blending: T.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0.6 })); pg.scale.set(2, 2, 1); pg.position.y = 0.7; pl.add(pg);
-    var you = textSprite('You', { color: '#ffffff' }); you.position.y = 1.55; pl.add(you); pl.position.set(player ? player.position.x : 0, 0, player ? player.position.z : 3.6); scene.add(pl); player = pl;
+    var you = textSprite('You', { color: '#ffffff' }); you.position.y = 1.55; pl.add(you); pl.position.set(player ? player.position.x : 0, 0, player ? player.position.z : 4.6); scene.add(pl); player = pl;
   }
   function rebuildRoom() {
     var keep = Object.keys(agents).map(function (k) { return agents[k]; });
@@ -187,7 +188,7 @@
     keep.forEach(function (a) { a.obj = buildBody(a, a.look); a.obj.position.set(a.x, 0, a.z); scene.add(a.obj); a.beam = makeBeam(a.look.c1); scene.add(a.beam); a._bt = null; setBubble(a); });
     Object.keys(holos).forEach(function (k) { holos[k].style.setProperty('--hc', sColor(k)); }); card.style.setProperty('--o3a', th().accent); buildDock();
   }
-  function buildDust() { if (dust) { scene.remove(dust); disposeObj(dust); dust = null; } if (quality !== 'high' || reduce) return; var n = 90, pos = new Float32Array(n * 3); for (var i = 0; i < n; i++) { pos[i * 3] = (Math.random() - 0.5) * 17; pos[i * 3 + 1] = Math.random() * 3.2; pos[i * 3 + 2] = (Math.random() - 0.5) * 12; } var g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(pos, 3)); dust = new T.Points(g, new T.PointsMaterial({ color: new T.Color(th().accent), size: 0.05, transparent: true, opacity: 0.5, depthWrite: false, blending: T.AdditiveBlending })); scene.add(dust); }
+  function buildDust() { if (dust) { scene.remove(dust); disposeObj(dust); dust = null; } if (quality !== 'high' || reduce) return; var n = 140, pos = new Float32Array(n * 3); for (var i = 0; i < n; i++) { pos[i * 3] = (Math.random() - 0.5) * (ROOM.w - 1); pos[i * 3 + 1] = Math.random() * 3.2; pos[i * 3 + 2] = (Math.random() - 0.5) * (ROOM.d - 1); } var g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(pos, 3)); dust = new T.Points(g, new T.PointsMaterial({ color: new T.Color(th().accent), size: 0.05, transparent: true, opacity: 0.5, depthWrite: false, blending: T.AdditiveBlending })); scene.add(dust); }
   function size() { if (!renderer) return; var r = host.getBoundingClientRect(); W = Math.max(280, Math.round(r.width)); H = full ? Math.round(window.innerHeight - (listEl ? listEl.offsetHeight : 0)) : (W < 560 ? 340 : 480); host.style.height = H + 'px'; renderer.setSize(W, H, false); renderer.domElement.style.width = W + 'px'; renderer.domElement.style.height = H + 'px'; camera.aspect = W / H; camera.updateProjectionMatrix(); }
   function camUpdate(dt) {
     var k = 1 - Math.exp(-6 * dt), ky = 1 - Math.exp(-8 * dt), f = follow && agents[follow], gx, gz;
@@ -282,7 +283,7 @@
     var mx = (keys.d || keys.arrowright ? 1 : 0) - (keys.a || keys.arrowleft ? 1 : 0), mz = (keys.s || keys.arrowdown ? 1 : 0) - (keys.w || keys.arrowup ? 1 : 0); player._vx = 0; player._vz = 0;
     if (mx || mz) { target = null; pending = null; follow = null; var c = Math.cos(yaw), sn = Math.sin(yaw), vx = mx * c + mz * sn, vz = -mx * sn + mz * c, len = Math.hypot(vx, vz) || 1; player.position.x += vx / len * 5 * dt; player.position.z += vz / len * 5 * dt; player._vx = vx / len * 5; player._vz = vz / len * 5; }
     else if (target) { var dx = target.x - player.position.x, dz = target.z - player.position.z, d = Math.hypot(dx, dz); if (d < 0.2) { target = null; if (pending) { var f = pending; pending = null; f(); } } else { player.position.x += dx / d * Math.min(d, 5 * dt); player.position.z += dz / d * Math.min(d, 5 * dt); player._vx = dx / d * 5; player._vz = dz / d * 5; } }
-    player.position.x = Math.max(-8.4, Math.min(8.4, player.position.x)); player.position.z = Math.max(-6, Math.min(6, player.position.z));
+    player.position.x = Math.max(-ROOM.w / 2 + 0.6, Math.min(ROOM.w / 2 - 0.6, player.position.x)); player.position.z = Math.max(-ROOM.d / 2 + 0.6, Math.min(ROOM.d / 2 - 0.6, player.position.z));
     var near = null, nd = 2.0; Object.keys(STATIONS).forEach(function (k) { if (k === 'office') return; var s = STATIONS[k], d2 = Math.hypot(s.x - player.position.x, s.z + 0.6 - player.position.z); if (d2 < nd) { nd = d2; near = k; } });
     if (near !== nearKey) { nearKey = near; if (near) setNote('Press E or click to open ' + STATIONS[near].label); else setNote(Object.keys(agents).length ? '' : (prompt && prompt.textContent)); }
     Object.keys(stationObjs).forEach(function (k) { var o = stationObjs[k]; if (o.userData && o.userData.top) { var busy = holoState[k] && holoState[k].busy > 0; o.userData.top.material.opacity = busy ? 0.7 + Math.sin(T0 / 150) * 0.3 : (near === k || focus === k ? 1 : 0.8); o.userData.cone.material.opacity = busy ? 0.2 + Math.sin(T0 / 200) * 0.06 : (near === k || focus === k ? 0.16 : 0.09); if (!reduce) { o.userData.glyph.material.rotation = Math.sin(T0 / 900 + o.position.x) * 0.12; o.userData.glyph.position.y = 1.7 + Math.sin(T0 / 700 + o.position.z) * 0.06; } } });
@@ -317,7 +318,7 @@
     cv.addEventListener('pointerdown', function (e) { drag = { x: e.clientX, yaw: yaw, moved: false }; try { cv.setPointerCapture(e.pointerId); } catch (x) { /* ignore */ } });
     cv.addEventListener('pointermove', function (e) { if (drag) { var dx = e.clientX - drag.x; if (Math.abs(dx) > 4) drag.moved = true; if (drag.moved) yaw = Math.max(-0.9, Math.min(0.9, drag.yaw - dx * 0.006)); } else { var k = pick(e, false); cv.style.cursor = k ? 'pointer' : 'default'; focus = (k && STATIONS[k]) ? k : null; } });
     cv.addEventListener('pointerup', function (e) { var was = drag; drag = null; if (was && !was.moved) pick(e, true); });
-    cv.addEventListener('wheel', function (e) { e.preventDefault(); dist = Math.max(9, Math.min(22, dist + e.deltaY * 0.01)); }, { passive: false });
+    cv.addEventListener('wheel', function (e) { e.preventDefault(); dist = Math.max(10, Math.min(32, dist + e.deltaY * 0.012)); }, { passive: false });
   }
   document.addEventListener('keydown', function (e) { onKey(e, true); }); document.addEventListener('keyup', function (e) { onKey(e, false); });
 
@@ -394,7 +395,7 @@
       T = m; _v = new T.Vector3(); try { renderer = new T.WebGLRenderer({ antialias: window.innerWidth > 700, alpha: false }); } catch (e) { throw new Error('WebGL is not available in this browser'); }
       try { quality = localStorage.getItem('shd_o3_q') || ((window.innerWidth < 700 || reduce) ? 'low' : 'high'); } catch (e) { /* ignore */ }
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, quality === 'low' ? 1 : (window.innerWidth < 700 ? 1.5 : 2))); host.style.display = 'block'; card._stage.style.display = 'block'; card._intro.style.display = 'none'; host.appendChild(renderer.domElement);
-      card.style.setProperty('--o3a', th().accent); dist = window.innerWidth < 700 ? 17 : 13.5; player = null; buildScene(); buildDust(); buildHolos(); buildDock(); size(); bindInput(); setQBtn(); running = true; lastT = performance.now(); pollCity(); poll = setInterval(pollCity, 2000); raf = requestAnimationFrame(frame);
+      card.style.setProperty('--o3a', th().accent); dist = window.innerWidth < 700 ? 22 : 17.5; player = null; buildScene(); buildDust(); buildHolos(); buildDock(); size(); bindInput(); setQBtn(); running = true; lastT = performance.now(); pollCity(); poll = setInterval(pollCity, 2000); raf = requestAnimationFrame(frame);
     }).catch(function (e) { ib.disabled = false; ib.textContent = 'Open 3D office'; toast('3D office unavailable: ' + (e && e.message || e)); });
   }
   function close() {

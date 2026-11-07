@@ -2132,6 +2132,9 @@ catch (e) { console.warn('[prod] bridge NOT mounted:', e && e.message); }
 // World agents (3D terminal contract C4): server-authoritative agent tasks (goto/work/study/idle), per-user, kernel-gated, audit-logged. The world only renders it.
 try { app.use('/api/world/agents', require('./world-agents-routes')); console.log('[prod] world agents mounted (/api/world/agents)'); }
 catch (e) { console.warn('[prod] world agents NOT mounted:', e && e.message); }
+// Colosseum: event schedule + tickets (sign-in required; Sparks only when ARENA_TICKETS=on). Fights are simulated client-side from a seed given only to ticket holders.
+try { app.use('/api/colosseum', require('./arena-routes')); console.log('[prod] arena mounted (/api/colosseum)'); }
+catch (e) { console.warn('[prod] arena NOT mounted:', e && e.message); }
 app.use('/api', require('./dashboard-patches'));                      // P0 patch: auction/pricing/city-boost/news-analyze (dashboard wired calls)
 app.use('/api/leaderboard', require('./lib/leaderboard-routes'));     // SHADDAI games leaderboards
 app.use('/api/chat', require('./lib/chat-routes'));                   // realm + per-room chat (PIKADON-scanned)

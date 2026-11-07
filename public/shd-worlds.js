@@ -234,8 +234,9 @@
     var colo = h('div', { class: 'sw-framehost' }, [msg('Opens the Colosseum viewer on demand.', 'dim')]);
     var spec = h('div', { class: 'sw-framehost' }, [msg('Opens a visitor view of the live 3D world. You can look around; you do not take part.', 'dim')]);
     fill(el, [
-      box('Colosseum', 'watch matches from the dashboard', [colo, h('div', { class: 'sw-actions' }, [
-        btn('Watch', function () { lazyFrame(colo, '/colosseum-final.html', 'Colosseum viewer', true); }),
+      box('Colosseum', 'practice bouts are free · main event and tournament need a ticket', [colo, h('div', { class: 'sw-actions' }, [
+        btn('Watch live', function () { if (window.shdColosseum) window.shdColosseum.mount(colo); else lazyFrame(colo, '/colosseum-final.html', 'Colosseum viewer', true); }),
+        btn('Classic viewer', function () { if (window.shdColosseum) window.shdColosseum.unmount(); lazyFrame(colo, '/colosseum-final.html', 'Classic Colosseum viewer', true); }, 'ghost'),
         btn('Enter the arena in 3D', function () { window.enter3DWorld && window.enter3DWorld(); }, 'ghost')
       ])]),
       box('Spectate the world', 'visitor view', [spec, h('div', { class: 'sw-actions' }, [
