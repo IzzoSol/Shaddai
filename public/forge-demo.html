@@ -59,11 +59,14 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-acti
 .panel h2{font:400 1.45rem/1.1 var(--f-display);color:var(--trim);margin:0;letter-spacing:.03em}
 .panel p{margin:0;color:var(--muted);font-size:.9rem}
 .panel label.f{display:grid;gap:5px;font-size:.82rem;color:var(--muted)}
-.panel input[type=text],.panel select{background:#071526;border:1px solid var(--line);color:var(--text);font:500 .95rem var(--f-ui);padding:10px 12px;min-height:44px;width:100%;border-radius:0}
-.panel input[type=text]:focus,.panel select:focus{outline:2px solid var(--accent);outline-offset:0}
+.panel input[type=text],.panel input[type=search],.panel select{background:#071526;border:1px solid var(--line);color:var(--text);font:500 .95rem var(--f-ui);padding:10px 12px;min-height:44px;width:100%;border-radius:0}
+.panel input[type=text]:focus,.panel input[type=search]:focus,.panel select:focus{outline:2px solid var(--accent);outline-offset:0}
 .chk{display:flex;gap:10px;align-items:flex-start;font-size:.88rem;color:var(--text);cursor:pointer}
 .chk input{margin-top:3px;width:18px;height:18px;accent-color:var(--accent)}
 .opts{display:flex;flex-wrap:wrap;gap:8px}
+.opts.skl{max-height:230px;overflow:auto;padding:2px 4px 2px 0;scrollbar-width:thin}.opts.skl .opt{flex:1 1 100%}
+#sk-sel{gap:6px;min-height:0}#sk-sel .ghost{padding:3px 10px;font-size:.72rem}
+.panel label.f input[type=search]{width:100%}
 .opt{position:relative}
 .opt input{position:absolute;opacity:0;inset:0;cursor:pointer;width:100%;height:100%;margin:0}
 .opt span{display:block;border:1px solid var(--line);padding:9px 14px;font-size:.88rem;background:#071526;min-height:40px}
@@ -148,13 +151,25 @@ var STEPS=[{k:'bind',t:'Bind',s:'Seal the oath'},{k:'body',t:'Body',s:'Shape the
 var STATUS=['AWAITING OATH','FORM UNSHAPED','LICENSE PENDING','NO JOB RUN','VAULT SEALED'];
 var S={i:0,max:0,name:'',purpose:'Research and summaries',oath:false,kind:'SHADDAI',look:'glow',glow:'figure',acc:'none',finish:'auto',skills:{'research.topic':true},job:'research.topic',topic:'',jobOut:'',jobErr:false,labor:0,vault:0,sparks:0,pal:'grid'};
 /* Real skills: every one is a workflow the dashboard can run (platform bridge). The four core ones always exist; the library adds more once you are signed in. */
-var CORE=[['research.topic','Research a topic','Look into any subject and summarise it'],['news.digest','News digest','Today\'s headlines in one read'],['market.snapshot','Market snapshot','Live prices and the fear and greed index'],['dashboard.report','Daily report','A summary of what happened in your dashboard']],LIB=[],CAP=3;
+var CORE=[['research.topic','Research a topic','Look into any subject and summarise it'],['news.digest','News digest','Today\'s headlines in one read'],['market.snapshot','Market snapshot','Live prices and the fear and greed index'],['dashboard.report','Daily report','A summary of what happened in your dashboard']],LIB=[];
 var PACKS=[['Researcher',['research.topic','news.digest']],['Market watcher',['market.snapshot','news.digest']],['Reporter',['dashboard.report','news.digest','market.snapshot']]];
 function nice(id){return String(id).replace(/^lib\./,'').replace(/[-_.]/g,' ').replace(/^./,function(c){return c.toUpperCase()})}
-function skillList(){var seen={};return CORE.concat(LIB).filter(function(k){if(seen[k[0]])return false;seen[k[0]]=1;return true})}
-function skillName(id){var f=skillList().filter(function(k){return k[0]===id})[0];return f?f[1]:nice(id)}
-function loadLib(){try{fetch('/api/bridge/library',{credentials:'same-origin'}).then(function(r){return r.ok?r.json():null}).then(function(d){
-  if(!d||!d.workflows)return;LIB=d.workflows.filter(function(w){return !(w.needs_context&&w.needs_context.length)}).slice(0,9).map(function(w){return [w.workflow_id,nice(w.workflow_id),'From the workflow library']});if(S.i===2&&typeof render==='function')render()}).catch(function(){})}catch(e){}}
+var SK=[];   /* dashboard skills from /api/bridge/skills: [id, name, description, kind, needs] */
+function skillList(){var seen={},core=CORE.map(function(k){return [k[0],k[1],k[2],'core',k[0]==='research.topic'?['query']:[]]});return core.concat(SK).concat(LIB).filter(function(k){if(seen[k[0]])return false;seen[k[0]]=1;return true})}
+function skillMeta(id){return skillList().filter(function(k){return k[0]===id})[0]}
+function skillName(id){var f=skillMeta(id);return f?f[1]:nice(String(id).replace(/^skill:/,''))}
+function canRunAlone(id){var m=skillMeta(id);return !!m&&(m[3]==='core'||(m[3]==='lib'&&!(m[4]&&m[4].length)))}
+function loadLib(){
+  try{
+    fetch('/api/bridge/library?limit=400',{credentials:'same-origin'}).then(function(r){return r.ok?r.json():null}).then(function(d){
+      if(!d||!d.workflows)return;
+      LIB=d.workflows.map(function(w){return [w.workflow_id,w.name&&w.name!==w.workflow_id?nice(w.name):nice(w.workflow_id),w.description||'From the workflow library','lib',w.needs_context||[]]});
+      if(S.i===2&&typeof refreshSkills==='function')refreshSkills()}).catch(function(){});
+    fetch('/api/bridge/skills',{credentials:'same-origin'}).then(function(r){return r.ok?r.json():null}).then(function(d){
+      if(!d||!d.skills)return;
+      SK=d.skills.map(function(k){return ['skill:'+k.skill,nice(k.skill),(k.description||'A dashboard skill')+(k.agent?' ('+k.agent+')':''),'skill',k.required_input||[]]});
+      if(S.i===2&&typeof refreshSkills==='function')refreshSkills()}).catch(function(){})
+  }catch(e){}}
 function brief(outs){if(!outs)return '';var k=Object.keys(outs)[0],v=String(outs[k]||'');try{var j=JSON.parse(v);v=typeof j==='object'?(j.price?(j.symbol||k)+' '+j.price:j.title||j.summary||(Array.isArray(j)?(j[0]&&(j[0].title||j[0].name)):'')||JSON.stringify(j)):String(j)}catch(e){}return String(v).slice(0,300)}
 function realJob(){
   S.jobOut='';S.jobErr=false;
@@ -539,20 +554,36 @@ function render(){
     '<p class="fine" id="bodyNote" aria-live="polite">'+esc(bodyNoteText)+'</p>'+
     '<div class="row" role="group" aria-label="Hologram tint"><span class="fine">Hologram tint</span>'+[['auto','Theme'],['gold','#E6B84A'],['violet','#8B6BFF'],['green','#4CC96A'],['cyan','#2FD6FF']].map(function(f){return '<button type="button" class="sw" data-fin="'+f[0]+'" aria-label="'+f[0]+'" aria-pressed="'+(S.finish===f[0])+'" style="background:'+(f[0]==='auto'?'conic-gradient(var(--accent),var(--trim),var(--accent))':f[1])+'"></button>'}).join('')+'</div>'+
     navRow('Lock the form')}
-  else if(S.i===2){var n=Object.keys(S.skills).length;h='<h2>Skills</h2><p>Real skills your agent can run. Each one is a real workflow in your dashboard, and PIKADON checks it before it runs.</p>'+
+  else if(S.i===2){var n=Object.keys(S.skills).length;h='<h2>Skills</h2><p>Pick what your agent can do. Every one is a real workflow or skill in your dashboard, and PIKADON checks it before it runs. Start from a pack, or search everything.</p>'+
     '<div class="row" role="group" aria-label="Starter packs">'+PACKS.map(function(pk,i){return '<button type="button" class="ghost" data-pack="'+i+'">'+pk[0]+'</button>'}).join('')+'</div>'+
-    '<div class="opts" role="group" aria-label="Skills">'+skillList().map(function(k){var on=!!S.skills[k[0]];return '<label class="opt"><input type="checkbox" data-sk="'+esc(k[0])+'"'+(on?' checked':'')+(!on&&n>=CAP?' disabled':'')+'><span>'+esc(k[1])+' <small class="fine">'+esc(k[2])+'</small></span></label>'}).join('')+'</div>'+
-    '<p class="fine" id="skn">'+n+' of '+CAP+' skills on the free plan.</p>'+navRow('Grant the skills')}
-  else if(S.i===3){var run=S.labor,ids=Object.keys(S.skills);if(ids.indexOf(S.job)<0)S.job=ids[0];h='<h2>First job</h2><p>Run one of its skills for real. It uses your free allowance.</p>'+
+    '<label class="f">Search skills and workflows<input type="search" id="sk-q" placeholder="e.g. price, news, research, report" autocomplete="off"></label>'+
+    '<div class="row" id="sk-sel" aria-live="polite"></div>'+
+    '<div class="opts skl" id="sk-list" role="group" aria-label="Skills"></div>'+
+    '<p class="fine" id="skn"></p>'+navRow('Grant the skills')}
+  else if(S.i===3){var run=S.labor,ids=Object.keys(S.skills).filter(canRunAlone);if(ids.length&&ids.indexOf(S.job)<0)S.job=ids[0];
+    if(!ids.length){h='<h2>First job</h2><p>None of the skills you chose can run on their own yet (they need an input first), so there is no instant demo. You can run them any time from your office.</p><div class="row">'+(S.i>0?'<button class="ghost" id="bk" type="button">Back</button>':'')+'<button class="btn primary grow" id="skipjob" type="button"><span>Continue to the wallet</span></button></div>'}
+    else{h='<h2>First job</h2>'+'<p>Run one of its skills for real. It uses your free allowance.</p>'+
     '<div class="opts" role="radiogroup" aria-label="First job">'+ids.map(function(k){return '<label class="opt"><input type="radio" name="job" value="'+esc(k)+'"'+(S.job===k?' checked':'')+(run?' disabled':'')+'><span>'+esc(skillName(k))+'</span></label>'}).join('')+'</div>'+
     (S.job==='research.topic'&&!run?'<label class="f">Topic<input type="text" id="f-topic" maxlength="80" placeholder="e.g. mangrove restoration" value="'+esc(S.topic||'')+'"></label>':'')+
     (run===2?'<div class="receipt"><b>'+(S.jobErr?'COULD NOT RUN':'RESULT')+'</b><br>Job: '+esc(skillName(S.job))+'<br>'+esc(S.jobOut||'Waiting for the result...')+'</div>':'')+
-    '<div class="row">'+(S.i>0?'<button class="ghost" id="bk" type="button">Back</button>':'')+(run===2?'<button class="btn primary grow" id="nx" type="button"><span>Open the wallet</span></button>':'<button class="btn primary grow'+(run===1?' loading':'')+'" id="runjob" type="button"'+(run===1?' disabled':'')+'><span>'+(run===1?'Working in the field':'Run first job')+'</span></button>')+'</div>'}
+    '<div class="row">'+(S.i>0?'<button class="ghost" id="bk" type="button">Back</button>':'')+(run===2?'<button class="btn primary grow" id="nx" type="button"><span>Open the wallet</span></button>':'<button class="btn primary grow'+(run===1?' loading':'')+'" id="runjob" type="button"'+(run===1?' disabled':'')+'><span>'+(run===1?'Working in the field':'Run first job')+'</span></button>')+'</div>'}}
   else{var v=S.vault;h='<h2>Wallet</h2><p>'+(v===0?'Every agent has its own PAYBOX wallet, controlled by you. Open it to see it.':v===1?'Opening the wallet.':'Your agent\'s PAYBOX wallet is ready. It starts at 0 credits, and you can add funds any time from the Wallet page.')+'</p>'+
     '<div class="row">'+(v===0?'<button class="ghost" id="bk" type="button">Back</button><button class="btn primary grow" id="openv" type="button"><span>Open the wallet</span></button>':v===2?'<button class="ghost" id="again" type="button">Forge another</button><button class="btn primary grow" id="enter" type="button"><span>Create my agent</span></button>':'<button class="btn primary grow loading" type="button" disabled><span>Opening the wallet</span></button>')+'</div>'+
     (v===2?'<p class="fine" id="regNote" aria-live="polite">'+esc(S.name||'Your agent')+' will join your office as a glow bot. From the office you can import it into the 3D realm. Sparks stay inside SHADDAI; there is no cash-out.</p>':'')}
   panel.innerHTML=h;wire();if(W)W.resize()
 }
+function refreshSkills(){
+  var box=document.getElementById('sk-list');if(!box)return;var qv=(document.getElementById('sk-q')||{}).value||'';
+  box.innerHTML=skillList().map(function(k){var on=!!S.skills[k[0]],need=k[4]&&k[4].length?' <em class="fine">needs '+esc(k[4].join(', '))+'</em>':'';
+    return '<label class="opt" data-q="'+esc((k[1]+' '+k[2]+' '+k[0]).toLowerCase())+'"><input type="checkbox" data-sk="'+esc(k[0])+'"'+(on?' checked':'')+'><span>'+esc(k[1])+' <small class="fine">'+esc(k[2])+'</small>'+need+'</span></label>'}).join('');
+  [].forEach.call(box.querySelectorAll('[data-sk]'),function(c){c.onchange=function(){if(c.checked)S.skills[c.dataset.sk]=true;else delete S.skills[c.dataset.sk];updSel()}});
+  filterSkills(qv);updSel()}
+function filterSkills(v){v=String(v||'').toLowerCase().trim();[].forEach.call(document.querySelectorAll('#sk-list .opt'),function(o){o.style.display=!v||o.dataset.q.indexOf(v)>-1?'':'none'})}
+function updSel(){
+  var ids=Object.keys(S.skills),sel=document.getElementById('sk-sel'),nx=document.getElementById('nx');
+  if(sel){sel.innerHTML='';ids.slice(0,24).forEach(function(id){var b=document.createElement('button');b.type='button';b.className='ghost';b.textContent=skillName(id)+' ×';b.title='Remove '+skillName(id);b.onclick=function(){delete S.skills[id];refreshSkills()};sel.appendChild(b)})}
+  var n=document.getElementById('skn');if(n)n.textContent=ids.length+' selected. There is no limit, so add whatever it needs. Skills marked "needs" take an input when they run.';
+  if(nx)nx.disabled=ids.length<1}
 function navRow(label){return '<div class="row">'+(S.i>0?'<button class="ghost" id="bk" type="button">Back</button>':'')+'<button class="btn primary grow" id="nx" type="button"><span>'+label+'</span></button></div>'}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function wire(){var q=function(s){return panel.querySelector(s)},qa=function(s){return panel.querySelectorAll(s)};
@@ -562,9 +593,9 @@ function wire(){var q=function(s){return panel.querySelector(s)},qa=function(s){
   qa('input[name=kind]').forEach(function(r){r.onchange=function(){S.kind=r.value;W&&W.sync()}});
   ['look','glow','acc'].forEach(function(n){qa('input[name='+n+']').forEach(function(r){r.onchange=function(){S[n]=r.value;W&&W.sync();if(n==='look')render()}})});
   qa('[data-fin]').forEach(function(b){b.onclick=function(){S.finish=b.dataset.fin;W&&W.finish(S.finish);qa('[data-fin]').forEach(function(x){x.setAttribute('aria-pressed',x===b)})}});
-  qa('[data-pack]').forEach(function(b){b.onclick=function(){var pk=PACKS[+b.dataset.pack];S.skills={};pk[1].slice(0,CAP).forEach(function(id){S.skills[id]=true});render()}});
-  qa('[data-sk]').forEach(function(c){c.onchange=function(){if(c.checked)S.skills[c.dataset.sk]=true;else delete S.skills[c.dataset.sk];var n=Object.keys(S.skills).length;nx.disabled=n<1;
-    qa('[data-sk]').forEach(function(o){o.disabled=!o.checked&&n>=CAP});q('#skn').textContent=n+' of '+CAP+' skills on the free plan.'}});
+  qa('[data-pack]').forEach(function(b){b.onclick=function(){var pk=PACKS[+b.dataset.pack];S.skills={};pk[1].forEach(function(id){S.skills[id]=true});render()}});
+  if(S.i===2){refreshSkills();var sq=q('#sk-q');if(sq)sq.oninput=function(){filterSkills(sq.value)}}
+  var sj=q('#skipjob');if(sj)sj.onclick=function(){S.jobErr=false;S.jobOut='Skipped. You can run its skills any time from your office.';UI.laborDone()};
   if(S.i===2&&nx)nx.disabled=Object.keys(S.skills).length<1;
   qa('input[name=job]').forEach(function(r){r.onchange=function(){S.job=r.value;render()}});
   var rj=q('#runjob');if(rj)rj.onclick=function(){var t=q('#f-topic');if(t)S.topic=t.value.trim();if(S.job==='research.topic'&&!S.topic){if(t){t.focus();t.placeholder='Type a topic first'}return}

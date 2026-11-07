@@ -4711,6 +4711,7 @@ window.enter3DWorld=function(){
     <button class="sbt on" onclick="showView('dash');lySetSb(this)"><span class="ic">🏠</span>Dashboard</button>
     <button class="sbt" onclick="showView('chat');lySetSb(this)"><span class="ic">💬</span>Chat</button>
     <button class="sbt" onclick="showView('agents');lySetSb(this)"><span class="ic">🤖</span>Agents</button>
+    <button class="sbt" onclick="showView('forge');lySetSb(this)" style="color:#f0b429;font-weight:700"><span class="ic">⬡</span>Forge</button>
     <button class="sbt" onclick="showView('office');lySetSb(this)"><span class="ic">🏢</span>Office</button>
     <!-- WORLDS -->
     <div style="font-size:7px;letter-spacing:1.8px;color:#2a3a4a;text-transform:uppercase;padding:8px 10px 3px;font-weight:800">Worlds</div>
@@ -8020,7 +8021,7 @@ window.enter3DWorld=function(){
         <iframe id="forgeFrameAgent" src="/agent-forge.html" style="width:100%;height:100%;border:0;display:block" title="Forge an Agent" loading="lazy"></iframe>
       </div>
     </div>
-    <style id="forgeEmbedHide">#forgeView > *:not(.forge-tabs):not(.forge-panel):not(#forgeEmbedHide){display:none !important}#forgeView{padding:0 !important}</style>
+    <style id="forgeEmbedHide">#forgeView > *:not(.forge-tabs):not(.forge-panel):not(.fg-head):not(#forgeEmbedHide){display:none !important}#forgeView{padding:0 !important}</style>
     <style id="operatorForgeCss">
       #operatorForge .of-rarity-badge{position:absolute;left:0;right:0;bottom:6px;text-align:center;font:700 12px/1 'Share Tech Mono',monospace;letter-spacing:3px;z-index:3;text-shadow:0 1px 5px #000;pointer-events:none}
       #operatorForge .of-rarity-badge.legendary{color:#d4af37}#operatorForge .of-rarity-badge.epic{color:#c084fc}#operatorForge .of-rarity-badge.rare{color:#22d3ee}#operatorForge .of-rarity-badge.common{color:#9fb0e0}
@@ -59302,6 +59303,7 @@ body.in-world #mainNav, body.in-world #sbNav { display:none !important; }
 <script defer src="/shd-office-dock.js?v=119"></script>
 <script defer src="/shd-admin.js?v=119"></script>
 <script defer src="/shd-markets.js?v=119"></script>
+<script defer src="/shd-agent-actions.js?v=119"></script>
 <script defer src="/shd-hub.js?v=119"></script>
 <script defer src="/shd-paybox.js?v=119"></script>
 <script defer src="/shd-words.js?v=119"></script>

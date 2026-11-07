@@ -72,12 +72,31 @@
     document.addEventListener('click', function () { menu.style.display = 'none'; });
     app.querySelector('.fg-btn:not(.ghost)').focus();
   }
+  /* the Forge tab: one clean screen (the old four-tab bar is hidden), with the other forges, full screen and pop out in the header */
+  var tabBuilt = false, curTab = '3d';
+  function showTab(which) { curTab = which; if (typeof window.switchForgeTab === 'function') window.switchForgeTab(which); var b = document.querySelector('#forgeView .fg-back'); if (b) b.style.display = which === '3d' ? 'none' : ''; }
+  function buildTab() {
+    var v = document.getElementById('forgeView'); if (!v || tabBuilt) return; tabBuilt = true;
+    var tabs = v.querySelector('.forge-tabs'); if (tabs) tabs.style.display = 'none';
+    var menu = h('div', { class: 'fg-menu', role: 'menu', style: 'display:none' }, [
+      h('button', { type: 'button', role: 'menuitem', text: '2D Forge', onclick: function () { showTab('2d'); menu.style.display = 'none'; } }),
+      h('button', { type: 'button', role: 'menuitem', text: 'Marketplace', onclick: function () { showTab('market'); menu.style.display = 'none'; } })]);
+    var more = h('button', { type: 'button', class: 'fg-btn ghost', text: 'Other forges', 'aria-haspopup': 'menu', onclick: function (e) { e.stopPropagation(); menu.style.display = menu.style.display === 'none' ? 'block' : 'none'; } });
+    var head = h('div', { class: 'fg-head' }, [
+      h('div', { class: 'fg-title' }, [h('b', { text: 'Forge an agent' }), h('span', { text: 'Name it, give it a glow body and real skills, run its first job. It lives in your office and you can connect Grok or an API to it.' })]),
+      h('div', { class: 'fg-actions' }, [h('button', { type: 'button', class: 'fg-btn ghost fg-back', style: 'display:none', text: 'Back to the wizard', onclick: function () { showTab('3d'); } }),
+        h('div', { class: 'fg-more' }, [more, menu]),
+        h('button', { type: 'button', class: 'fg-btn ghost', text: 'Full screen', onclick: function () { openApp(curTab); } }),
+        h('button', { type: 'button', class: 'fg-btn ghost', text: 'Pop out', title: 'Open in its own browser window', onclick: function () { window.open((FORGES[curTab] || FORGES['3d'])[0], 'shdForge', 'width=1180,height=820,noopener'); } })])]);
+    v.insertBefore(head, v.firstChild); document.addEventListener('click', function () { menu.style.display = 'none'; });
+    [].forEach.call(v.querySelectorAll('.forge-panel'), function (p) { p.style.height = 'calc(100vh - 150px)'; p.style.minHeight = '560px'; });
+  }
   function wrapShow() {
     var sv = window.showView; if (typeof sv !== 'function' || sv._fg) return;
     window.showView = function (view) {
       if (view === 'forge') {
-        if (!realSignedIn() && !local()) { needSignIn(function () { openApp('3d'); }, 'Sign in to forge an agent.'); return; }
-        openApp('3d'); return;      // the Forge is a window of its own, not a dashboard tab
+        if (!realSignedIn() && !local()) { needSignIn(function () { window.showView('forge'); }, 'Sign in to forge an agent.'); return; }
+        var res = sv.apply(this, arguments); buildTab(); setTimeout(function () { showTab('3d'); }, 60); return res;      // the Forge is a tab in the dashboard
       }
       return sv.apply(this, arguments);
     };
@@ -91,16 +110,27 @@
     if (d.type === 'shd:signin') {
       needSignIn(function () { try { var f = document.getElementById('forgeFrame3d'); if (f && f.contentWindow) f.contentWindow.postMessage({ type: 'shd:signedin' }, location.origin); } catch (e) { /* ignore */ } }, 'Sign in to save your agent. Your choices are kept.');
     } else if (d.type === 'shd:forged') {
+      lastForged = { name: d.name || 'Your agent', id: d.id || null };
       toast((d.name || 'Your agent') + ' was created and joined your office.');
       try { if (typeof e5RenderForgedRows === 'function') e5RenderForgedRows(); } catch (e) { /* ignore */ }
       try { if (window.shdWorlds && window.shdWorlds.loadSpace) window.shdWorlds.loadSpace(); } catch (e) { /* ignore */ }
     } else if (d.type === 'shd:goto' && d.view) {
-      closeApp(); goView(d.view);
+      closeApp(); goView(d.view); if (d.view === 'office' && lastForged) { var lf = lastForged; lastForged = null; setTimeout(function () { showNext(lf); }, 1600); }
     }
   });
+  var lastForged = null;
+  function showNext(f) {
+    var old = document.querySelector('.fg-next'); if (old) old.remove();
+    var card = h('aside', { class: 'fg-next', role: 'region', 'aria-label': 'Next steps for ' + f.name }, [
+      h('button', { type: 'button', class: 'fg-x', 'aria-label': 'Close', text: '×', onclick: function () { card.remove(); } }),
+      h('b', { text: f.name + ' is in your office' }), h('small', { text: 'Next: let Grok or an API control it, and find it in your Gallery.' }),
+      window.shdAgentActions ? window.shdAgentActions({ id: f.id, name: f.name, codename: f.name }) : null,
+      h('button', { type: 'button', class: 'gl-btn ghost', text: 'See it in the Gallery', onclick: function () { card.remove(); try { window._ogMode = 'agents'; window.showView('office'); setTimeout(function () { if (window.switchOfficeTab) window.switchOfficeTab('gallery'); }, 400); } catch (e) { /* ignore */ } } })]);
+    document.body.appendChild(card);
+  }
   function goView(view) {
     if (view === 'world') { try { if (window.enter3DWorld) window.enter3DWorld(); } catch (e) { /* ignore */ } return; }
-    if (view === 'forge') { openApp('3d'); return; }
+    if (view === 'forge') { window.showView('forge'); return; }
     if (!document.getElementById(view + 'View') && view !== 'dash') return; try { window.showView(view); } catch (e) { return; }
     if (view === 'office') {
       var t = 0, iv = setInterval(function () { t++; var b = document.querySelector('#shdOffice3d .o3-intro button'); var intro = document.querySelector('#shdOffice3d .o3-intro');
