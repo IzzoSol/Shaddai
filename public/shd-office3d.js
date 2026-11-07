@@ -389,6 +389,9 @@
     cmdIn.addEventListener('keydown', function (e) { if (e.key === 'Enter') { var v = cmdIn.value.trim(); if (v) { say(v); cmdIn.value = ''; } } e.stopPropagation(); });
     var stage = h('div', { class: 'o3-stage' }, [host, holoLayer, prompt, hud, panel, cmd, dock, h('div', { class: 'o3-help', text: 'WASD / arrows move · click a desk or a holo tab · drag to turn · wheel to zoom · E to use' })]);
     card = h('section', { id: 'shdOffice3d', class: 'o3-card' }, [intro, stage, listEl]); stage.style.display = 'none'; card._stage = stage; card._intro = intro; view.insertBefore(card, view.firstChild);
+    card._load = h('div', { class: 'o3-loadmsg', role: 'status', 'aria-live': 'polite', text: 'Loading your 3D office…' });
+    if (canGL()) { intro.style.display = 'none'; card.appendChild(card._load); }
+    else { var sp = intro.querySelector('span'); if (sp) sp.textContent = 'This browser cannot draw the 3D office. Every office tool is still available in the tabs below.'; var ib0 = intro.querySelector('button'); if (ib0) { ib0.disabled = true; ib0.textContent = '3D not supported here'; } }
   }
   function open() {
     var ib = card._intro.querySelector('button'); ib.disabled = true; ib.textContent = 'Loading…';
@@ -407,7 +410,32 @@
   }
   window.addEventListener('resize', function () { if (running) size(); });
   document.addEventListener('visibilitychange', function () { if (!document.hidden && running) pollCity(); });
-  function wrap() { var sv = window.showView; if (typeof sv !== 'function' || sv._o3) return; window.showView = function (v) { var r = sv.apply(this, arguments); if (v === 'office') setTimeout(mount, 60); return r; }; window.showView._o3 = true; }
+  function canGL() { try { var c = document.createElement('canvas'); return !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl'))); } catch (e) { return false; } }
+  var opening = false;
+  function autoOpen() {
+    if (!card || running || opening || !canGL()) return; opening = true;
+    var t0 = Date.now(), ib = card._intro.querySelector('button');
+    card._intro.style.display = 'none'; if (card._load && !card._load.isConnected) card.appendChild(card._load); card._load.textContent = 'Loading your 3D office…';
+    open();
+    var iv = setInterval(function () {
+      if (running) { clearInterval(iv); opening = false; if (card._load) card._load.remove(); return; }
+      var failed = ib && !ib.disabled && ib.textContent === 'Open 3D office' && Date.now() - t0 > 1500;
+      if (failed || Date.now() - t0 > 25000) {
+        clearInterval(iv); opening = false; if (card._load) card._load.remove();
+        card._intro.style.display = ''; var sp = card._intro.querySelector('span'); if (sp) sp.textContent = failed ? 'The 3D office could not start. You can try again; every office tool is still available in the tabs below.' : 'The 3D office is taking longer than expected. You can wait, or try again.';
+        if (ib) { ib.disabled = false; ib.textContent = 'Try again'; }
+      }
+    }, 300);
+  }
+  function wrap() { var sv = window.showView; if (typeof sv !== 'function' || sv._o3) return; window.showView = function (v) {
+      var r = sv.apply(this, arguments);
+      setTimeout(function () {
+        var ov = document.getElementById('officeView'), active = !!(ov && ov.classList.contains('active'));
+        if (v === 'office') { mount(); autoOpen(); }                 // choosing Office shows the 3D office directly
+        else if (!active && running) close();                        // leaving Office stops the render loop and frees the scene
+      }, 60);
+      return r;
+    }; window.showView._o3 = true; }
   wrap(); window.addEventListener('load', function () { wrap(); setTimeout(wrap, 700); setTimeout(mount, 1200); });
   window.shdOffice3d = { open: open, close: close, mount: mount, _agents: function () { return agents; }, _player: function () { return player; }, _holos: function () { return holos; }, _theme: function () { return themeKey; }, themes: THEMES, stations: STATIONS };
 })();

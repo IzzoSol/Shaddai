@@ -357,8 +357,9 @@
     [].forEach.call(panes.children, function (p) {
       [].forEach.call(p.children, function (sec, idx) {
         var t = sec.querySelector('.settings-title'); if (!t || p.children.length < 2) return;
-        sec.classList.add('shd-acc'); if (idx > 0) sec.classList.add('shd-collapsed');
-        t.setAttribute('role', 'button'); t.setAttribute('tabindex', '0'); t.setAttribute('aria-expanded', idx > 0 ? 'false' : 'true');
+        var shut = idx > 0 && sec.id !== 'settingsThemeSkin' && sec.id !== 'shdDisplayPanel';   // the theme switcher stays open: it is the first thing people reach for
+        sec.classList.add('shd-acc'); if (shut) sec.classList.add('shd-collapsed');
+        t.setAttribute('role', 'button'); t.setAttribute('tabindex', '0'); t.setAttribute('aria-expanded', shut ? 'false' : 'true');
         function flip(e) { if (e.target.closest && e.target.closest('button,input,select,a,textarea') && e.target !== t) return; var c = sec.classList.toggle('shd-collapsed'); t.setAttribute('aria-expanded', c ? 'false' : 'true'); }
         t.addEventListener('click', flip); t.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(e); } });
       });

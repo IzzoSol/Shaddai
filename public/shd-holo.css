@@ -405,3 +405,6 @@ html.shd-calm *,html.shd-calm *::before,html.shd-calm *::after{animation-duratio
 .iw-grid .iw-card.on{border-color:var(--c);box-shadow:0 0 26px color-mix(in srgb,var(--c) 40%,transparent)}.iw-grid .iw-card b{font:800 11px 'Orbitron',sans-serif;letter-spacing:.06em}.iw-grid .iw-card small{font-size:11px;color:var(--text-secondary,#b8c9e6)}
 .iw-note{min-height:18px;margin-top:12px;font-size:12px;color:var(--text-secondary,#b8c9e6)}.iw-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .gl-skills{gap:6px}.gl-skill{padding:3px 10px;border-radius:999px;border:1px solid color-mix(in srgb,var(--accent,#00e5a0) 45%,transparent);color:var(--accent,#00e5a0);font:700 10px 'Share Tech Mono',monospace;letter-spacing:.04em;text-transform:capitalize}
+
+/* Office opens directly: a plain loading line instead of a closed landing card */
+.o3-loadmsg{display:flex;align-items:center;justify-content:center;min-height:240px;margin:8px 0;border:1px solid var(--border,rgba(255,255,255,.14));border-radius:14px;background:linear-gradient(160deg,rgba(8,20,32,.9),rgba(3,9,16,.9));color:var(--text-secondary,#b8c9e6);font:700 12px 'Share Tech Mono',monospace;letter-spacing:.12em;text-transform:uppercase}

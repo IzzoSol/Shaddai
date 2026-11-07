@@ -655,6 +655,27 @@ html[data-theme="light"] #brand-ava{box-shadow:0 0 10px -4px rgba(154,117,16,.4)
 .empty{position:relative}
 .empty::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cg fill='none' stroke='%23f5c542' stroke-width='1'%3E%3Ccircle cx='70' cy='70' r='35'/%3E%3Ccircle cx='35' cy='52' r='35'/%3E%3Ccircle cx='105' cy='52' r='35'/%3E%3Ccircle cx='35' cy='88' r='35'/%3E%3Ccircle cx='105' cy='88' r='35'/%3E%3Ccircle cx='70' cy='35' r='35'/%3E%3Ccircle cx='70' cy='105' r='35'/%3E%3C/g%3E%3C/svg%3E") center/140px repeat;opacity:.07;pointer-events:none}
 html[data-theme="light"] .empty::before{opacity:.10}
+/* freshness states (word + colour; the dot only pulses when live) */
+header #live{animation:none!important;text-shadow:none!important;font-weight:700;letter-spacing:.1em}
+header #live::before{animation:none!important;box-shadow:none!important;background:currentColor!important}
+header #live.s-live{color:var(--emerald)!important}header #live.s-live::before{animation:pulse 1.6s infinite!important;box-shadow:0 0 8px var(--emerald)!important}
+header #live.s-delayed,header #live.s-cached{color:var(--amber)!important}
+header #live.s-stale,header #live.s-error{color:var(--red)!important}
+header #live.s-loading,header #live.s-sim{color:#aab8c8!important}
+#updated{max-width:48vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--f-mono);font-size:10px;color:#b4c0cf}
+#clock{font-family:var(--f-mono);font-size:10px;color:#8794a6}
+#freshbar{position:fixed;top:96px;left:0;right:0;height:34px;z-index:14;display:flex;align-items:center;gap:10px;padding:0 12px;background:rgba(7,10,15,.97);border-bottom:1px solid var(--edge);border-left:4px solid #aab8c8;font-family:var(--f-mono);font-size:11px;color:#c8d2de}
+#fbText{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#freshbar.s-live{border-left-color:var(--emerald)}#freshbar.s-delayed,#freshbar.s-cached{border-left-color:var(--amber)}#freshbar.s-stale,#freshbar.s-error{border-left-color:var(--red)}
+#basisBtn{flex:none;min-height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--edge2);background:transparent;color:var(--gold);font-family:var(--f-mono);font-size:10px;letter-spacing:.06em;cursor:pointer}
+#basisBtn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+#basis{position:fixed;top:134px;left:10px;right:10px;z-index:30;padding:10px 14px;border:1px solid var(--gold);border-radius:12px;background:rgba(7,10,15,.99);box-shadow:0 14px 40px rgba(0,0,0,.6);font-size:12px;line-height:1.55;color:#d6dee8}
+#basis[hidden]{display:none}#basis p{margin:4px 0}#basisState{font-family:var(--f-mono);color:var(--gold)}
+#views{top:132px!important}
+/* text over photos: dim the photo and add a shadow so labels stay readable */
+.bub.fb .bub-bg{opacity:.38!important}
+.bub.fb,.bub.fb *{text-shadow:0 1px 3px rgba(0,0,0,.95)}
+@media (max-width:640px){#updated{display:none}}
 </style>
 <script src="/sw-heal.js"></script>
 </head>
@@ -663,9 +684,9 @@ html[data-theme="light"] .empty::before{opacity:.10}
 <header id="top">
   <img id="brand-ava" src="/assets/agents/ZEROX-portrait.png" alt="ZEROX">
   <div id="brand">ZEROX<b>·SIGNALS</b></div>
-  <span id="clock" title="Local time"></span>
+  <span id="clock" title="Your device clock. This is not a data time."></span>
   <span id="updated"></span>
-  <span id="live" aria-live="polite">LIVE</span>
+  <span id="live" class="s-loading" role="status" aria-live="polite">LOADING</span>
   <button id="btn-refresh" title="Refresh" aria-label="Refresh signals">⟳</button>
   <button id="btn-theme" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button>
 <div class="mktstrip" id="mktstrip">
@@ -674,6 +695,11 @@ html[data-theme="light"] .empty::before{opacity:.10}
 </div>
 </header>
 
+<div id="freshbar" role="status" aria-live="polite"><span id="fbText">Loading…</span><button type="button" id="basisBtn" aria-expanded="false" aria-controls="basis">How to read this</button></div>
+<div id="basis" role="region" aria-label="How to read these numbers" hidden>
+  <p id="basisState"></p>
+  <p>Prices are in USD, from DexScreener pairs when available (their fetch time is shown above). A multiple such as 3.3× is the tracker's last recorded price divided by the price when the call was made. It is history, not a forecast, and it has no timestamp per coin. The calls list is a stored archive; the badge tells you how fresh it really is. Nothing here is financial advice.</p>
+</div>
 <div id="views">
   <section class="view on" id="v-heat" role="tabpanel" aria-labelledby="nav-heat">
     <div class="view-h"><span class="ti">Heatmap</span><span class="count" id="heat-count"></span><span class="count" id="heat-meta" style="opacity:.55;font-size:10.5px"></span></div>
@@ -855,6 +881,47 @@ function drawSpark(canvas, points, color) {
   ctx.stroke();
 }
 
+/* ---------------- freshness (real fetch results, not the clock) ---------------- */
+var Fresh = { seq: 0, feed: { ok: 0, err: '', asOf: 0, n: 0, simAll: false, simHidden: 0 }, dex: { ok: 0, err: '' }, cached: false, busy: false };
+function freshAgo(ms) { var s = Math.max(0, Math.round(ms / 1000)); if (s < 60) return s + 's'; var m = Math.round(s / 60); if (m < 60) return m + 'm'; var h = Math.round(m / 60); if (h < 48) return h + 'h'; return Math.round(h / 24) + 'd'; }
+function hms(t) { return new Date(t).toTimeString().slice(0, 8); }
+function freshState() {
+  var f = Fresh.feed, now = Date.now();
+  if (f.simAll) return { k: 'sim', t: 'SIMULATED', d: 'The feed says its data is simulated.' };
+  if (!f.ok) {
+    if (f.err) return { k: 'error', t: 'ERROR', d: 'Could not load the calls feed (' + f.err + ').' + (Fresh.cached ? ' Showing your last saved copy.' : '') };
+    return Fresh.cached ? { k: 'cached', t: 'CACHED', d: 'Showing your last saved copy while the feed loads.' } : { k: 'loading', t: 'LOADING', d: 'Loading the calls feed.' };
+  }
+  var age = now - f.ok;
+  if (f.err) return { k: 'stale', t: 'STALE', d: 'The last refresh failed (' + f.err + '). Showing the last good update from ' + freshAgo(age) + ' ago.' };
+  if (age > 10 * 60e3) return { k: 'stale', t: 'STALE', d: 'No successful refresh for ' + freshAgo(age) + '.' };
+  if (age > 2 * 60e3) return { k: 'delayed', t: 'DELAYED', d: 'The last successful refresh was ' + freshAgo(age) + ' ago. It normally refreshes every minute.' };
+  if (f.asOf && now - f.asOf > 24 * 3600e3) return { k: 'stale', t: 'OLD DATA', d: 'The feed loaded, but its newest call is ' + freshAgo(now - f.asOf) + ' old. It is a stored call archive, not a live tape.' };
+  return { k: 'live', t: 'LIVE FEED', d: 'Calls feed fetched ' + freshAgo(age) + ' ago. Multiples are the tracker\'s last recorded values and carry no per-coin timestamp.' };
+}
+function renderFresh() {
+  var st = freshState(), L = el('live'), U = el('updated');
+  if (L) { L.className = 's-' + st.k; L.textContent = st.t; L.title = st.d; }
+  if (U) {
+    var parts = [], f = Fresh.feed, now = Date.now();
+    if (f.ok) parts.push('feed fetched ' + hms(f.ok) + ' (' + freshAgo(now - f.ok) + ' ago)');
+    if (f.asOf) parts.push('newest call ' + freshAgo(now - f.asOf) + ' ago');
+    if (Fresh.dex.ok) parts.push('prices (DexScreener) ' + freshAgo(now - Fresh.dex.ok) + ' ago');
+    else if (Fresh.dex.err) parts.push('DexScreener unavailable');
+    if (f.simHidden) parts.push(f.simHidden + ' simulated entries hidden');
+    var line = parts.join(' · ') || (Fresh.busy ? 'updating…' : ''); U.textContent = line; U.title = st.d;
+    var fb = el('freshbar'), ft = el('fbText'), bs = el('basisState'); if (fb && ft) { fb.className = 's-' + st.k; ft.textContent = st.t + ' · ' + (line || st.d); fb.title = st.d; } if (bs) bs.textContent = st.d;
+  }
+}
+if (!window.__ssFreshTimer) window.__ssFreshTimer = setInterval(renderFresh, 5000);
+(function () {
+  var btn = el('basisBtn'), box = el('basis'); if (!btn || !box) return;
+  function set(open) { box.hidden = !open; btn.setAttribute('aria-expanded', open ? 'true' : 'false'); }
+  btn.addEventListener('click', function (e) { e.stopPropagation(); set(box.hidden); });
+  document.addEventListener('click', function (e) { if (!box.hidden && !box.contains(e.target)) set(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !box.hidden) { set(false); btn.focus(); } });
+})();   // age is recomputed even if nothing refreshes, so STALE can appear on its own
+
 /* ---------------- data ---------------- */
 function httpsHeaders(r){return r;}
 async function fetchJSON(u) {
@@ -863,15 +930,18 @@ async function fetchJSON(u) {
   return r.json();
 }
 async function refresh() {
-  setText('updated', '');
+  var mySeq = ++Fresh.seq; Fresh.busy = true; renderFresh();
   renderAll();
   var r = await Promise.allSettled([loadFeed(), loadDex(), loadWallets()]);
   var ok = r.filter(function (x) { return x.status === 'fulfilled'; }).length;
+  var latest = mySeq === Fresh.seq; if (latest) Fresh.busy = false;
+  if (!latest) { /* a newer refresh started while this one was running; its result wins */ }
+  else if (r[0].status === 'fulfilled') { Fresh.feed.ok = Date.now(); Fresh.feed.err = ''; } else { Fresh.feed.err = String((r[0].reason && r[0].reason.message) || r[0].reason || 'failed'); }
   renderAll();
   stamp();
   // keep the timestamp on a clean refresh — it was being erased on full
   // success, so subscribers could never see how fresh the sheet was
-  if (ok < 3) setText('updated', 'partial · ' + Date.now().toString().slice(-5));
+  renderFresh();
 }
 /* Fast self-refresh while user is on DEX */
 setInterval(function () {
@@ -905,6 +975,10 @@ async function loadFeed() {
   var live = fresh.filter(function (c) { return (Number(c.curMult) || 0) >= 1; }).length;
   console.log('[SHADDAI] feed loaded:', fresh.length, 'calls,', live, 'live (≥1×)');
   state.feed = fresh;
+  Fresh.cached = false; Fresh.feed.n = fresh.length;
+  Fresh.feed.asOf = fresh.reduce(function (m, c) { var t = Number(c.ts) || 0; return t > m ? t : m; }, 0);
+  Fresh.feed.simHidden = fresh.filter(function (c) { return /^(seed|test|demo)$/.test(String(c.source || '')); }).length;
+  Fresh.feed.simAll = !!(j.simulated || j.demo || j.mode === 'demo' || j.mode === 'simulated');
   try { sessionStorage.setItem('ss_feed', JSON.stringify(fresh)); } catch (e) {}
   DexMerge.mergeInto(fresh).then(function () { renderHeat(); if (state.tab === 'calls') renderCalls(); bubSparks(); });
   return state.feed.length;
@@ -917,8 +991,9 @@ var DexMerge = (function () {
   function k(m) { return 'ds_' + (m || '').slice(0, 12); }
   function fetchBatch(mints) {
     return fetch('https://api.dexscreener.com/latest/dex/tokens/' + mints.join(','), { signal: AbortSignal.timeout(12000) })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .catch(function () { return null; });
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (j) { Fresh.dex.ok = Date.now(); Fresh.dex.err = ''; return j; })
+      .catch(function (e) { Fresh.dex.err = String((e && e.message) || e); return null; });
   }
   function mergeInto(list) {
     if (!list || !list.length) return Promise.resolve();
@@ -1037,11 +1112,7 @@ async function loadWallets() {
   catch (e) { state.wallets = []; }
   return state.wallets.length;
 }
-function stamp() {
-  var n = Date.now();
-  var t = new Date(n).toTimeString().slice(0, 5);
-  setText('updated', t);
-}
+function stamp() { renderFresh(); }   // the old version wrote the clock time here, which looked like a data time even when the feed had failed
 
 /* ---------------- safety color ---------------- */
 function safetyColor(score) {
@@ -1727,8 +1798,10 @@ function renderPNL() {
 
 /* ---------------- tabs + swipe ---------------- */
 var tabs = ['heat', 'calls', 'race', 'dex', 'wallet', 'pnl'];
-function setTab(t) {
+function setTab(t, fromHistory) {
+  if (tabs.indexOf(t) < 0) t = 'heat';
   state.tab = t;
+  try { if (!fromHistory && location.hash.slice(1) !== t) history.pushState({ tab: t }, '', '#' + t); } catch (e) {}
   try { localStorage.setItem('ss_tab', t); } catch (e) {}
   tabs.forEach(function (v) { el('v-' + v).classList.toggle('on', v === t); });
   document.querySelectorAll('#nav .nt').forEach(function (b) {
@@ -1820,7 +1893,8 @@ tickClock();
 setInterval(tickClock, 1000);
 function renderAll() { renderHeat(); renderCalls(); renderRate(); renderPulse(); renderDex(); renderWallet(); renderPNL(); }
 
-try { var t = localStorage.getItem('ss_tab'); if (tabs.indexOf(t) >= 0) setTab(t); } catch (e) {}/* ── market weather + news ticker (key-free) ── */
+try { var hashTab = location.hash.slice(1), t = tabs.indexOf(hashTab) >= 0 ? hashTab : localStorage.getItem('ss_tab'); if (tabs.indexOf(t) >= 0) setTab(t, true); } catch (e) {}
+window.addEventListener('popstate', function () { var h = location.hash.slice(1); if (tabs.indexOf(h) >= 0) setTab(h, true); });/* ── market weather + news ticker (key-free) ── */
 function sWfmt(n){ n=Number(n)||0; if(n>=1e9)return (n/1e9).toFixed(1)+'B'; if(n>=1e6)return (n/1e6).toFixed(1)+'M'; if(n>=1e3)return (n/1e3).toFixed(1)+'K'; return n.toFixed(2); }
 function sEsc(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;'); }
 function loadWeather(){ var b=document.getElementById('mktChips'); if(!b)return; fetch(API + '/api/tufish/watch?ids=bitcoin,ethereum,solana',{signal:AbortSignal.timeout(8000)}).then(function(r){return r.json();}).then(function(d){ if(!d||!d.coins||!d.coins.length)return; b.innerHTML=d.coins.map(function(c){ var ch=Number(c.change24h)||0,up=ch>=0; return '<span class="mkt"><b>'+sEsc(c.symbol)+'</b> '+(up?'▲ ':'▼ ')+'$'+sWfmt(c.price)+' '+(up?'+':'')+ch.toFixed(1)+'%</span>'; }).join(''); }).catch(function(){}); }
@@ -1829,7 +1903,7 @@ loadWeather();
 loadTicker();
 initPnlImages().then(renderPNL);
 (function boot() {
-  try { var cached = sessionStorage.getItem('ss_feed'); if (cached) { var arr = JSON.parse(cached); if (Array.isArray(arr) && arr.length) { state.feed = arr; state.firstFeed = false; } } } catch (e) {}
+  try { var cached = sessionStorage.getItem('ss_feed'); if (cached) { var arr = JSON.parse(cached); if (Array.isArray(arr) && arr.length) { state.feed = arr; state.firstFeed = false; Fresh.cached = true; } } } catch (e) {}
   renderAll();
   refresh();
 })();
