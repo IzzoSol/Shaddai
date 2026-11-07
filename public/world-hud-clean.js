@@ -9,9 +9,9 @@
 (function (root) {
   'use strict';
   var KEY = 'shd_hud_prefs_v1';
-  var DEF = { controls: false, helpChip: false, coords: false, title: false, topNav: false, chat: false, modePill: false, lookSens: 1.0, invertY: false };
+  var DEF = { controls: false, helpChip: false, coords: false, title: false, topNav: false, chat: false, modePill: false, corner: false, lookSens: 1.0, invertY: false };
   var P = (function () { try { return Object.assign({}, DEF, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { return Object.assign({}, DEF); } })();
-  var LABELS = { controls: 'Controls strip (keys)', helpChip: '"Press H" help chip', coords: 'Coordinates', title: 'SHADDAI WORLD title', topNav: 'Home / Dashboard buttons', chat: 'Chat button', modePill: 'Cursor / play mode pill' };
+  var LABELS = { controls: 'Controls strip (keys)', helpChip: '"Press H" help chip', coords: 'Coordinates', title: 'SHADDAI WORLD title', topNav: 'Home / Dashboard buttons', chat: 'Chat button', modePill: 'Cursor / play mode pill', corner: 'Bottom-right buttons' };
   var flash = 0;
   function save() { try { localStorage.setItem(KEY, JSON.stringify(P)); } catch (e) { } }
   function modePill() { var b = [].slice.call(document.querySelectorAll('button,div')).filter(function (e) { return e.children.length < 3 && /^\W*(CURSOR|PLAY) MODE\W*$/i.test((e.textContent || '').trim()); }); return b[0] || null; }
@@ -26,6 +26,7 @@
     show(document.getElementById('worldNav'), P.topNav);
     show(document.getElementById('chatBtn'), P.chat);
     show(modePill(), P.modePill);
+    sweepCorner();
     if (root.__setLookSens) root.__setLookSens(P.lookSens, P.invertY);
   }
   function set(k, v) { if (!(k in DEF)) return; P[k] = v; save(); apply(); }
@@ -70,6 +71,41 @@
     if (e.code !== 'F2' || e.repeat) return; var t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
     e.preventDefault(); setUiOff(!uiOff);
   });
+  // CORNER TRAY (2026-11-06, owner: "the buttons in the bottom right corner need to be able to be dropped down or hide"): one chevron in
+  // the corner folds away every small clickable overlay that sits bottom-right (venue/race/ship/shop/access buttons, whichever module made
+  // them). Read-outs that do not take clicks (speedometers, chips with pointer-events:none) stay. Folded by default (clean screen);
+  // the chevron shows how many are tucked away. Same switch in NAVI -> SETTINGS ("Bottom-right buttons").
+  var CORNER_SKIP = { shdCornerTog: 1, navi: 1, naviBtn: 1 };
+  function cornerItem(e, vw, vh) {
+    if (KEEP[e.id] || CORNER_SKIP[e.id] || e.tagName === 'SCRIPT' || e.tagName === 'STYLE' || e.tagName === 'CANVAS') return false;
+    var st = getComputedStyle(e); if (st.position !== 'fixed' || st.display === 'none' || st.pointerEvents === 'none') return false;
+    if (st.visibility === 'hidden' && !e.hasAttribute('data-shd-corner')) return false;
+    var r = e.getBoundingClientRect(); if (!r.width || r.width * r.height > vw * vh * 0.12) return false;          // a real panel, not a button
+    if (r.left < vw * 0.6 || r.top < vh * 0.55) return false;                                                    // bottom-right zone only
+    return e.tagName === 'BUTTON' || e.tagName === 'A' || st.cursor === 'pointer' || !!e.querySelector('button,a,[onclick]');
+  }
+  var cornerTog = null;
+  function sweepCorner() {
+    if (!document.body || uiOff) return;
+    var vw = innerWidth, vh = innerHeight, kids = document.body.children, n = 0;
+    for (var i = 0; i < kids.length; i++) {
+      var e = kids[i]; if (!cornerItem(e, vw, vh)) continue; n++;
+      if (!P.corner && !e.hasAttribute('data-shd-corner')) { e.setAttribute('data-shd-corner', e.style.visibility || '-'); e.style.visibility = 'hidden'; }
+    }
+    if (P.corner) [].forEach.call(document.querySelectorAll('[data-shd-corner]'), function (e) { var v = e.getAttribute('data-shd-corner'); e.style.visibility = v === '-' ? '' : v; e.removeAttribute('data-shd-corner'); });
+    if (!cornerTog) {
+      cornerTog = document.createElement('button'); cornerTog.id = 'shdCornerTog'; cornerTog.type = 'button';
+      cornerTog.style.cssText = 'position:fixed;right:10px;bottom:46px;z-index:100001;min-width:30px;height:24px;padding:0 7px;border-radius:8px;cursor:pointer;' +
+        "border:1px solid rgba(0,212,255,.45);background:rgba(5,14,34,.85);color:#7fe3ff;font:700 11px/1 'Chakra Petch',sans-serif;letter-spacing:.08em";
+      cornerTog.onclick = function (ev) { ev.stopPropagation(); set('corner', !P.corner); toast(P.corner ? 'CORNER BUTTONS SHOWN' : 'CORNER BUTTONS TUCKED AWAY'); };
+      document.body.appendChild(cornerTog);
+    }
+    cornerTog.style.display = n ? '' : 'none';
+    cornerTog.textContent = P.corner ? '▾' : '▴ ' + n;
+    cornerTog.title = P.corner ? 'Tuck the corner buttons away' : 'Show ' + n + ' corner button' + (n === 1 ? '' : 's');
+    cornerTog.setAttribute('aria-expanded', P.corner ? 'true' : 'false');
+  }
+  setInterval(sweepCorner, 700);                                                              // buttons that modules add later get folded too
   setInterval(sweepUi, 700);                                                                  // notices/toasts that pop up while hidden stay hidden
   setInterval(apply, 1500);                                                                   // late-built elements (chat button, pill) get the rule too
   if (document.readyState !== 'loading') apply(); else addEventListener('DOMContentLoaded', apply);

@@ -106,10 +106,13 @@ window.WorldRiderPose = window.WorldRiderPose || (function () {
         uplegL: found.uplegl, legL: found.legl, footL: found.footl,
         uplegR: found.uplegr, legR: found.legr, footR: found.footr,
       };
-      // a hand/foot the regex missed → use the first bone child of the lower limb as the "end"
+      // CHAIN FIX (2026-11-07, torn chest/shoulders on the hoverboard): side-by-position is only safe for the ROOT of a limb
+      // (shoulder joints / hip joints never cross). Hands and feet can: SHADDAI + ORACLE idle with FOLDED ARMS, so at bind time the
+      // right hand sits on the body's left and was wired as handL → the solver twisted the left forearm toward the RIGHT hand.
+      // Now fore/hand and leg/foot are taken from the DESCENDANTS of their own upper bone (geometry only picks the root).
       ['L', 'R'].forEach(function (s) {
-        if (!b['hand' + s] && b['fore' + s]) b['hand' + s] = firstBoneChild(b['fore' + s]);
-        if (!b['foot' + s] && b['leg' + s]) b['foot' + s] = firstBoneChild(b['leg' + s]);
+        var up = b['arm' + s]; if (up) { b['fore' + s] = descKind(up, 'fore') || firstBoneChild(up); if (b['fore' + s]) b['hand' + s] = descKind(b['fore' + s], 'hand') || firstBoneChild(b['fore' + s]); }
+        var ul = b['upleg' + s]; if (ul) { b['leg' + s] = descKind(ul, 'leg') || firstBoneChild(ul); if (b['leg' + s]) b['foot' + s] = descKind(b['leg' + s], 'foot') || firstBoneChild(b['leg' + s]); }
       });
       rig.b = b;
       // posed bones in PARENT-FIRST order (blend + matrix updates rely on this)
@@ -123,6 +126,12 @@ window.WorldRiderPose = window.WorldRiderPose || (function () {
       return rig;
     }
     function firstBoneChild(o) { for (var i = 0; i < o.children.length; i++) if (o.children[i].isBone) return o.children[i]; return null; }
+    // nearest bone below `o` (breadth-first) whose limb word is `kind` (skips twist/roll helpers in between)
+    function descKind(o, kind) {
+      var q = o.children.slice();
+      while (q.length) { var c = q.shift(); if (!c.isBone) continue; if (kindOf(limbWord(c.name)) === kind) return c; for (var i = 0; i < c.children.length; i++) q.push(c.children[i]); }
+      return null;
+    }
 
     // rotate `bone` (minimal rotation) so the joint `tip` moves onto the ray toward `target`
     function aimAt(bone, tip, target) {
