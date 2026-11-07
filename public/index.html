@@ -10430,8 +10430,10 @@ window.enter3DWorld=function(){
 
   <!-- Wallet View -->
   <div id="walletView" class="view">
-    <!-- SOLANA PAY COMMAND CENTER -->
-    <div class="card" style="border:2px solid rgba(153,69,255,0.35);background:linear-gradient(135deg,rgba(153,69,255,0.05),rgba(20,241,149,0.03),rgba(0,0,0,0));grid-column:1/-1">
+    <!-- PAYBOX wallets (replaces the Solana Pay card; Solana is coming soon). The old card stays in the page, hidden, so its scripts keep working. -->
+    <div id="shdPayboxMount" style="grid-column:1/-1"></div>
+    <!-- SOLANA PAY COMMAND CENTER (hidden: coming soon) -->
+    <div id="solanaPayLegacy" class="card" style="display:none;border:2px solid rgba(153,69,255,0.35);background:linear-gradient(135deg,rgba(153,69,255,0.05),rgba(20,241,149,0.03),rgba(0,0,0,0));grid-column:1/-1">
 
       <!-- Header -->
       <div class="card-head" style="border-bottom:1px solid rgba(153,69,255,0.2);padding-bottom:12px;margin-bottom:14px">
@@ -10584,7 +10586,7 @@ window.enter3DWorld=function(){
         <span class="card-title">💰 Wallet & Earnings</span>
         <div style="display:flex;gap:8px">
           <button class="btn btn-ghost" onclick="refreshWallet()">↻ Refresh</button>
-          <button class="btn btn-accent" id="connectWalletBtn" onclick="connectWallet()">Connect Wallet</button>
+          <button class="btn btn-ghost" id="connectWalletBtn" disabled title="Solana wallets are coming soon" style="opacity:.6;cursor:not-allowed">Solana · coming soon</button>
         </div>
       </div>
       
@@ -10599,17 +10601,8 @@ window.enter3DWorld=function(){
       
       <!-- Not Connected -->
       <div id="walletNotConnected" style="padding:40px;text-align:center">
-        <div style="font-size:40px;margin-bottom:16px">💳</div>
-        <div style="font-size:14px;color:var(--text-muted);margin-bottom:20px">Connect your Solana wallet to receive payments from clients</div>
-        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-          <button class="btn btn-ghost" onclick="connectSpecificWallet('phantom')">👻 Phantom</button>
-          <button class="btn btn-ghost" onclick="connectSpecificWallet('solflare')">🔥 Solflare</button>
-          <button class="btn btn-ghost" onclick="connectSpecificWallet('backpack')">🎒 Backpack</button>
-          <button class="btn btn-ghost" onclick="connectSpecificWallet('coinbase')">💰 Coinbase</button>
-          <button class="btn btn-ghost" onclick="connectSpecificWallet('slope')">📐 Slope</button>
-          <button class="btn btn-ghost" onclick="connectSpecificWallet('ledger')">📓 Ledger</button>
-          <button class="btn btn-ghost" onclick="connectSpecificWallet('glow')">🌟 Glow</button>
-        </div>
+        <div style="font:900 15px 'Orbitron',sans-serif;letter-spacing:.08em;color:var(--accent);margin-bottom:8px">SOLANA WALLETS · COMING SOON</div>
+        <div style="font-size:13px;color:var(--text-muted);max-width:52ch;margin:0 auto">For now every agent runs on its own PAYBOX wallet (above). Connecting your own Solana wallet will arrive in a later update.</div>
       </div>
       
       <!-- Connected -->
@@ -59273,6 +59266,7 @@ body.in-world #mainNav, body.in-world #sbNav { display:none !important; }
 <script defer src="/shd-glow.js?v=119"></script>
 <script defer src="/shd-plans.js?v=119"></script>
 <script defer src="/shd-hub.js?v=119"></script>
+<script defer src="/shd-paybox.js?v=119"></script>
 <script defer src="/shd-words.js?v=119"></script>
 <script defer src="/shd-colosseum.js?v=119"></script>
 <script defer src="/shd-link.js?v=119"></script>

@@ -113,7 +113,7 @@
   function setGate(msg, btn) { hud.gate.textContent = ''; if (!msg) { hud.gate.style.display = 'none'; return; } hud.gate.style.display = 'flex'; hud.gate.appendChild(h('div', { text: msg })); if (btn) hud.gate.appendChild(btn); }
 
   /* ── modes + tickets ── */
-  function refreshEvents() { return api('GET', '/api/colosseum/events').then(function (d) { if (d && d.ok) { offset = d.now - Date.now(); tickets = d; } else tickets = null; updatePrices(); return d; }); }
+  function refreshEvents() { return api('GET', '/api/colosseum/events').then(function (d) { if (d && d.ok && d.current && d.current.length > 1) { offset = d.now - Date.now(); tickets = d; } else tickets = null; updatePrices(); return d; }); }
   function updatePrices() { var m = hud.modes && hud.modes.querySelector('[data-m=main] .col-price'), t = hud.modes && hud.modes.querySelector('[data-m=tournament] .col-price'); if (!tickets) { if (m) m.textContent = 'offline'; if (t) t.textContent = 'offline'; return; } var c = tickets.current; if (m) m.textContent = c[0].has_ticket ? 'ticket ✓' : (tickets.tickets_on ? c[0].price_sparks + ' Spark' : 'sign in'); if (t) t.textContent = c[1].has_ticket ? 'ticket ✓' : (tickets.tickets_on ? c[1].price_sparks + ' Spark' : 'sign in'); }
   function setMode(m) {
     mode = m; seedLive = null; eventLive = null; lastTick = -1; matchKey = ''; hud.modes.querySelectorAll('.col-mode').forEach(function (x) { x.classList.toggle('on', x.getAttribute('data-m') === m); }); setGate('');

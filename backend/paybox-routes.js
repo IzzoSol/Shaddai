@@ -225,6 +225,9 @@ router.post('/agent-tip', json, async (req, res) => {
   }
 });
 
+// GET /api/paybox/agent-wallets — each agent's PAYBOX balance (read-only; Solana and Hyperliquid report coming_soon)
+try { router.use('/agent-wallets', require('./lib/paybox-agent-wallets')()); } catch (e) { console.warn('[paybox-routes] agent-wallets unavailable:', e.message); }
+
 module.exports = router;
 module.exports.recordOrder = recordOrder;
 module.exports.confirmOrder = confirmOrder;

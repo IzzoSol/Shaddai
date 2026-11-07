@@ -262,3 +262,20 @@ html[data-theme-skin="holo"] ::-webkit-scrollbar-thumb{background:hsl(var(--hh) 
 .sc-foot{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
 @media (max-width:640px){.hb-menu{left:12px;right:12px!important;width:auto}.sc-card-big{padding:16px}}
 @media (prefers-reduced-motion:reduce){.sc-card,.hb-menu{animation:none}}
+/* ── PAYBOX wallets ───────────────────────────────────────────────────────── */
+.pbw{grid-column:1/-1;padding:18px;border-radius:16px;border:1px solid var(--border,rgba(0,229,160,.3));background:linear-gradient(160deg,rgba(8,22,34,.9),rgba(4,10,18,.9));box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 14px 40px rgba(0,0,0,.4)}
+.pbw-head{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.pbw-kick{font:700 10px 'Share Tech Mono',monospace;letter-spacing:.3em;color:var(--accent,#00e5a0)}.pbw-h{margin:2px 0;font:900 20px 'Orbitron',sans-serif;color:#fff}.pbw-sub{margin:0;font-size:12px;color:var(--text-secondary,#b8c9e6);max-width:56ch}
+.pbw-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pbw-chip{padding:5px 11px;border-radius:999px;border:1px solid var(--border,rgba(255,255,255,.2));font:700 10px 'Share Tech Mono',monospace;letter-spacing:.06em;color:var(--text-muted,#7f93bd)}.pbw-chip.live{border-color:var(--accent,#00e5a0);color:var(--accent,#00e5a0)}
+.pbw-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.pbw-tile{padding:12px 14px;border-radius:12px;border:1px solid var(--border,rgba(255,255,255,.14));background:rgba(255,255,255,.03)}.pbw-tile b{display:block;font:900 20px 'Orbitron',sans-serif;color:var(--accent,#00e5a0)}.pbw-tile small{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted,#7f93bd)}
+.pbw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.pbw-card{position:relative;display:flex;flex-direction:column;gap:6px;padding:14px;border-radius:14px;border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:linear-gradient(160deg,color-mix(in srgb,var(--c) 10%,transparent),rgba(255,255,255,.015));box-shadow:0 0 22px color-mix(in srgb,var(--c) 12%,transparent)}
+.pbw-name{font:900 14px 'Orbitron',sans-serif;letter-spacing:.08em;color:var(--c)}.pbw-role{font-size:11px;color:var(--text-secondary,#b8c9e6)}
+.pbw-bal b{font:900 26px 'Orbitron',sans-serif;color:#fff}.pbw-bal small{font-size:11px;color:var(--text-muted,#7f93bd)}
+.pbw-row{display:flex;gap:6px;flex-wrap:wrap}.pbw-amt{width:64px;min-height:40px;padding:0 8px;border-radius:9px;border:1px solid var(--border,rgba(255,255,255,.2));background:rgba(255,255,255,.04);color:#fff}
+.pbw-btn{min-height:40px;padding:0 14px;border-radius:9px;border:1px solid var(--c,var(--accent,#00e5a0));background:var(--c,var(--accent,#00e5a0));color:#04100c;font:800 10px 'Orbitron',sans-serif;letter-spacing:.06em;cursor:pointer}.pbw-btn.ghost{background:transparent;color:var(--c,var(--accent,#00e5a0))}.pbw-btn:disabled{opacity:.5}
+.pbw-note{font-size:11px;min-height:15px;color:var(--text-secondary,#b8c9e6)}.pbw-empty{padding:18px;color:var(--text-secondary,#b8c9e6);font-size:13px}
+
+.pbw-chips .pbw-btn{border-color:var(--accent,#00e5a0);color:var(--accent,#00e5a0);min-height:34px}

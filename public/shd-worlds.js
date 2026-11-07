@@ -232,12 +232,11 @@
   function loadArena() {
     var el = mount('arena'); if (!el) return;
     if (el.dataset.built) return; el.dataset.built = '1';
-    var colo = h('div', { class: 'sw-framehost' }, [msg('Opens the Colosseum viewer on demand.', 'dim')]);
+    var colo = h('div', { class: 'sw-framehost' }, [msg('Opening the Colosseum…', 'dim')]);
     var spec = h('div', { class: 'sw-framehost' }, [msg('Opens a visitor view of the live 3D world. You can look around; you do not take part.', 'dim')]);
     fill(el, [
       box('Colosseum', 'practice bouts are free · main event and tournament need a ticket', [colo, h('div', { class: 'sw-actions' }, [
-        btn('Watch live', function () { if (window.shdColosseum) window.shdColosseum.mount(colo); else lazyFrame(colo, '/colosseum-final.html', 'Colosseum viewer', true); }),
-        btn('Classic viewer', function () { if (window.shdColosseum) window.shdColosseum.unmount(); lazyFrame(colo, '/colosseum-final.html', 'Classic Colosseum viewer', true); }, 'ghost'),
+        btn('Restart view', function () { if (window.shdColosseum) { window.shdColosseum.unmount(); window.shdColosseum.mount(colo); } }, 'ghost'),
         btn('Enter the arena in 3D', function () { window.enter3DWorld && window.enter3DWorld(); }, 'ghost')
       ])]),
       box('Spectate the world', 'visitor view', [spec, h('div', { class: 'sw-actions' }, [
@@ -245,6 +244,8 @@
         btn('Stop', function () { spec.textContent = ''; spec.appendChild(msg('Stopped.', 'dim')); }, 'ghost')
       ])])
     ]);
+    /* the 3D Colosseum is the only one: it opens as soon as the tab does */
+    (function openColo(n) { if (window.shdColosseum) { try { window.shdColosseum.mount(colo); } catch (e) { colo.textContent = 'The Colosseum could not start on this device.'; } } else if (n < 20) setTimeout(function () { openColo(n + 1); }, 300); else { colo.textContent = ''; colo.appendChild(msg('The Colosseum is still loading. Reload the page if it does not appear.', 'dim')); } })(0);
   }
 
   /* ── ATHENAEUM ─────────────────────────────────────────────────────────── */
@@ -353,6 +354,7 @@
   }
   function boot() { wrapSwitch(); wrapInit(); build(); }
   boot(); window.addEventListener('load', function () { boot(); setTimeout(boot, 600); });
+  try { if (/[?&]arena=1\b/.test(location.search)) window.addEventListener('load', function () { setTimeout(function () { if (window.showView) showView('worlds'); setTimeout(function () { if (window.switchWorldsTab) switchWorldsTab('arena'); }, 400); }, 1200); }); } catch (e) { /* ignore */ }
   window.shdWorlds = { build: build, loadPlots: loadPlots, loadSpace: loadSpace, loadArena: loadArena, loadAthenaeum: loadAthenaeum };
   void _init;
 })();
