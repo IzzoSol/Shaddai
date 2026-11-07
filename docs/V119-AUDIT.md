@@ -54,3 +54,9 @@
 ## 6. Where the plan stands
 Done: command center pieces (Worlds hub, Agent City, body viewer, command chat), bridge phase 1 with headless council, skills/workflows on real tools, Sparks metering (off), dashboard<->3D link per the world terminal's contract (hash routing, deep links, snapshot box).
 Done since: the world terminal's C4 (`/api/world/agents` + tasks through the kernel, tested) and the mini 3D office. Not done: OAuth for bots, Postgres store (owner: skip), academy tiers 1–7 + `/api/school/progress` (contract C3, owner: skip), bot bodies bought with Sparks, projects/co-creation, model upload marketplace, server-side gates, push/deploy.
+
+## Loop pass 2 (learn once, use free forever) — added
+- `POST /api/bridge/learn { agent_id, skill | workflow }` (owner door). One-time tuition: skill 0.25 Spark, workflow 0.50 Spark (charged only when `BRIDGE_METERING=on`; idempotent; refunded if the lesson cannot be recorded). The lesson is stored on the agent (`operative.skills[] = { skillId: 'skill:<id>' | '<workflow id>', source: 'bridge-learn' }`).
+- An agent that has learned a skill/workflow runs it free and UNCOUNTED (does not use the hourly allowance). Other agents are unaffected. Chat: `/learn <words>` while talking to one of your agents.
+- OPEN: these lessons live in the same `skills` array the Athenaeum uses, but the Athenaeum's own skill ids are a different registry; reconciling "learned in the Athenaeum" with "learned here" is undecided. Tuition prices are placeholders for the owner to set. Bots cannot learn on their own (it spends the owner's Sparks); only the owner can teach.
+- Verified: `platform-bridge.sparks.test.js` covers ownership, unsafe-skill refusal, charge-once, already-known, free uncounted runs, unlearned agents still paying, refund on failure.

@@ -17,6 +17,7 @@
     { c: '/define', d: 'Define a word', arg: 'garden' },
     { c: '/calc', d: 'Do some math', arg: '12 * (3 + 4)' },
     { c: '/run', d: 'Run anything by name (fuzzy)', arg: 'crypto analysis' },
+    { c: '/learn', d: 'Teach this agent a skill: it runs it free forever', arg: 'price pulse' },
     { c: '/library', d: 'Browse 180+ ready-made workflows', arg: 'search' },
     { c: '/skills', d: 'List the skills you can run' },
     { c: '/clear', d: 'Clear this conversation' }
@@ -113,6 +114,13 @@
     var parts = text.trim().split(/\s+/), cmd = parts[0].toLowerCase(), rest = text.trim().slice(parts[0].length).trim();
     if (cmd === '/clear') { convo = []; save(cur, []); msgsEl.textContent = ''; empty(); return true; }
     if (cmd === '/skills') { loadSkills().then(function (l) { sys(l.length ? 'Runnable skills (' + l.length + '): ' + l.slice(0, 40).map(function (s) { return s.skill + (s.required_input.length ? ' [' + s.required_input.join(',') + ']' : ''); }).join(', ') + (l.length > 40 ? ' …' : '') + '\nRun one with  /skill <id> key=value' : 'No skills available on this server.'); }); return true; }
+    if (cmd === '/learn') {
+      if (!cur || cur.type !== 'forged') { sys('Open one of YOUR agents first (left list), then /learn <skill or workflow>. Council agents already know their own craft.'); return true; }
+      if (!window.shdWords) { sys('The word engine is not loaded.'); return true; }
+      window.shdWords.find(rest).then(function (r) { if (!r.ok) { sys(r.message); return; } var body = { agent_id: cur.id }; if (r.kind === 'skill') body.skill = r.id; else body.workflow = r.id;
+        api('POST', '/api/bridge/learn', body).then(function (d) { sys(d.ok ? (d.already ? cur.name + ' already knows ' + r.title + '.' : cur.name + ' learned ' + r.title + (d.tuition_sparks && d.tuition_sparks !== '0.00' ? ' (tuition ' + d.tuition_sparks + ' Sparks)' : '') + '. It now runs it free, forever, and it will not use your hourly allowance.') : (d._s === 402 ? 'Out of Sparks. Top up, then try again.' : 'Could not learn that: ' + (d.error || d._s))); }); });
+      return true;
+    }
     if (cmd === '/library') { api('GET', '/api/bridge/library?q=' + encodeURIComponent(rest) + '&limit=12').then(function (d) { var l = (d && d.workflows) || []; sys(l.length ? 'Workflow library (' + (d.total || l.length) + ' ready-made). ' + l.map(function (w) { return w.workflow_id.replace(/^lib\./, '') + (w.needs_context.length ? ' [' + w.needs_context.join(',') + ']' : ''); }).join(', ') + '\nRun one with  /wf <id> key=value' : 'No workflows match that search.'); }); return true; }
     if (cmd === '/wf') { if (!parts[1]) { sys('Usage: /wf <id> key=value …  (see /library)'); return true; } startRun('lib.' + parts[1].replace(/^lib\./, ''), { context: parseKV(parts.slice(2)) }, 'workflow · ' + parts[1]); return true; }
     if (cmd === '/skill') { if (!parts[1]) { sys('Usage: /skill <skill-id> key=value …  (see /skills)'); return true; } startRun('skill.run', { skill: parts[1], input: parseKV(parts.slice(2)) }, 'skill · ' + parts[1]); return true; }

@@ -85,6 +85,19 @@
       return { ok: true, title: c.title, wf: c.wf, params: leftover.length && c.id === 'research.topic' ? { query: leftover.join(' ') } : {}, via: 'workflow' };
     });
   }
+  /* find(text): the best skill or library workflow for plain words (used by /learn). */
+  function find(text) {
+    var p = parseInput(text), q = p.plain.map(function (w) { return w.toLowerCase().replace(/[^a-z0-9]/g, ''); }).filter(function (w) { return w && !FILLER[w]; });
+    if (!q.length) return Promise.resolve({ ok: false, message: 'Say which skill or workflow, for example: learn price pulse.' });
+    return load().then(function (cands) {
+      var pool = cands.filter(function (c) { return c.kind === 'skill' || c.kind === 'library'; });
+      var sc = pool.map(function (c) { return { c: c, s: score(q, c).s }; }).filter(function (x) { return x.s >= 0.5; }).sort(function (a, b) { return b.s - a.s; });
+      if (!sc.length) return { ok: false, message: 'No skill or workflow matches "' + p.plain.join(' ') + '".' };
+      var near = sc.filter(function (x) { return sc[0].s - x.s < 0.08; });
+      if (near.length > 1 && sc[0].s < 0.99) return { ok: false, message: 'Which one did you mean? ' + near.slice(0, 5).map(function (x) { return x.c.title; }).join(' · ') };
+      var c = sc[0].c; return { ok: true, kind: c.kind, id: c.kind === 'skill' ? c.skill : c.wf, title: c.title };
+    });
+  }
   function hints() { return FRIENDLY.slice(0, 8).map(function (f) { return { say: f.hint, title: f.title }; }); }
   /* autocomplete: friendly commands first, then close library/skill names */
   function suggest(prefix) {
@@ -93,5 +106,5 @@
     if (cache && p.length >= 2) { var q = nameWords(p); cache.map(function (c) { return { c: c, s: score(q, c).s }; }).filter(function (x) { return x.s >= 0.5; }).sort(function (a, b) { return b.s - a.s; }).slice(0, 5).forEach(function (x) { out.push({ say: 'run ' + x.c.title.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(), title: x.c.title }); }); }
     return out.slice(0, 8);
   }
-  window.shdWords = { resolve: resolve, suggest: suggest, load: load, hints: hints, friendly: FRIENDLY, tickers: TICKERS, _score: score, _words: words };
+  window.shdWords = { find: find, resolve: resolve, suggest: suggest, load: load, hints: hints, friendly: FRIENDLY, tickers: TICKERS, _score: score, _words: words };
 })();

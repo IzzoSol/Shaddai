@@ -26,6 +26,7 @@ const CHAT_ASKS_PER_HOUR = 80, CHAT_MAX = 2000, CHAT_KEEP = 400;
 // ── Sparks metering (OFF unless BRIDGE_METERING=on). 1 Spark = $1. Prices are integer cents of a Spark ($0.01), so 0.10 Spark = 10 cents.
 // The free hourly allowance above stays free; beyond it each extra run / question is charged from the owner's Sparks via economy-service
 // (the only Sparks writer). A bot token can only spend up to its own daily cap, so it cannot drain the owner's balance.
+const TUITION_CENTS = { skill: 25, workflow: 50 };   // one-time: an agent that has LEARNED a skill/workflow runs it free forever
 const RUN_OVERAGE_CENTS = 1, ASK_OVERAGE_CENTS = 3, PAID_RUNS_MAX = 300, PAID_ASKS_MAX = 200, DEFAULT_DAILY_CAP_CENTS = 100;
 const fmtSparks = (cents) => (cents / 100).toFixed(2);
 const RUNS_PER_HOUR = 30, INBOX_MAX = 100;
@@ -240,7 +241,7 @@ function createBridge(opts) {
   // One runner for both kinds of actor: an outside bot (via its token) or one of YOUR forged agents (started by you in the dashboard).
   function startRun(ctx, a) {
     const wf = WORKFLOWS[a.workflow_id]; if (!wf) throw new ToolError(404, 'unknown workflow');
-    if (!ctx.prepaid && !(a && db.idem[ctx.owner + ':' + a.idempotency_key]) && Object.values(db.runs).filter((r) => r.owner === ctx.owner && now() - r.created_ms < 3600000).length >= (opts.runsPerHour || RUNS_PER_HOUR)) throw new ToolError(429, 'hourly run limit reached for your account; try again later');
+    if (!ctx.prepaid && !(a && db.idem[ctx.owner + ':' + a.idempotency_key]) && Object.values(db.runs).filter((r) => r.owner === ctx.owner && !r.learned && now() - r.created_ms < 3600000).length >= (opts.runsPerHour || RUNS_PER_HOUR)) throw new ToolError(429, 'hourly run limit reached for your account; try again later');
     if (!safeId(a.idempotency_key)) throw new ToolError(400, 'idempotency_key required (1-128 chars: letters, digits, _ . : @ -)');
     if (ctx.scopes) for (const sc of wf.required_scopes) if (!ctx.scopes.includes(sc)) throw new ToolError(403, 'scope_missing:' + sc);
     let agentId = a.agent_id || ctx.boundAgent || null;
@@ -255,7 +256,7 @@ function createBridge(opts) {
     const paramsHash = sha(JSON.stringify([a.workflow_id, agentId, a.plot_id || null, params]));
     const ik = ctx.owner + ':' + a.idempotency_key, prior = db.idem[ik];
     if (prior) { if (prior.hash !== paramsHash) throw new ToolError(409, 'idempotency_key already used with different parameters'); return Object.assign(publicRun(db.runs[prior.run_id]), { replay: true }); }
-    const run = { run_id: rid('run'), workflow_id: a.workflow_id, workflow_version: wf.version, agent_id: agentId, plot_id: a.plot_id || null, owner: ctx.owner, token_id: ctx.token_id || null, actor: { kind: ctx.kind },
+    const run = { run_id: rid('run'), workflow_id: a.workflow_id, workflow_version: wf.version, agent_id: agentId, plot_id: a.plot_id || null, owner: ctx.owner, token_id: ctx.token_id || null, actor: { kind: ctx.kind }, learned: !!ctx.learned,
       status: 'queued', input: (params.input && typeof params.input === 'object') ? params.input : {}, results: [],
       params, steps: steps.map((st) => ({ name: st.name, status: 'pending', tool: st.tool, args: st.args, tpl: st.tpl, internal: st.internal, fn: typeof st.fn === 'function' ? st.fn : undefined })), approvals: [], approvals_pending: [], approved: false, created_at: iso(now()), updated_at: iso(now()), created_ms: now() };
     db.runs[run.run_id] = run; db.idem[ik] = { hash: paramsHash, run_id: run.run_id }; persist();
@@ -284,10 +285,13 @@ function createBridge(opts) {
     const c = await charge(owner, tok, ASK_OVERAGE_CENTS, 'question', 'ask:' + owner + ':' + rid('k'));
     hist.push(now()); map.set(owner, hist); return c;
   }
+  function learnedBy(agentId, key) { try { const op = operatives && operatives.get && operatives.get(agentId); return !!(op && (op.skills || []).some((x) => x && x.skillId === key)); } catch (_) { return false; } }
   async function startRunMetered(ctx, a) {
     const tok = ctx.token_id ? db.tokens[ctx.token_id] : null, limit = opts.runsPerHour || RUNS_PER_HOUR;
-    const used = Object.values(db.runs).filter((r) => r.owner === ctx.owner && now() - r.created_ms < 3600000).length;
+    const used = Object.values(db.runs).filter((r) => r.owner === ctx.owner && !r.learned && now() - r.created_ms < 3600000).length;
     const prior = a && safeId(a.idempotency_key) && db.idem[ctx.owner + ':' + a.idempotency_key];
+    const agentId = (a && a.agent_id) || ctx.boundAgent, lkey = a && a.workflow_id === 'skill.run' ? 'skill:' + String(a.params && a.params.skill) : String(a && a.workflow_id);
+    if (agentId && learnedBy(agentId, lkey)) return startRun(Object.assign({}, ctx, { prepaid: true, learned: true }), a);   // learned = free forever, uncounted
     if (used < limit || prior) return startRun(ctx, a);
     if (used >= limit + PAID_RUNS_MAX) throw new ToolError(429, 'hourly run limit reached for your account; try again later');
     const paid = await charge(ctx.owner, tok, RUN_OVERAGE_CENTS, 'run', 'run:' + ctx.owner + ':' + String(a && a.idempotency_key));
@@ -510,12 +514,29 @@ function createBridge(opts) {
     const hour = (arr) => arr.filter((t) => now() - t < 3600000).length;
     const runsUsed = Object.values(db.runs).filter((r) => r.owner === req.owner && now() - r.created_ms < 3600000).length;
     let balance = null; if (metering) { try { const u = await economy().getBalance(req.owner); const n = Number(u && typeof u === 'object' ? (u.balance != null ? u.balance : u.sparks) : u); if (Number.isFinite(n)) balance = { units: n, sparks: fmtSparks(n * 100 / unitsPerSpark) }; } catch (_) { balance = null; } }
-    res.json({ ok: true, metering, one_spark_usd: 1, prices_sparks: { extra_run: fmtSparks(RUN_OVERAGE_CENTS), extra_question: fmtSparks(ASK_OVERAGE_CENTS) },
+    res.json({ ok: true, metering, one_spark_usd: 1, prices_sparks: { extra_run: fmtSparks(RUN_OVERAGE_CENTS), extra_question: fmtSparks(ASK_OVERAGE_CENTS), learn_skill: fmtSparks(TUITION_CENTS.skill), learn_workflow: fmtSparks(TUITION_CENTS.workflow) },
       free_per_hour: { runs: opts.runsPerHour || RUNS_PER_HOUR, bot_questions: opts.asksPerHour || ASKS_PER_HOUR, chat_questions: opts.chatAsksPerHour || CHAT_ASKS_PER_HOUR },
       used_this_hour: { runs: runsUsed, bot_questions: hour(asks.get(req.owner) || []), chat_questions: hour(chatAsks.get(req.owner) || []) }, balance,
       recent: db.usage.filter((u) => u.owner === req.owner).slice(-20).reverse().map((u) => ({ at: u.ts, kind: u.kind, sparks: fmtSparks(u.cents) })) });
   });
   router.get('/library', needOwner, (req, res) => res.json({ ok: true, total: libMeta.length, workflows: librarySearch(req.query.q, req.query.limit, 400) }));
+  // Learn once, run free forever: the owner pays a one-time tuition (Sparks, only when metering is on) and the skill is recorded on the agent.
+  router.post('/learn', needOwner, json, (req, res) => {
+    const b = req.body || {}, agentId = String(b.agent_id || '');
+    if (!safeId(agentId) || agentOwner(agentId) !== req.owner) return res.status(403).json({ ok: false, error: 'not your agent' });
+    let key, kind;
+    if (b.skill) { const rec = skillTable().getRecipe && skillTable().getRecipe(String(b.skill)); if (!rec || !Array.isArray(rec.steps) || rec.steps.length > 12 || !rec.steps.every((st) => SAFE_TOOLS.has(st.tool))) return res.status(404).json({ ok: false, error: 'unknown or unavailable skill' }); key = 'skill:' + String(b.skill); kind = 'skill'; }
+    else if (b.workflow) { const id = String(b.workflow); if (!WORKFLOWS[id] || /^demo\./.test(id) || id === 'tool.run' || id === 'skill.run') return res.status(404).json({ ok: false, error: 'unknown workflow' }); key = id; kind = 'workflow'; }
+    else return res.status(400).json({ ok: false, error: 'give a skill or a workflow to learn' });
+    if (learnedBy(agentId, key)) return res.json({ ok: true, already: true, learned: key });
+    const cents = TUITION_CENTS[kind], ck = 'learn:' + req.owner + ':' + agentId + ':' + key;
+    Promise.resolve().then(() => (metering ? charge(req.owner, null, cents, 'tuition', ck) : { cents: 0, refund: async () => {} })).then((paid) => {
+      try { const op = operatives.get(agentId) || {}; operatives.update(agentId, { skills: (op.skills || []).concat([{ skillId: key, version: 'bridge', source: 'bridge-learn', learnedAt: iso(now()) }]) }); }
+      catch (e) { return paid.refund().then(() => res.status(500).json({ ok: false, error: 'could not record the lesson; you were not charged' })); }
+      db.usage.push({ ts: iso(now()), owner: req.owner, token_id: null, kind: 'learn.' + key, cents: paid.cents || 0, units: paid.units || 0 }); persist();
+      res.json({ ok: true, learned: key, tuition_sparks: fmtSparks(paid.cents || 0), note: 'This agent now runs it free, forever, and it does not use your hourly allowance.' });
+    }).catch((e) => res.status(e instanceof ToolError ? e.code : 500).json({ ok: false, error: e instanceof ToolError ? e.message : 'internal error' }));
+  });
   router.get('/audit', needOwner, (req, res) => res.json({ ok: true, audit: db.audit.filter((a) => a.owner === req.owner).slice(-100).reverse() }));
   router.get('/world-state', (req, res) => {
     const ids = new Set(Object.values(db.runs).filter((r) => r.agent_id).map((r) => r.agent_id));

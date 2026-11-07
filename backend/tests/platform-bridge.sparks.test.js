@@ -62,6 +62,38 @@ const { createBridge } = require('../platform-bridge');
   const cap = createBridge({ file: path.join(tmp, 'c.json'), plotsFile: path.join(tmp, 'p.json'), metering: true, economy, runsPerHour: 1, stepMs: 5, spacingMs: 0, operatives: { get: () => null, listByOwner: () => [] }, uidOf: (req) => req.headers['x-uid'] || '' });
   assert.ok(cap._test && cap._test.WORKFLOWS['demo.ping']);
 
+  // ── LEARN ONCE, RUN FREE FOREVER ──
+  const store = { a1: { id: 'a1', name: 'Bolt', owner: 'alice', skills: [] }, a2: { id: 'a2', name: 'Zed', owner: 'alice', skills: [] }, b1: { id: 'b1', name: 'Eve', owner: 'bob', skills: [] } };
+  const bal2 = { alice: 100, bob: 100 }, spent2 = [];
+  const econ2 = { spend: async (u, n, reason, key) => { if ((bal2[u] || 0) < n) { const e = new Error('Insufficient'); e.code = 'INSUFFICIENT_FUNDS'; throw e; } bal2[u] -= n; spent2.push({ u, n, reason, key }); return {}; }, grant: async (u, n) => { bal2[u] = (bal2[u] || 0) + n; return {}; }, getBalance: async (u) => bal2[u] || 0 };
+  let failUpdate = false;
+  const lb = createBridge({ file: path.join(tmp, 'l.json'), plotsFile: path.join(tmp, 'p.json'), metering: true, economy: econ2, unitsPerSpark: 100, runsPerHour: 1, stepMs: 5, spacingMs: 0,
+    operatives: { get: (id) => store[id] || null, listByOwner: (o) => Object.values(store).filter((x) => x.owner === o), update: (id, patch) => { if (failUpdate) throw new Error('disk'); Object.assign(store[id], patch); return store[id]; } },
+    tools: { get_joke: { description: 'joke', execute: async () => 'a joke' } }, skills: { getRecipe: (id) => (id === 'tell-a-joke' ? { steps: [{ tool: 'get_joke', params: {} }] } : id === 'run-code' ? { steps: [{ tool: 'run_js', params: {} }] } : undefined), listRecipes: () => [], interpolate: (t) => t },
+    uidOf: (req) => req.headers['x-uid'] || '' });
+  const app3 = express(); app3.use('/l', lb); const s3 = await new Promise((r) => { const x = app3.listen(0, () => r(x)); }); const b3 = 'http://127.0.0.1:' + s3.address().port + '/l';
+  const H = (uid, body, m, p2) => fetch(b3 + p2, { method: m || 'POST', headers: { 'content-type': 'application/json', 'x-uid': uid }, body: body ? JSON.stringify(body) : undefined }).then(async (r) => ({ status: r.status, json: await r.json().catch(() => ({})) }));
+  assert.strictEqual((await H('alice', { agent_id: 'b1', skill: 'tell-a-joke' }, 'POST', '/learn')).status, 403, 'cannot teach someone else agent');
+  assert.strictEqual((await H('alice', { agent_id: 'a1', skill: 'run-code' }, 'POST', '/learn')).status, 404, 'a skill that needs unsafe tools cannot be learned');
+  assert.strictEqual((await H('alice', { agent_id: 'a1', skill: 'nope' }, 'POST', '/learn')).status, 404);
+  assert.strictEqual((await H('alice', { agent_id: 'a1' }, 'POST', '/learn')).status, 400);
+  const balBefore = bal2.alice, L1 = await H('alice', { agent_id: 'a1', skill: 'tell-a-joke' }, 'POST', '/learn');
+  assert.strictEqual(L1.status, 200); assert.strictEqual(L1.json.tuition_sparks, '0.25'); assert.strictEqual(bal2.alice, balBefore - 25, 'tuition for a skill is 0.25 Spark, charged once'); assert.strictEqual(store.a1.skills.length, 1); assert.strictEqual(store.a1.skills[0].skillId, 'skill:tell-a-joke');
+  const L2 = await H('alice', { agent_id: 'a1', skill: 'tell-a-joke' }, 'POST', '/learn'); assert.strictEqual(L2.json.already, true); assert.strictEqual(bal2.alice, balBefore - 25, 'learning again is free (already known)');
+  const tokL = (await (await fetch(b3 + '/tokens', { method: 'POST', headers: { 'content-type': 'application/json', 'x-uid': 'alice' }, body: JSON.stringify({ scopes: ['workflows:run', 'runs:read', 'tools:run'] }) })).json()).token;
+  let nn = 0; const go2 = (key, agent) => fetch(b3 + '/mcp', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + tokL }, body: JSON.stringify({ jsonrpc: '2.0', id: ++nn, method: 'tools/call', params: { name: 'start_workflow', arguments: { workflow_id: 'skill.run', agent_id: agent, idempotency_key: key, params: { skill: 'tell-a-joke' } } } }) }).then((r) => r.status);
+  const spentBefore = spent2.length;
+  assert.deepStrictEqual([await go2('j1', 'a1'), await go2('j2', 'a1'), await go2('j3', 'a1'), await go2('j4', 'a1')], [200, 200, 200, 200], 'the agent that learned the skill runs it again and again');
+  assert.strictEqual(spent2.length, spentBefore, 'learned runs cost nothing');
+  assert.strictEqual(await go2('u1', 'a2'), 200, 'the first run by an agent that has not learned it uses the free allowance');
+  const u2 = await go2('u2', 'a2'); assert.strictEqual(u2, 200); assert.strictEqual(spent2.length, spentBefore + 1, 'an agent that has NOT learned it pays overage (the 4 learned runs did not use up the allowance)');
+  assert.strictEqual(spent2[spent2.length - 1].reason, 'bridge:run');
+  // a failed recording refunds the tuition
+  failUpdate = true; const bal3 = bal2.alice; const L3 = await H('alice', { agent_id: 'a2', skill: 'tell-a-joke' }, 'POST', '/learn'); failUpdate = false;
+  assert.strictEqual(L3.status, 500); assert.strictEqual(bal2.alice, bal3, 'if the lesson could not be recorded, the tuition is refunded'); assert.strictEqual(store.a2.skills.length, 0);
+  assert.strictEqual((await H('alice', null, 'GET', '/usage')).json.prices_sparks.learn_skill, '0.25');
+  s3.close();
+
   // metering OFF (default): overage is simply rate limited, Sparks untouched
   const off = createBridge({ file: path.join(tmp, 'o.json'), plotsFile: path.join(tmp, 'p.json'), economy, runsPerHour: 1, stepMs: 5, spacingMs: 0, operatives: { get: () => null, listByOwner: () => [] }, uidOf: (req) => req.headers['x-uid'] || '' });
   const app2 = express(); app2.use('/o', off); const s2 = await new Promise((r) => { const x = app2.listen(0, () => r(x)); }); const b2 = 'http://127.0.0.1:' + s2.address().port + '/o';
