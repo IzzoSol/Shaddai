@@ -3771,7 +3771,7 @@ addEventListener('keydown', function(e){
 });
 
 const avatarMat = new THREE.MeshStandardMaterial({ color:0x1a1405, emissive:0xffcf4a, emissiveIntensity:0.75, roughness:0.4, metalness:0.7 });
-const playerAvatar = new THREE.Group();
+const playerAvatar = new THREE.Group(); playerAvatar.name = "player-avatar"; window.__w3dDebug.playerAvatar = playerAvatar;   // probe handle (tools/_ride-shots)
 { const t=new THREE.Mesh(new THREE.CapsuleGeometry(0.6,1.7,6,12),avatarMat); t.position.y=1.85; playerAvatar.add(t);
   const h=new THREE.Mesh(new THREE.SphereGeometry(0.52,16,16),avatarMat); h.position.y=3.25; playerAvatar.add(h);
   const la=new THREE.Mesh(new THREE.CapsuleGeometry(0.18,1.1,4,8),avatarMat); la.position.set(-0.8,1.95,0); la.rotation.z=0.2; playerAvatar.add(la);
