@@ -23,6 +23,11 @@ const express = require('express');
 
 const SCOPES = ['workflows:read', 'workflows:run', 'runs:read', 'runs:cancel', 'agents:read', 'plots:read', 'tools:run', 'economy:read', 'school:read', 'school:join', 'inbox:write', 'plots:maintain', 'rag:read', 'agents:ask', 'chat:talk'];
 const CHAT_ASKS_PER_HOUR = 80, CHAT_MAX = 2000, CHAT_KEEP = 400;
+// ── Sparks metering (OFF unless BRIDGE_METERING=on). 1 Spark = $1. Prices are integer cents of a Spark ($0.01), so 0.10 Spark = 10 cents.
+// The free hourly allowance above stays free; beyond it each extra run / question is charged from the owner's Sparks via economy-service
+// (the only Sparks writer). A bot token can only spend up to its own daily cap, so it cannot drain the owner's balance.
+const RUN_OVERAGE_CENTS = 1, ASK_OVERAGE_CENTS = 3, PAID_RUNS_MAX = 300, PAID_ASKS_MAX = 200, DEFAULT_DAILY_CAP_CENTS = 100;
+const fmtSparks = (cents) => (cents / 100).toFixed(2);
 const RUNS_PER_HOUR = 30, INBOX_MAX = 100;
 const DEFAULT_SCOPES = ['workflows:read', 'runs:read', 'agents:read', 'plots:read', 'chat:talk'];
 const SAFE_TOOLS = require('./lib/safe-tools');
@@ -87,8 +92,8 @@ function createBridge(opts) {
   const operatives = opts.operatives || (() => { try { return require('./lib/operatives'); } catch (_) { return null; } })();
   const customUid = typeof opts.uidOf === 'function' ? opts.uidOf : null;
 
-  let db = { tokens: {}, runs: {}, idem: {}, audit: [], inbox: [], chat: [], seq: 0 };
-  try { const j = JSON.parse(fs.readFileSync(file, 'utf8')); if (j && j.tokens) db = Object.assign(db, j); if (!Array.isArray(db.inbox)) db.inbox = []; if (!Array.isArray(db.chat)) db.chat = []; if (typeof db.seq !== 'number') db.seq = 0; } catch (_) { /* first boot */ }
+  let db = { tokens: {}, runs: {}, idem: {}, audit: [], inbox: [], chat: [], seq: 0, usage: [] };
+  try { const j = JSON.parse(fs.readFileSync(file, 'utf8')); if (j && j.tokens) db = Object.assign(db, j); if (!Array.isArray(db.inbox)) db.inbox = []; if (!Array.isArray(db.chat)) db.chat = []; if (typeof db.seq !== 'number') db.seq = 0; if (!Array.isArray(db.usage)) db.usage = []; } catch (_) { /* first boot */ }
   let pending = null;
   function persist() {
     if (pending) return;
@@ -234,7 +239,7 @@ function createBridge(opts) {
   // One runner for both kinds of actor: an outside bot (via its token) or one of YOUR forged agents (started by you in the dashboard).
   function startRun(ctx, a) {
     const wf = WORKFLOWS[a.workflow_id]; if (!wf) throw new ToolError(404, 'unknown workflow');
-    if (Object.values(db.runs).filter((r) => r.owner === ctx.owner && now() - r.created_ms < 3600000).length >= (opts.runsPerHour || RUNS_PER_HOUR)) throw new ToolError(429, 'hourly run limit reached for your account; try again later');
+    if (!ctx.prepaid && !(a && db.idem[ctx.owner + ':' + a.idempotency_key]) && Object.values(db.runs).filter((r) => r.owner === ctx.owner && now() - r.created_ms < 3600000).length >= (opts.runsPerHour || RUNS_PER_HOUR)) throw new ToolError(429, 'hourly run limit reached for your account; try again later');
     if (!safeId(a.idempotency_key)) throw new ToolError(400, 'idempotency_key required (1-128 chars: letters, digits, _ . : @ -)');
     if (ctx.scopes) for (const sc of wf.required_scopes) if (!ctx.scopes.includes(sc)) throw new ToolError(403, 'scope_missing:' + sc);
     let agentId = a.agent_id || ctx.boundAgent || null;
@@ -255,6 +260,37 @@ function createBridge(opts) {
     db.runs[run.run_id] = run; db.idem[ik] = { hash: paramsHash, run_id: run.run_id }; persist();
     setImmediate(() => advance(run));
     return publicRun(run);
+  }
+
+  const metering = opts.metering != null ? !!opts.metering : process.env.BRIDGE_METERING === 'on';
+  const unitsPerSpark = opts.unitsPerSpark || Number(process.env.SPARKS_LEDGER_UNITS_PER_SPARK) || 100;   // ASSUMPTION: 1 ledger unit = 0.01 Spark. Owner must confirm.
+  const economy = () => opts.economy || require('./economy-service').getDefault();
+  async function charge(owner, tok, cents, reason, key) {
+    if (!metering) throw new ToolError(429, 'hourly ' + reason + ' limit reached for your account; try again later');
+    if (tok) { const day = iso(now()).slice(0, 10); if (!tok.spend || tok.spend.day !== day) tok.spend = { day, cents: 0 }; const cap = tok.dailyCapCents != null ? tok.dailyCapCents : DEFAULT_DAILY_CAP_CENTS;
+      if (tok.spend.cents + cents > cap) throw new ToolError(402, 'this bot reached its daily Sparks cap (' + fmtSparks(cap) + ' Sparks); raise it in the dashboard'); }
+    const units = Math.max(1, Math.round(cents * unitsPerSpark / 100));
+    try { await economy().spend(owner, units, 'bridge:' + reason, key); }
+    catch (e) { if (e && (e.code === 'INSUFFICIENT_FUNDS' || /insufficient/i.test(String(e.message)))) throw new ToolError(402, 'Out of Sparks. Top up to keep going (' + fmtSparks(cents) + ' Sparks per extra ' + reason + ').'); throw new ToolError(503, 'the Sparks service is unavailable; try again shortly'); }
+    if (tok) tok.spend.cents += cents;
+    db.usage.push({ ts: iso(now()), owner, token_id: tok ? tok.id : null, kind: reason, cents, units }); if (db.usage.length > 2000) db.usage.splice(0, db.usage.length - 2000); persist();
+    return { cents, units, refund: async () => { try { await economy().grant(owner, units, 'bridge:refund:' + reason, 'refund:' + key); } catch (_) { /* ledger idempotent; an owner can contact support */ } if (tok && tok.spend) tok.spend.cents = Math.max(0, tok.spend.cents - cents); db.usage.push({ ts: iso(now()), owner, token_id: tok ? tok.id : null, kind: reason + '.refund', cents: -cents, units: -units }); persist(); } };
+  }
+  async function meterAsk(owner, tok, map, limit) {
+    const hist = (map.get(owner) || []).filter((t) => now() - t < 3600000);
+    if (hist.length < limit) { hist.push(now()); map.set(owner, hist); return { refund: async () => { hist.pop(); } }; }
+    if (hist.length >= limit + PAID_ASKS_MAX) throw new ToolError(429, 'hourly question limit reached for your account; try again later');
+    const c = await charge(owner, tok, ASK_OVERAGE_CENTS, 'question', 'ask:' + owner + ':' + rid('k'));
+    hist.push(now()); map.set(owner, hist); return c;
+  }
+  async function startRunMetered(ctx, a) {
+    const tok = ctx.token_id ? db.tokens[ctx.token_id] : null, limit = opts.runsPerHour || RUNS_PER_HOUR;
+    const used = Object.values(db.runs).filter((r) => r.owner === ctx.owner && now() - r.created_ms < 3600000).length;
+    const prior = a && safeId(a.idempotency_key) && db.idem[ctx.owner + ':' + a.idempotency_key];
+    if (used < limit || prior) return startRun(ctx, a);
+    if (used >= limit + PAID_RUNS_MAX) throw new ToolError(429, 'hourly run limit reached for your account; try again later');
+    const paid = await charge(ctx.owner, tok, RUN_OVERAGE_CENTS, 'run', 'run:' + ctx.owner + ':' + String(a && a.idempotency_key));
+    try { return startRun(Object.assign({}, ctx, { prepaid: true }), a); } catch (e) { await paid.refund(); throw e; }
   }
 
   // Owner <-> bot message channel: one thread per bot token. The owner writes in the dashboard; the bot reads and replies via MCP.
@@ -292,7 +328,7 @@ function createBridge(opts) {
     a = a || {};
     switch (name) {
       case 'list_workflows': return Object.keys(WORKFLOWS).map((id) => ({ workflow_id: id, version: WORKFLOWS[id].version, title: WORKFLOWS[id].title, required_scopes: WORKFLOWS[id].required_scopes, money_class: WORKFLOWS[id].money_class, approval_policy: WORKFLOWS[id].approve_before ? 'owner approves before ' + WORKFLOWS[id].approve_before : 'none' }));
-      case 'start_workflow': return startRun({ owner: tok.owner, token_id: tok.id, boundAgent: tok.agent_id, scopes: tok.scopes, kind: 'bot' }, a);
+      case 'start_workflow': return startRunMetered({ owner: tok.owner, token_id: tok.id, boundAgent: tok.agent_id, scopes: tok.scopes, kind: 'bot' }, a);
       case 'list_tools': { const T = toolTable(); return Array.from(SAFE_TOOLS).filter((n) => T[n]).map((n) => ({ tool: n, description: T[n].description || '', params: T[n].schema || {} })); }
       case 'list_skills': {
         const sk = skillTable(); const q = String(a.query || '').toLowerCase().slice(0, 60); const list = sk.listRecipes ? sk.listRecipes() : [];
@@ -317,10 +353,8 @@ function createBridge(opts) {
       case 'ask_agent': {
         const id = String(a.agent || 'SHADDAI').toUpperCase(); if (!COUNCIL.includes(id)) throw new ToolError(400, 'agent must be one of ' + COUNCIL.join(', '));
         const q = str(a.question, '', ASK_MAX); if (!q) throw new ToolError(400, 'question required (max ' + ASK_MAX + ' characters)');
-        const hist = (asks.get(tok.owner) || []).filter((t) => now() - t < 3600000); if (hist.length >= (opts.asksPerHour || ASKS_PER_HOUR)) throw new ToolError(429, 'hourly question limit reached for your account');
-        hist.push(now()); asks.set(tok.owner, hist);
         const ask = opts.askAgent || defaultAsk;
-        return Promise.resolve(ask(id, q)).then((r) => ({ agent: id, answer: capOut(r && r.answer).slice(0, ANSWER_MAX), sources: (r && r.sources) || [], note: 'advice only; the bridge cannot trade or move money' }));
+        return meterAsk(tok.owner, tok, asks, opts.asksPerHour || ASKS_PER_HOUR).then((paid) => Promise.resolve(ask(id, q)).then((r) => ({ agent: id, answer: capOut(r && r.answer).slice(0, ANSWER_MAX), sources: (r && r.sources) || [], note: 'advice only; the bridge cannot trade or move money' })).catch((e) => paid.refund().then(() => { throw e; })));
       }
       case 'read_messages': {
         const fresh = db.chat.filter((m) => m.owner === tok.owner && m.thread === tok.id && m.from === 'owner' && m.seq > (tok.chatCursor || 0));
@@ -384,13 +418,14 @@ function createBridge(opts) {
     const bad = scopes.filter((s) => !SCOPES.includes(s)); if (bad.length) return res.status(400).json({ ok: false, error: 'scope not grantable to outside bots: ' + bad.join(', '), grantable: SCOPES });
     let agentId = null; if (b.agent_id != null && b.agent_id !== '') { agentId = String(b.agent_id); if (!safeId(agentId) || agentOwner(agentId) !== req.owner) return res.status(403).json({ ok: false, error: 'that agent is not yours' }); }
     const days = Math.min(MAX_TTL_DAYS, Math.max(1, parseInt(b.days, 10) || DEFAULT_TTL_DAYS));
+    const capIn = parseInt(b.daily_cap_cents, 10), cap = Math.min(5000, Math.max(0, Number.isFinite(capIn) && capIn >= 0 ? capIn : DEFAULT_DAILY_CAP_CENTS));
     const secret = 'shdb_' + crypto.randomBytes(32).toString('base64url');
     const tok = { id: rid('tok'), owner: req.owner, label: String(b.label || 'Outside bot').replace(/[<>]/g, '').slice(0, 60), scopes: Array.from(new Set(scopes)), agent_id: agentId,
-      hash: sha(secret), createdAt: iso(now()), expiresMs: now() + days * 86400000, expiresAt: iso(now() + days * 86400000), revokedAt: null, lastUsedAt: null };
+      hash: sha(secret), createdAt: iso(now()), expiresMs: now() + days * 86400000, expiresAt: iso(now() + days * 86400000), revokedAt: null, lastUsedAt: null, dailyCapCents: cap };
     db.tokens[tok.id] = tok; persist();
     res.status(201).json({ ok: true, token: secret, note: 'Copy it now. It is never shown again.', info: pubTok(tok) });
   });
-  const pubTok = (t) => ({ id: t.id, label: t.label, scopes: t.scopes, agent_id: t.agent_id, created_at: t.createdAt, expires_at: t.expiresAt, revoked: !!t.revokedAt, last_used_at: t.lastUsedAt });
+  const pubTok = (t) => ({ id: t.id, label: t.label, scopes: t.scopes, agent_id: t.agent_id, daily_cap_sparks: fmtSparks(t.dailyCapCents != null ? t.dailyCapCents : DEFAULT_DAILY_CAP_CENTS), spent_today_sparks: fmtSparks(t.spend && t.spend.day === iso(now()).slice(0, 10) ? t.spend.cents : 0), created_at: t.createdAt, expires_at: t.expiresAt, revoked: !!t.revokedAt, last_used_at: t.lastUsedAt });
   router.get('/tokens', needOwner, (req, res) => res.json({ ok: true, grantable_scopes: SCOPES, default_scopes: DEFAULT_SCOPES, tokens: Object.values(db.tokens).filter((t) => t.owner === req.owner).map(pubTok) }));
   router.delete('/tokens/:id', needOwner, (req, res) => {
     const t = db.tokens[req.params.id]; if (!t || t.owner !== req.owner) return res.status(404).json({ ok: false, error: 'unknown token' });
@@ -410,9 +445,7 @@ function createBridge(opts) {
   router.post('/agents/:agentId/run', needOwner, json, (req, res) => {
     const b = req.body || {};
     if (findSecret(b.params)) return res.status(400).json({ ok: false, error: 'never send secrets or credentials in params' });
-    try { const r = startRun({ owner: req.owner, token_id: null, boundAgent: null, scopes: null, kind: 'forged' }, { workflow_id: b.workflow_id, agent_id: req.params.agentId, params: b.params, idempotency_key: b.idempotency_key || rid('ui') });
-      res.status(202).json({ ok: true, run: r }); }
-    catch (e) { if (e instanceof ToolError) return res.status(e.code).json({ ok: false, error: e.message }); console.error('[bridge]', e && e.stack || e); res.status(500).json({ ok: false, error: 'internal error' }); }
+    Promise.resolve().then(() => startRunMetered({ owner: req.owner, token_id: null, boundAgent: null, scopes: null, kind: 'forged' }, { workflow_id: b.workflow_id, agent_id: req.params.agentId, params: b.params, idempotency_key: b.idempotency_key || rid('ui') })).then((r) => res.status(202).json({ ok: true, run: r })).catch((e) => { if (e instanceof ToolError) return res.status(e.code).json({ ok: false, error: e.message }); console.error('[bridge]', e && e.stack || e); res.status(500).json({ ok: false, error: 'internal error' }); });
   });
   router.get('/inbox', needOwner, (req, res) => res.json({ ok: true, messages: db.inbox.filter((m) => m.owner === req.owner).slice(-50).reverse() }));
   router.delete('/inbox/:id', needOwner, (req, res) => { const i = db.inbox.findIndex((m) => m.id === req.params.id && m.owner === req.owner); if (i < 0) return res.status(404).json({ ok: false, error: 'unknown message' }); db.inbox.splice(i, 1); persist(); res.json({ ok: true }); });
@@ -440,18 +473,15 @@ function createBridge(opts) {
     const q = str(b.question, '', ASK_MAX); if (!q) return res.status(400).json({ ok: false, error: 'question required' });
     if (findSecret({ q })) return res.status(400).json({ ok: false, error: 'that looks like a key or secret; do not paste credentials into chat' });
     let persona = null; if (b.as) { if (!safeId(String(b.as)) || agentOwner(String(b.as)) !== req.owner) return res.status(403).json({ ok: false, error: 'not your agent' }); const op = operatives && operatives.get(String(b.as)); persona = { name: (op && op.name) || 'agent' }; }
-    const hist = (chatAsks.get(req.owner) || []).filter((t) => now() - t < 3600000); if (hist.length >= (opts.chatAsksPerHour || CHAT_ASKS_PER_HOUR)) return res.status(429).json({ ok: false, error: 'hourly chat limit reached; try again later' });
-    hist.push(now()); chatAsks.set(req.owner, hist);
-    Promise.resolve((opts.askAgent || defaultAsk)(id, q, { history: Array.isArray(b.history) ? b.history : [], persona }))
+    meterAsk(req.owner, null, chatAsks, opts.chatAsksPerHour || CHAT_ASKS_PER_HOUR).then((paid) => Promise.resolve((opts.askAgent || defaultAsk)(id, q, { history: Array.isArray(b.history) ? b.history : [], persona }))
       .then((r) => res.json({ ok: true, agent: id, answer: capOut(r && r.answer).slice(0, ANSWER_MAX), sources: (r && r.sources) || [] }))
-      .catch(() => res.status(502).json({ ok: false, error: 'that agent could not answer right now' }));
+      .catch(() => paid.refund().then(() => res.status(502).json({ ok: false, error: 'that agent could not answer right now' }))))
+      .catch((e) => res.status(e instanceof ToolError ? e.code : 500).json({ ok: false, error: e instanceof ToolError ? e.message : 'internal error' }));
   });
   router.post('/run', needOwner, json, (req, res) => {
     const b = req.body || {};
     if (findSecret(b.params)) return res.status(400).json({ ok: false, error: 'never send secrets or credentials in params' });
-    try { const r = startRun({ owner: req.owner, token_id: null, boundAgent: null, scopes: null, kind: b.agent_id ? 'forged' : 'owner' }, { workflow_id: b.workflow_id, agent_id: b.agent_id || null, params: b.params, idempotency_key: b.idempotency_key || rid('ui') });
-      res.status(202).json({ ok: true, run: r }); }
-    catch (e) { if (e instanceof ToolError) return res.status(e.code).json({ ok: false, error: e.message }); console.error('[bridge]', e && e.stack || e); res.status(500).json({ ok: false, error: 'internal error' }); }
+    Promise.resolve().then(() => startRunMetered({ owner: req.owner, token_id: null, boundAgent: null, scopes: null, kind: b.agent_id ? 'forged' : 'owner' }, { workflow_id: b.workflow_id, agent_id: b.agent_id || null, params: b.params, idempotency_key: b.idempotency_key || rid('ui') })).then((r) => res.status(202).json({ ok: true, run: r })).catch((e) => { if (e instanceof ToolError) return res.status(e.code).json({ ok: false, error: e.message }); console.error('[bridge]', e && e.stack || e); res.status(500).json({ ok: false, error: 'internal error' }); });
   });
   router.get('/skills', needOwner, (req, res) => { const sk = skillTable(); const list = sk.listRecipes ? sk.listRecipes() : [];
     res.json({ ok: true, skills: list.map((r) => { const rec = sk.getRecipe ? sk.getRecipe(r.id) : null; const runnable = !!rec && Array.isArray(rec.steps) && rec.steps.length <= 12 && rec.steps.every((st) => SAFE_TOOLS.has(st.tool)); return { skill: r.id, agent: r.agent, description: r.description, required_input: rec ? requiredInputs(rec) : [], runnable }; }).filter((x) => x.runnable) }); });
@@ -472,6 +502,15 @@ function createBridge(opts) {
     const text = str(req.body && req.body.text, '', CHAT_MAX); if (!text) return res.status(400).json({ ok: false, error: 'text required' });
     if (findSecret({ text })) return res.status(400).json({ ok: false, error: 'that looks like a key or secret; do not paste credentials into chat' });
     const m = addChat(req.owner, t.id, 'owner', text); res.status(201).json({ ok: true, message: { id: m.id, seq: m.seq, from: 'owner', text: m.text, at: m.ts } });
+  });
+  router.get('/usage', needOwner, async (req, res) => {
+    const hour = (arr) => arr.filter((t) => now() - t < 3600000).length;
+    const runsUsed = Object.values(db.runs).filter((r) => r.owner === req.owner && now() - r.created_ms < 3600000).length;
+    let balance = null; if (metering) { try { const u = await economy().getBalance(req.owner); const n = Number(u && typeof u === 'object' ? (u.balance != null ? u.balance : u.sparks) : u); if (Number.isFinite(n)) balance = { units: n, sparks: fmtSparks(n * 100 / unitsPerSpark) }; } catch (_) { balance = null; } }
+    res.json({ ok: true, metering, one_spark_usd: 1, prices_sparks: { extra_run: fmtSparks(RUN_OVERAGE_CENTS), extra_question: fmtSparks(ASK_OVERAGE_CENTS) },
+      free_per_hour: { runs: opts.runsPerHour || RUNS_PER_HOUR, bot_questions: opts.asksPerHour || ASKS_PER_HOUR, chat_questions: opts.chatAsksPerHour || CHAT_ASKS_PER_HOUR },
+      used_this_hour: { runs: runsUsed, bot_questions: hour(asks.get(req.owner) || []), chat_questions: hour(chatAsks.get(req.owner) || []) }, balance,
+      recent: db.usage.filter((u) => u.owner === req.owner).slice(-20).reverse().map((u) => ({ at: u.ts, kind: u.kind, sparks: fmtSparks(u.cents) })) });
   });
   router.get('/audit', needOwner, (req, res) => res.json({ ok: true, audit: db.audit.filter((a) => a.owner === req.owner).slice(-100).reverse() }));
   router.get('/world-state', (req, res) => {

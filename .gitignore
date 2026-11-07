@@ -208,3 +208,6 @@ backend/data/*pre-repair-backup*
 fal-assets/production/models/*.glb
 fal-assets/production/models/*.obj
 fal-assets/production/models/*-obj/
+# Outside-bot bridge store: token hashes, runs, private owner<->bot chat. Never commit.
+backend/data/bridge.json
+backend/data/bridge.json.tmp-*

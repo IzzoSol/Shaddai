@@ -39,6 +39,8 @@
     var scopesBox = h('div', { class: 'sw-actions' }), label = h('input', { class: 'sw-sel', placeholder: 'Name (e.g. Grok Bot)', maxlength: '60', 'aria-label': 'Bot name' });
     var days = h('select', { class: 'sw-sel', 'aria-label': 'Expires' }, [h('option', { value: '7', text: '7 days' }), h('option', { value: '30', text: '30 days', selected: 'selected' }), h('option', { value: '90', text: '90 days' })]);
     var checks = {};
+    var capIn = h('input', { class: 'sw-sel', type: 'number', min: '0', max: '50', step: '0.10', value: '1.00', 'aria-label': 'Daily Sparks cap for this bot', style: 'width:92px', title: 'Most Sparks this bot may spend per day beyond the free allowance (1 Spark = $1)' });
+    var usageEl = h('div', { class: 'sw-grid' });
     var agentSel = h('select', { class: 'sw-sel', 'aria-label': 'Body for this bot' }, [h('option', { value: '', text: 'No body (shows as a diamond)' })]);
     var me = ''; try { me = localStorage.getItem('shd_userid') || ''; } catch (e) { /* ignore */ }
     api('GET', '/api/operatives' + (me ? '?owner=' + encodeURIComponent(me) : '')).then(function (d) {
@@ -67,6 +69,7 @@
             h('div', { class: 'sw-row' }, [h('b', { text: t.label }), h('i', { class: 'sw-chip', text: t.last_used_at ? 'used' : 'unused' })]),
             h('div', { class: 'sw-sub', text: t.scopes.join(' · ') }),
             h('div', { class: 'sw-sub', text: 'expires ' + String(t.expires_at).slice(0, 10) + (t.agent_id ? ' · bound to ' + t.agent_id : '') }),
+            h('div', { class: 'sw-sub', text: 'Sparks today: ' + (t.spent_today_sparks || '0.00') + ' of ' + (t.daily_cap_sparks || '1.00') + ' daily cap' }),
             h('div', { class: 'sw-actions' }, [h('button', { type: 'button', class: 'sw-btn ghost', text: 'Revoke', onclick: function () {
               if (!window.confirm('Revoke "' + t.label + '"? It stops working on its next call.')) return;
               api('DELETE', '/api/bridge/tokens/' + encodeURIComponent(t.id)).then(function () { toast('Revoked'); loadTokens(); });
@@ -94,6 +97,20 @@
       });
     }
     function decide(id, what) { api('POST', '/api/bridge/runs/' + encodeURIComponent(id) + '/' + what).then(function () { toast(what === 'approve' ? 'Approved' : 'Denied'); loadRuns(); }); }
+    function loadUsage() {
+      api('GET', '/api/bridge/usage').then(function (d) {
+        usageEl.textContent = '';
+        if (!d || !d.ok) { usageEl.appendChild(msg('Usage unavailable.')); return; }
+        var f = d.free_per_hour || {}, u = d.used_this_hour || {}, pr = d.prices_sparks || {};
+        usageEl.appendChild(h('div', { class: 'sw-card slim' }, [h('div', { class: 'sw-row' }, [h('b', { text: 'Free every hour' }), h('i', { class: 'sw-chip ok', text: 'included' })]),
+          h('div', { class: 'sw-sub', text: 'Runs ' + (u.runs || 0) + '/' + f.runs + ' · bot questions ' + (u.bot_questions || 0) + '/' + f.bot_questions + ' · chat questions ' + (u.chat_questions || 0) + '/' + f.chat_questions })]));
+        usageEl.appendChild(h('div', { class: 'sw-card slim' }, [h('div', { class: 'sw-row' }, [h('b', { text: 'Beyond the free allowance' }), h('i', { class: 'sw-chip ' + (d.metering ? 'ok' : 'warn'), text: d.metering ? 'Sparks on' : 'Sparks off' })]),
+          h('div', { class: 'sw-sub', text: d.metering ? 'Extra run ' + pr.extra_run + ' Spark · extra question ' + pr.extra_question + ' Spark (1 Spark = $1)' : 'Extra requests are simply paused until the next hour. Sparks billing is switched off on this server.' }),
+          d.balance ? h('div', { class: 'sw-sub', text: 'Your balance: ' + d.balance.sparks + ' Sparks' }) : null,
+          d.metering ? h('div', { class: 'sw-actions' }, [h('button', { type: 'button', class: 'sw-btn', text: 'Top up Sparks', onclick: function () { var b = document.getElementById('shopFab'); if (b) b.click(); else toast('Open the Shop to top up'); } })]) : null]));
+        if ((d.recent || []).length) usageEl.appendChild(h('div', { class: 'sw-card slim' }, [h('b', { text: 'Recent charges' }), h('div', { class: 'sw-sub', text: d.recent.slice(0, 5).map(function (r) { return r.kind + ' ' + r.sparks; }).join(' · ') })]));
+      }).catch(function () { usageEl.textContent = ''; usageEl.appendChild(msg('Usage unavailable.')); });
+    }
     function loadAudit() {
       api('GET', '/api/bridge/audit').then(function (d) {
         auditEl.textContent = '';
@@ -104,7 +121,7 @@
     function mint() {
       var scopes = Object.keys(checks).filter(function (s) { return checks[s].checked; });
       if (!scopes.length) { toast('Pick at least one permission'); return; }
-      api('POST', '/api/bridge/tokens', { label: label.value || 'Outside bot', scopes: scopes, days: parseInt(days.value, 10), agent_id: agentSel.value || undefined }).then(function (d) {
+      api('POST', '/api/bridge/tokens', { label: label.value || 'Outside bot', scopes: scopes, days: parseInt(days.value, 10), agent_id: agentSel.value || undefined, daily_cap_cents: Math.max(0, Math.round((parseFloat(capIn.value) || 0) * 100)) }).then(function (d) {
         if (!d.ok) { toast(d.error || 'Could not create the token'); return; }
         reveal.textContent = '';
         reveal.appendChild(h('div', { class: 'sw-card' }, [
@@ -125,15 +142,16 @@
     ]));
     body.appendChild(h('div', { class: 'sw-card' }, [
       h('div', { class: 'sw-row' }, [h('b', { text: 'New bot token' })]),
-      h('div', { class: 'sw-actions' }, [label, days, agentSel]),
+      h('div', { class: 'sw-actions' }, [label, days, agentSel, h('span', { class: 'sw-sub', text: 'Daily cap (Sparks)' }), capIn]),
       h('div', { class: 'sw-sub', text: 'A body is one of your forged agents. The bot works as that agent, so its avatar shows in the 3D world. Make a body in the 3D Forge; showing bodies inside the dashboard is coming soon.' }), scopesBox,
       h('div', { class: 'sw-actions' }, [h('button', { type: 'button', class: 'sw-btn', text: 'Create token', onclick: mint })]), reveal
     ]));
     body.appendChild(h('div', { class: 'sw-hd', style: 'padding:6px 0;border:0' }, [h('b', { text: 'Connected' })])); body.appendChild(tokensEl);
     body.appendChild(h('div', { class: 'sw-hd', style: 'padding:6px 0;border:0' }, [h('b', { text: 'Bot activity & approvals' })])); body.appendChild(runsEl);
+    body.appendChild(h('div', { class: 'sw-hd', style: 'padding:6px 0;border:0' }, [h('b', { text: 'Usage & Sparks' })])); body.appendChild(usageEl);
     body.appendChild(h('div', { class: 'sw-hd', style: 'padding:6px 0;border:0' }, [h('b', { text: 'Audit' })])); body.appendChild(auditEl);
     body.appendChild(h('div', { class: 'sw-msg dim', text: 'Note: registering an agent for jobs elsewhere in Shaddai is not the same as importing a live Grok Bot. A bot connects here, from outside, and Shaddai never runs its code.' }));
-    loadTokens(); loadRuns(); loadAudit();
+    loadTokens(); loadRuns(); loadAudit(); loadUsage();
     return h('section', { class: 'sw-box' }, [h('div', { class: 'sw-hd' }, [h('b', { text: 'Outside bots' }), h('span', { text: 'Grok Bot · Muse · any MCP client' })]), body]);
   };
 })();

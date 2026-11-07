@@ -181,7 +181,7 @@ const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id)
   const b2 = 'http://127.0.0.1:' + srv2.address().port + '/t';
   const tk2 = (await (await fetch(b2 + '/tokens', { method: 'POST', headers: { 'content-type': 'application/json', 'x-uid': 'alice' }, body: JSON.stringify({ scopes: ['workflows:run'] }) })).json()).token;
   const go = (k) => fetch(b2 + '/mcp', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + tk2 }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'start_workflow', arguments: { workflow_id: 'demo.ping', idempotency_key: k } } }) }).then((r) => r.status);
-  assert.deepStrictEqual([await go('q1'), await go('q2'), await go('q3')], [200, 200, 429], 'hourly run quota per account'); srv2.close();
+  assert.deepStrictEqual([await go('q1'), await go('q2'), await go('q3')], [200, 200, 429], 'hourly run quota per account'); assert.strictEqual(await go('q1'), 200, 'replaying an existing run is never rate limited'); srv2.close();
 
   // ── bots sign up for classes with THEIR agent; snapshot of the world ──
   const bound = await mint('alice', { label: 'student', agent_id: 'a1', scopes: ['school:join', 'agents:read', 'school:read'] });
