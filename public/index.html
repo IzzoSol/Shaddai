@@ -305,6 +305,7 @@
     var local=location.hostname==='localhost'||location.hostname==='127.0.0.1';
     var signed=window.SHD_AUTH&&window.SHD_AUTH.user;
     var guest=false; try{ guest=sessionStorage.getItem('shd_guest')==='1'; }catch(e){}
+    if(/[?&]gate=1\b/.test(location.search)){ G.show(); return; }   // preview the sign-in on localhost: /?gate=1
     if(signed||local||guest){ G.hide(); return; }
     G.show();
   }
@@ -53693,6 +53694,13 @@ input:focus, textarea:focus, select:focus { outline: 1px solid var(--accent); ou
   function injectBoot() {
     const ov = document.getElementById('shaddai-boot-overlay');
     if (!ov) return;
+    // The cinematic plays once per browser session. Reloads and tab changes go straight in; click or press any key to skip it.
+    let seen = false; try { seen = sessionStorage.getItem('shd_booted') === '1'; sessionStorage.setItem('shd_booted', '1'); } catch (e) { /* ignore */ }
+    const calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (seen || calm) { ov.remove(); return; }
+    const skip = () => { ov.style.transition = 'opacity .25s ease'; ov.style.opacity = '0'; setTimeout(() => { if (ov.parentNode) ov.remove(); }, 260); document.removeEventListener('keydown', skip); };
+    ov.addEventListener('click', skip); document.addEventListener('keydown', skip, { once: true });
+    ov.style.cursor = 'pointer'; ov.title = 'Click to skip';
 
     const AGENTS = [
       { name:'SHADDAI',  role:'SOVEREIGN ORCHESTRATOR',  color:'#00ff88' },
