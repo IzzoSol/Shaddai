@@ -408,3 +408,31 @@ html.shd-calm *,html.shd-calm *::before,html.shd-calm *::after{animation-duratio
 
 /* Office opens directly: a plain loading line instead of a closed landing card */
 .o3-loadmsg{display:flex;align-items:center;justify-content:center;min-height:240px;margin:8px 0;border:1px solid var(--border,rgba(255,255,255,.14));border-radius:14px;background:linear-gradient(160deg,rgba(8,20,32,.9),rgba(3,9,16,.9));color:var(--text-secondary,#b8c9e6);font:700 12px 'Share Tech Mono',monospace;letter-spacing:.12em;text-transform:uppercase}
+
+/* ── Office screens (widgets inside the 3D office) ── */
+.o3s-panel{position:absolute;left:12px;top:100px;bottom:84px;width:min(350px,calc(100% - 24px));z-index:8;display:flex;flex-direction:column;border-radius:16px;border:1px solid var(--accent,#00e5a0);background:linear-gradient(160deg,rgba(6,18,30,.94),rgba(3,9,16,.94));box-shadow:0 18px 50px rgba(0,0,0,.6),0 0 36px color-mix(in srgb,var(--accent,#00e5a0) 18%,transparent);backdrop-filter:blur(6px);overflow:hidden}
+.o3s-top{flex:none;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid color-mix(in srgb,var(--accent,#00e5a0) 25%,transparent)}.o3s-top b{font:900 12px 'Orbitron',sans-serif;letter-spacing:.14em;color:#fff;text-transform:uppercase}
+.o3s-bodywrap{flex:1;overflow:auto;padding:10px;display:flex;flex-direction:column;gap:10px}
+.o3s-card{padding:10px 12px;border-radius:12px;border:1px solid var(--border,rgba(255,255,255,.14));background:rgba(255,255,255,.03)}
+.o3s-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}.o3s-head b{flex:1;font:800 11px 'Orbitron',sans-serif;letter-spacing:.1em;color:var(--accent,#00e5a0);text-transform:uppercase}
+.o3s-chip{padding:2px 8px;border-radius:999px;border:1px solid currentColor;font:800 9px 'Orbitron',sans-serif;letter-spacing:.08em}.o3s-chip.s-live{color:#00ff88}.o3s-chip.s-stale{color:#ffb020}.o3s-chip.s-error{color:#ff5470}.o3s-chip.s-loading{color:#aab8c8}
+.o3s-mini{min-height:30px;padding:0 10px;border-radius:8px;border:1px solid var(--border,rgba(255,255,255,.25));background:transparent;color:var(--text-secondary,#b8c9e6);font:700 10px sans-serif;cursor:pointer}.o3s-mini:hover{border-color:var(--accent,#00e5a0);color:var(--accent,#00e5a0)}
+.o3s-row{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);font:700 12px 'Share Tech Mono',monospace;color:#e8eefc}.o3s-row:last-child{border:0}.o3s-row .up{color:#00ff88}.o3s-row .dn{color:#ff6b84}
+.o3s-big{font:900 34px 'Orbitron',sans-serif;color:#fff}.o3s-sub{font-size:12px;line-height:1.5;color:var(--text-secondary,#b8c9e6)}
+.o3s-bar{height:8px;border-radius:6px;background:linear-gradient(90deg,#ff5470,#ffb020,#00ff88);position:relative;margin-top:8px;opacity:.85}.o3s-bar i{position:absolute;top:-3px;bottom:-3px;width:3px;background:#fff;border-radius:2px;transform:translateX(-50%)}
+.o3s-news{display:flex;flex-direction:column;gap:1px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06)}.o3s-news small{font:700 9px 'Share Tech Mono',monospace;letter-spacing:.1em;color:var(--text-muted,#7f93bd);text-transform:uppercase}.o3s-news a{color:#e8eefc;font-size:12px;line-height:1.4;text-decoration:none}.o3s-news a:hover{color:var(--accent,#00e5a0);text-decoration:underline}
+.o3s-foot{margin-top:6px;font:700 9px 'Share Tech Mono',monospace;color:var(--text-muted,#7f93bd)}
+.o3s-in{width:100%;box-sizing:border-box;min-height:38px;padding:0 10px;border-radius:9px;border:1px solid var(--border,rgba(255,255,255,.2));background:rgba(255,255,255,.04);color:#fff;margin-bottom:8px}
+.o3s-btns{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.o3s-btn{min-height:34px;padding:0 12px;border-radius:9px;border:1px solid var(--accent,#00e5a0);background:transparent;color:var(--accent,#00e5a0);font:800 10px 'Orbitron',sans-serif;cursor:pointer}.o3s-btn:hover{background:color-mix(in srgb,var(--accent,#00e5a0) 14%,transparent)}
+.o3s-opt{display:flex;gap:10px;align-items:flex-start;padding:8px;border-radius:10px;border:1px solid var(--border,rgba(255,255,255,.14));cursor:pointer}.o3s-opt input{width:20px;height:20px;accent-color:var(--accent,#00e5a0);margin-top:2px}.o3s-opt b{display:block;font:800 11px 'Orbitron',sans-serif;color:#fff}.o3s-opt small{font-size:11px;color:var(--text-muted,#7f93bd)}
+@media (max-width:640px){.o3s-panel{left:8px;right:8px;width:auto;top:56px;bottom:90px}}
+
+/* ── Docked office: a small live window that stays open on every screen (real size, so the scene is never cropped) ── */
+#shdOfficeDock{position:fixed;right:16px;bottom:78px;z-index:9500;width:360px;max-width:calc(100vw - 24px);border-radius:14px;overflow:hidden;border:1px solid var(--accent,#00e5a0);background:#070b16;box-shadow:0 14px 40px rgba(0,0,0,.6),0 0 30px color-mix(in srgb,var(--accent,#00e5a0) 22%,transparent)}
+#shdOfficeDock .od-bar{display:flex;align-items:center;justify-content:space-between;height:30px;padding:0 8px;background:rgba(4,12,20,.97);border-bottom:1px solid color-mix(in srgb,var(--accent,#00e5a0) 30%,transparent)}
+#shdOfficeDock .od-bar b{font:800 10px 'Orbitron',sans-serif;letter-spacing:.12em;color:var(--accent,#00e5a0);text-transform:uppercase}
+#shdOfficeDock .od-bar button{min-height:24px;margin-left:4px;padding:0 8px;border-radius:7px;border:1px solid var(--border,rgba(255,255,255,.25));background:transparent;color:#e8eefc;font:700 10px sans-serif;cursor:pointer}#shdOfficeDock .od-bar button:hover{border-color:var(--accent,#00e5a0);color:var(--accent,#00e5a0)}
+#shdOfficeDock .od-body{position:relative;width:100%;overflow:hidden}
+#shdOfficeDock .o3-card{position:relative;width:100%;margin:0;border:0;border-radius:0}
+#shdOfficeDock .o3-hud,#shdOfficeDock .o3-cmd,#shdOfficeDock .o3-dock,#shdOfficeDock .o3-help,#shdOfficeDock .o3-list,#shdOfficeDock .o3-panel,#shdOfficeDock .o3s-panel{display:none!important}
+@media (max-width:640px){#shdOfficeDock{right:8px;bottom:70px;width:300px}}

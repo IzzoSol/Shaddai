@@ -98,7 +98,7 @@
       api('POST', '/api/economy/catalog/purchase', { userId: uid(), itemId: it.id, idempotencyKey: 'hub-' + it.id + '-' + Date.now() }).then(function (d) {
         btn.disabled = false;
         if (d.requiresStripe) { msg.textContent = 'This one is a paid item. Opening checkout…'; if (window.shdPlans) shdPlans.open(); return; }
-        if (d.ok) { msg.textContent = 'Added: ' + (it.name || it.id) + '.'; if (d.balance != null) bal.textContent = '⬡ ' + d.balance; try { if (window.Shop && Shop.refresh) Shop.refresh(); } catch (e) { /* ignore */ } return; }
+        if (d.ok) { msg.textContent = 'Added: ' + (it.name || it.id) + '.'; if (d.balance != null) bal.textContent = '⬡ ' + d.balance; try { window.dispatchEvent(new Event('shd:sparks')); } catch (e) { /* ignore */ } try { if (window.Shop && Shop.refresh) Shop.refresh(); } catch (e) { /* ignore */ } return; }
         msg.textContent = d._offline ? "Can't reach the shop right now." : (d.error || d.message || 'Could not complete that purchase.');
       });
     }
@@ -119,5 +119,5 @@
     return !!(navi && shop);
   }
   var tries = 0, t = setInterval(function () { if (wire() || ++tries > 40) clearInterval(t); }, 500);
-  window.shdHub = { navi: function () { var b = document.getElementById('popChatBtn'); if (b) naviMenu(b); }, shop: function () { var b = document.getElementById('shopFab'); if (b) shopMenu(b); }, showcase: showcase, hideNavi: hideNavi };
+  window.shdHub = { navi: function () { var b = document.getElementById('popChatBtn'); if (b) setTimeout(function () { naviMenu(b); }, 0); }, shop: function () { var b = document.getElementById('shopFab'); if (b) setTimeout(function () { shopMenu(b); }, 0); }, showcase: showcase, hideNavi: hideNavi };
 })();

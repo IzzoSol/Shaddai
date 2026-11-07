@@ -59,7 +59,7 @@
         if (!render(d)) return;
         tokensEl.textContent = '';
         if (!scopesBox.childNodes.length) (d.grantable_scopes || []).forEach(function (s) {
-          var c = h('input', { type: 'checkbox', id: 'sb-' + s }); c.checked = (d.default_scopes || []).indexOf(s) > -1; checks[s] = c;
+          var c = h('input', { type: 'checkbox', id: 'sb-' + s }); c.checked = (d.default_scopes || []).indexOf(s) > -1; c.dataset.def = c.checked ? '1' : '0'; checks[s] = c;
           scopesBox.appendChild(h('label', { class: 'sw-sub', title: SCOPE_HELP[s] || s, style: 'display:flex;gap:5px;align-items:center;cursor:pointer' }, [c, s]));
         });
         var list = (d.tokens || []).filter(function (t) { return !t.revoked; });
@@ -118,6 +118,14 @@
         if (!auditEl.childNodes.length) auditEl.appendChild(document.createTextNode('Nothing yet.'));
       });
     }
+    /* Quick setup for Grok: the default permissions plus "Start workflows" and "Use the data tools", nothing else; 7 days; no body. */
+    function quickGrok() {
+      var need = ['workflows:run', 'tools:run'];
+      if (!Object.keys(checks).length) { toast('Still loading the permissions. Try again in a moment.'); return; }
+      var missing = need.filter(function (x) { return !checks[x]; }); if (missing.length) { toast('This server cannot grant: ' + missing.join(', ')); return; }
+      Object.keys(checks).forEach(function (k) { checks[k].checked = checks[k].dataset.def === '1' || need.indexOf(k) > -1; });
+      days.value = '7'; agentSel.value = ''; label.value = 'Grok Bot'; mint();
+    }
     function mint() {
       var scopes = Object.keys(checks).filter(function (s) { return checks[s].checked; });
       if (!scopes.length) { toast('Pick at least one permission'); return; }
@@ -139,6 +147,12 @@
       h('div', { class: 'sw-row' }, [h('b', { text: 'MCP URL' }), h('button', { type: 'button', class: 'sw-btn ghost', text: 'Copy', onclick: function () { copy(url); } })]),
       h('code', { class: 'sw-sub', style: 'word-break:break-all', text: url }),
       h('div', { class: 'sw-sub', text: 'Send the token as  Authorization: Bearer <token>.  Add it to your bot as a remote MCP server. If your bot\'s client only offers OAuth sign-in, that consent flow is the next layer to build.' })
+    ]));
+    body.appendChild(h('div', { class: 'sw-card' }, [
+      h('div', { class: 'sw-row' }, [h('b', { text: 'Quick setup · Grok' }), h('i', { class: 'sw-chip ok', text: 'recommended' })]),
+      h('div', { class: 'sw-sub', text: 'Makes a 7-day token with the default permissions plus Start workflows and Use the data tools, and nothing else. It has no body and cannot spend beyond your free allowance.' }),
+      h('div', { class: 'sw-sub', text: 'The token is shown once. Paste it only into Grok\'s connector settings, never into a chat. When you finish testing, press Revoke on it in the list below.' }),
+      h('div', { class: 'sw-actions' }, [h('button', { type: 'button', class: 'sw-btn', text: 'Create Grok token', onclick: quickGrok })])
     ]));
     body.appendChild(h('div', { class: 'sw-card' }, [
       h('div', { class: 'sw-row' }, [h('b', { text: 'New bot token' })]),

@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   if (window.__shdUserShim) return; window.__shdUserShim = true;
-  var PER_USER = /^(shd_o3_room|shd_o3_sol|shd_o3_hl|shd_chat2_|shd_lead_agent|shd_world_snapshot_v1|shd_inv_v1|shd_forge_demo_agent_v1|shd_sparks|shaddai\.sparks|shaddai\.econ|shaddai_onboarded|shd_onboarded|shd_holo_seen|shd_name|shd_displayName|shd_focus)/;
+  var PER_USER = /^(shd_o3_room|shd_o3_sol|shd_o3_hl|shd_o3_screens|shd_chat2_|shd_lead_agent|shd_world_snapshot_v1|shd_inv_v1|shd_forge_demo_agent_v1|shd_sparks|shaddai\.sparks|shaddai\.econ|shaddai_onboarded|shd_onboarded|shd_holo_seen|shd_name|shd_displayName|shd_focus)/;
   var proto = Storage.prototype, get = proto.getItem, set = proto.setItem, del = proto.removeItem, ls;
   try { ls = window.localStorage; } catch (e) { return; }
   function who() { try { return get.call(ls, 'shd_userid') || 'anon'; } catch (e) { return 'anon'; } }

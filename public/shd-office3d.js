@@ -189,7 +189,7 @@
     Object.keys(holos).forEach(function (k) { holos[k].style.setProperty('--hc', sColor(k)); }); card.style.setProperty('--o3a', th().accent); buildDock();
   }
   function buildDust() { if (dust) { scene.remove(dust); disposeObj(dust); dust = null; } if (quality !== 'high' || reduce) return; var n = 140, pos = new Float32Array(n * 3); for (var i = 0; i < n; i++) { pos[i * 3] = (Math.random() - 0.5) * (ROOM.w - 1); pos[i * 3 + 1] = Math.random() * 3.2; pos[i * 3 + 2] = (Math.random() - 0.5) * (ROOM.d - 1); } var g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(pos, 3)); dust = new T.Points(g, new T.PointsMaterial({ color: new T.Color(th().accent), size: 0.05, transparent: true, opacity: 0.5, depthWrite: false, blending: T.AdditiveBlending })); scene.add(dust); }
-  function size() { if (!renderer) return; var r = host.getBoundingClientRect(); W = Math.max(280, Math.round(r.width)); H = full ? Math.round(window.innerHeight - (listEl ? listEl.offsetHeight : 0)) : (W < 560 ? 340 : 480); host.style.height = H + 'px'; renderer.setSize(W, H, false); renderer.domElement.style.width = W + 'px'; renderer.domElement.style.height = H + 'px'; camera.aspect = W / H; camera.updateProjectionMatrix(); }
+  function size() { if (!renderer) return; var r = host.getBoundingClientRect(); W = Math.max(280, Math.round(r.width)); H = full ? Math.round(window.innerHeight - (listEl ? listEl.offsetHeight : 0)) : (document.body.classList.contains('shd-office-docked') ? Math.round(W * 0.62) : (W < 560 ? 340 : 480)); host.style.height = H + 'px'; renderer.setSize(W, H, false); renderer.domElement.style.width = W + 'px'; renderer.domElement.style.height = H + 'px'; camera.aspect = W / H; camera.updateProjectionMatrix(); }
   function camUpdate(dt) {
     var k = 1 - Math.exp(-6 * dt), ky = 1 - Math.exp(-8 * dt), f = follow && agents[follow], gx, gz;
     if (f) { gx = f.x * 0.5; gz = f.z * 0.4; } else { gx = player.position.x * 0.5 + (player._vx || 0) * 0.25; gz = player.position.z * 0.4 + (player._vz || 0) * 0.25; }
@@ -432,7 +432,7 @@
       setTimeout(function () {
         var ov = document.getElementById('officeView'), active = !!(ov && ov.classList.contains('active'));
         if (v === 'office') { mount(); autoOpen(); }                 // choosing Office shows the 3D office directly
-        else if (!active && running) close();                        // leaving Office stops the render loop and frees the scene
+        else if (!active && running && !(window.shdOfficeDock && window.shdOfficeDock.docked())) close();                        // leaving Office stops the render loop and frees the scene
       }, 60);
       return r;
     }; window.showView._o3 = true; }

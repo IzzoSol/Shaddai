@@ -4305,7 +4305,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
     <span class="tbs-item" title="AI backend / models" style="display:flex;align-items:center;gap:5px;cursor:pointer;pointer-events:auto" onclick="checkOllama();refreshOllamaModels()"><span class="status-dot checking" id="ollamaDotHdr" style="width:6px;height:6px;border-radius:50%;flex:none"></span><span id="ollamaTxtHdr">Checking</span></span>
     <span class="tbs-item" title="Queued jobs">Queue: <b id="queueNumHdr" style="color:#00e5a0;font-weight:900">0</b></span>
     <span class="tbs-item" title="Session cost">Cost: <b id="totalCostHdr" style="color:#ffce63;font-weight:900">$0.0000</b></span>
-    <span class="tbs-item" title="Your Sparks — click to open Economy" style="cursor:pointer" onclick="window._officeEntrySub='treasury';showView('office')">⚡ <b id="navSparks" style="color:#00e5a0;font-weight:900">—</b></span>
+    <span class="tbs-item" title="Your Sparks — click to open the Shop" style="cursor:pointer" onclick="if(window.shdHub)shdHub.shop();else{window._officeEntrySub='treasury';showView('office')}">⚡ <b id="navSparks" style="color:#00e5a0;font-weight:900">—</b></span>
   </div>
   <!-- CENTER cell — brand/version (grid-centered, can't collide) -->
   <div id="tbBrand" style="justify-self:center;display:flex;align-items:center;gap:10px;white-space:nowrap">
@@ -4383,6 +4383,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 (function(){
   function _syncNavSparks(){
     var el=document.getElementById('navSparks'); if(!el) return;
+    if(window.shdSparks) return;   // shd-sparks.js owns this number (real server balance, or a dash)
     var sp=parseFloat(localStorage.getItem('shd_sparks')||localStorage.getItem('shaddai.sparks')||'0');
     el.textContent=sp>=1000?(sp/1000).toFixed(1)+'k':Math.floor(sp).toString();
   }
@@ -59296,6 +59297,9 @@ body.in-world #mainNav, body.in-world #sbNav { display:none !important; }
 <script defer src="/shd-apis.js?v=119"></script>
 <script defer src="/shd-agents.js?v=119"></script>
 <script defer src="/shd-forge.js?v=119"></script>
+<script defer src="/shd-sparks.js?v=119"></script>
+<script defer src="/shd-office-screens.js?v=119"></script>
+<script defer src="/shd-office-dock.js?v=119"></script>
 <script defer src="/shd-hub.js?v=119"></script>
 <script defer src="/shd-paybox.js?v=119"></script>
 <script defer src="/shd-words.js?v=119"></script>
