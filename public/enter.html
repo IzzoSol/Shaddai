@@ -158,23 +158,6 @@ html[data-theme-skin="brutalist"] .ctl, html[data-theme-skin="serif"] .ctl{ back
 @media(max-width:520px){ .ctl{ padding:0 10px; font-size:10px; } .ctl .lbl-long{ display:none; } }
 .brand .sh b{ font-weight:900; }
 .brand .sh .sh-mini{ display:none; }
-/* sign-in lives alone in the top-right corner: one quiet pill outside the controls row */
-.authcorner{ position:fixed; top:calc(clamp(14px,2.6vw,24px) + env(safe-area-inset-top)); right:clamp(16px,4vw,42px); z-index:80; }
-.authpill{
-  font-family:var(--f-mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
-  color:var(--ink-soft); border:1px solid var(--edge); border-radius:2px; background:rgba(14,20,27,.5);
-  min-height:34px; padding:0 12px; display:inline-flex; align-items:center; gap:7px; cursor:pointer;
-  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
-  transition:border-color .25s var(--ease), color .25s var(--ease), background .25s var(--ease);
-}
-html[data-theme-skin="brutalist"] .authpill, html[data-theme-skin="serif"] .authpill{ background:rgba(255,255,255,.6); }
-.authpill:hover{ color:var(--ink); border-color:rgba(0,255,156,.42); }
-.authpill .dot{ width:6px; height:6px; border-radius:50%; background:var(--emerald); box-shadow:0 0 8px var(--emerald); flex-shrink:0; }
-.authpill.out .dot{ background:var(--ink-faint); box-shadow:none; }
-@media(max-width:520px){ .authpill{ min-height:32px; padding:0 10px; font-size:10px; } }
-/* keep the controls row clear of the pinned corner pill */
-.controls{ margin-right:clamp(86px,13vw,150px); }
-@media(max-width:520px){ .controls{ margin-right:clamp(72px,22vw,110px); } }
 @media(max-width:440px){
   header{ padding-left:12px; padding-right:12px; gap:8px; }
   .brand .sh{ font-size:17px; letter-spacing:.16em; }
@@ -868,10 +851,7 @@ setTimeout(end,9000);
     <button class="ctl" id="btnAll" type="button" title="Show every module">◳ <span class="lbl-long">all</span></button>
     <button class="ctl" id="btnEdit" type="button" title="Rearrange your front door">✎ <span class="lbl-long">edit</span></button>
   </div>
-</header><!-- sign-in lives alone in the corner: one quiet pill, out of the way -->
-<div class="authcorner">
-  <button class="authpill" id="btnAuth" type="button"><span class="dot"></span><span id="authLbl">sign in</span></button>
-</div>
+</header>
 
 <!-- secondary utilities — deliberately outside .controls, see .util in CSS -->
 <div class="util">
@@ -1248,20 +1228,6 @@ setTimeout(end,9000);
   });
   document.getElementById('gateClose').addEventListener('click', function () { closeSheets(); closeGate(); });
 
-  /* ── sign-in ─────────────────────────────────────────────────────────
-     Implemented once in shd-chrome.js and shared with Simple Mode. It uses
-     endpoints that already exist; no backend file is modified. */
-  var authBtn = document.getElementById('btnAuth');
-  var authLbl = document.getElementById('authLbl');
-  function paintAuth() {
-    var u = C.user();
-    authBtn.classList.toggle('out', !u);
-    authLbl.textContent = u ? C.shortId(u) : (window.innerWidth <= 440 ? 'in' : 'sign in');
-  }
-  authBtn.addEventListener('click', function () { C.openAuth(); });
-  C.onAuth(paintAuth);
-
-  paintAuth();
   setShowAll(showAll);   // renders once, in the mode the visitor left it in
 
   /* the intro runs after the doors exist, so it can hand off into them.
