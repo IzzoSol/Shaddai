@@ -13640,8 +13640,8 @@ window.enter3DWorld=function(){
             <span style="font-size:9px;padding:3px 8px;background:rgba(0,200,255,0.12);border:1px solid var(--tertiary);color:var(--tertiary)">Info</span>
           </div>
           <div style="display:flex;gap:6px">
-            <button class="btn btn-accent" style="font-size:9px;padding:5px 14px">Primary Button</button>
-            <button class="btn btn-ghost" style="font-size:9px;padding:5px 14px">Ghost Button</button>
+            <span class="btn btn-accent" aria-hidden="true" title="Preview of your colours" style="font-size:9px;padding:5px 14px;cursor:default">Primary preview</span>
+            <span class="btn btn-ghost" aria-hidden="true" title="Preview of your colours" style="font-size:9px;padding:5px 14px;cursor:default">Ghost preview</span>
           </div>
         </div>
 
@@ -36115,8 +36115,9 @@ setTimeout(() => {
 
 // ── Export audit log ──────────────────────────────────────────────────────
 function exportAuditLog() {
+  if (!(S.audit || []).length) { notify('Nothing to export yet. The audit log fills as agents act.'); return; }
   const data = (S.audit || []).map(e =>
-    `[${e.ts}] ${e.status.toUpperCase()} | ${e.agent}→${e.api} | ${e.action} | ${e.detail}`
+    `[${e.ts || ''}] ${String(e.status || 'info').toUpperCase()} | ${e.agent || '-'}→${e.api || '-'} | ${e.action || ''} | ${e.detail || ''}`
   ).join('\n');
   const blob = new Blob([data], {type:'text/plain'});
   const a = document.createElement('a');
