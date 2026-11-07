@@ -38,6 +38,7 @@
     gear: 'M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zM12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2',
     user: 'M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM4 21c0-4 3.500-7 8-7s8 3 8 7',
     folder: 'M3 6h6l2 2h10v11H3z',
+    calendar: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',
     alert: 'M12 3 2 21h20L12 3zM12 10v5M12 18h.01',
     clock: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2',
     info: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 11v6M12 7.5h.01',
@@ -57,7 +58,7 @@
     /* decorative symbols with a clear match. Branded character emoji (the turtle, the fish, the creatures) and status dots are deliberately NOT mapped. */
     '🧠': 'chip', '🚪': 'cube', '🔥': 'bolt', '🌙': 'spark', '📋': 'list', '📚': 'modules', '⚠': 'alert', '🛑': 'alert', '🔮': 'orbit', '💻': 'server', '🔐': 'lock', '🏢': 'cube', '🏙': 'cube', '🏗': 'cube', '🏛': 'cube', '🏬': 'cube', '🏪': 'cube', '🏘': 'cube',
     '💡': 'spark', '✍': 'news', '✉': 'news', '📝': 'news', '📄': 'news', '📑': 'news', '📜': 'news', '📤': 'send', '📣': 'send', '⏰': 'clock', '🚉': 'globe', '🧾': 'card', '🔎': 'search', '🔭': 'search', '🔊': 'music', '🎧': 'music', '📻': 'music', '🎤': 'music', '🎙': 'music',
-    '🤝': 'user', '🔬': 'orbit', '🧪': 'orbit', '🎓': 'spark', '🏅': 'spark', '🆕': 'spark', '🏦': 'coin', '💵': 'coin', '💸': 'coin', '💹': 'chart', '📸': 'image', '🔨': 'gear', 'ℹ': 'info', '🔗': 'plug', '⚡': 'bolt', '📈': 'chart', '📊': 'chart', '📡': 'globe', '🔍': 'search', '🌌': 'orbit', '🛡': 'shield' };
+    '🤝': 'user', '🔬': 'orbit', '🧪': 'orbit', '🎓': 'spark', '🏅': 'spark', '🆕': 'spark', '🏦': 'coin', '💵': 'coin', '💸': 'coin', '💹': 'chart', '📸': 'image', '🔨': 'gear', 'ℹ': 'info', '🔗': 'plug', '⚡': 'bolt', '📈': 'chart', '📊': 'chart', '📡': 'globe', '🔍': 'search', '🌌': 'orbit', '🛡': 'shield', '📅': 'calendar', '🗓': 'calendar', '📆': 'calendar' };
   var EMO = new RegExp("(?:\\p{Emoji_Presentation}|\\p{Extended_Pictographic}\\uFE0F)(?:\\u200D(?:\\p{Emoji_Presentation}|\\p{Extended_Pictographic}\\uFE0F?))*", "gu");
   var SKIP = 'script,style,textarea,input,select,svg,code,pre,[contenteditable],.cx-msgs,.shd-keep-emoji';
   function scrub(root) {
@@ -82,7 +83,9 @@
      Only the screen you are looking at is swept, as it is shown and as it changes, so the big page stays fast. */
   var KEEP = ['chatView', 'socialView', 'newsView', 'library-notesView', 'projectsView', 'documentsView', 'content-studioView', 'gridView', 'forgeView'], pending = null;
   function activeView() { var a = document.querySelector('.view.active'); return a && KEEP.indexOf(a.id) < 0 ? a : null; }
-  function sweep() { pending = null; hydrate(document); var a = activeView(); if (a) scrub(a); var m = document.getElementById('worldsMenu'); if (m) scrub(m); var pm = document.getElementById('shdPayboxMount'); if (pm) scrub(pm); }
+  var TILE = [[/IMAGE/i, 'image'], [/VIDEO/i, 'video'], [/MUSIC|AUDIO|VOICE|TTS/i, 'music'], [/WRITER/i, 'news'], [/GALLERY/i, 'image'], [/CHART|SIGNAL/i, 'chart'], [/SERIES|CALENDAR/i, 'calendar']];
+  function tiles() { document.querySelectorAll('.mm-icon-shell img').forEach(function (im) { if (im.dataset.fb || !(im.complete && im.naturalWidth === 0)) return; im.dataset.fb = '1'; var card = im.closest('.mm-card'), t = card ? (card.querySelector('.mm-title') || {}).textContent || '' : '', m = TILE.filter(function (x) { return x[0].test(t); })[0], sp = document.createElement('span'); sp.className = 'shd-tile-ic'; sp.innerHTML = icon(m ? m[1] : 'spark', 30); im.replaceWith(sp); }); }
+  function sweep() { pending = null; hydrate(document); tiles(); var a = activeView(); if (a) scrub(a); var m = document.getElementById('worldsMenu'); if (m) scrub(m); document.querySelectorAll('.soc-tabs, #socTab-calendar .card-head').forEach(function (n) { scrub(n); }); var pm = document.getElementById('shdPayboxMount'); if (pm) scrub(pm); }
   function queue() { if (!pending) pending = setTimeout(sweep, 150); }
   function init() {
     sweep();

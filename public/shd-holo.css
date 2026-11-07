@@ -454,3 +454,40 @@ html.shd-calm *,html.shd-calm *::before,html.shd-calm *::after{animation-duratio
 .ad-arow{display:grid;grid-template-columns:90px 1fr auto;gap:10px;align-items:center;padding:4px 0;font:700 11px 'Share Tech Mono',monospace;color:#e8eefc;text-transform:uppercase}.ad-bar{height:8px;border-radius:5px;background:rgba(255,255,255,.07);overflow:hidden}.ad-bar i{display:block;height:100%;background:var(--accent,#00e5a0)}
 .ad-foot{margin-top:10px;font:700 10px 'Share Tech Mono',monospace;color:var(--text-muted,#7f93bd)}
 @media (max-width:640px){.ad-arow{grid-template-columns:70px 1fr}.ad-arow span:last-child{grid-column:1/-1}}
+
+/* ── Social + Calendar: holographic tabs, a readable calendar (CSS only; the calendar logic is unchanged) ── */
+#socialView .soc-tabs{gap:8px!important;padding:0 0 12px!important;flex-wrap:wrap;border-bottom:1px solid color-mix(in srgb,var(--accent,#00e5a0) 22%,transparent)!important}
+#socialView .soc-vtab{display:inline-flex!important;align-items:center;gap:8px;min-height:44px;padding:0 18px!important;border-radius:999px!important;border:1px solid var(--border,rgba(255,255,255,.18))!important;background:rgba(255,255,255,.03)!important;font:800 12px 'Orbitron',sans-serif!important;letter-spacing:.08em!important;color:var(--text-secondary,#b8c9e6)!important;transition:border-color .2s,box-shadow .2s,background .2s}
+#socialView .soc-vtab:hover{border-color:var(--accent,#00e5a0)!important;color:#fff!important}
+#socialView .soc-vtab.active{background:var(--accent,#00e5a0)!important;border-color:var(--accent,#00e5a0)!important;color:#04100c!important;box-shadow:0 0 22px color-mix(in srgb,var(--accent,#00e5a0) 40%,transparent)}
+#socialView .soc-vtab:focus-visible{outline:2px solid var(--accent,#00e5a0);outline-offset:2px}
+#socTab-calendar .card-head .btn,#socTab-calendar .card-head button{min-height:36px!important;padding:0 14px!important;font-size:11px!important;border-radius:9px!important}
+#socTab-calendar #calViewWeek,#socTab-calendar #calViewMonth{min-height:36px!important;padding:0 14px!important;font:800 11px 'Orbitron',sans-serif!important;letter-spacing:.06em}
+#socTab-calendar .card-title{font:900 15px 'Orbitron',sans-serif!important;letter-spacing:.1em!important}
+#socialCalendarGrid{gap:8px!important}
+#socialCalendarGrid>div{border-radius:12px!important;background:linear-gradient(165deg,rgba(14,30,44,.7),rgba(5,12,20,.8))!important;border:1px solid rgba(255,255,255,.08)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+#socialCalendarGrid>div:hover{border-color:color-mix(in srgb,var(--accent,#00e5a0) 55%,transparent)!important}
+#socialCalendarGrid>div[style*="rgba(0,229,160,0.5)"],#socialCalendarGrid>.soc-cal-day.today{border-color:var(--accent,#00e5a0)!important;box-shadow:0 0 22px color-mix(in srgb,var(--accent,#00e5a0) 30%,transparent),inset 0 1px 0 rgba(255,255,255,.08)!important}
+#socialCalendarGrid>div[style*="text-align:center"]{background:none!important;border:0!important;box-shadow:none!important;font:800 11px 'Orbitron',sans-serif!important;letter-spacing:.14em!important;color:var(--accent,#00e5a0)!important}
+#socialCalendarGrid>div[style*="min-height:60px"]{min-height:84px!important}
+#socialCalendarGrid>div[style*="rgba(255,255,255,0.01)"]:not([style*="cursor"]){background:none!important;border:0!important;box-shadow:none!important}
+#socialCalendarGrid [style*="font-size:6px"],#socialCalendarGrid [style*="font-size:7px"]{font-size:11px!important;line-height:1.35;padding:3px 7px!important;border-radius:6px!important}
+#socialCalendarGrid [style*="font-size:9px"]{font-size:13px!important}
+#socialCalendarGrid .scd-hdr{font:800 11px 'Orbitron',sans-serif!important;letter-spacing:.1em;color:var(--accent,#00e5a0)}
+#socTab-calendar .card [style*="font-size:8px"]{font-size:11px!important}
+#socTab-calendar label[style*="font-size:8px"]{font-size:11px!important;letter-spacing:.08em}
+@media (max-width:640px){#socialView .soc-vtab{flex:1 1 44%;justify-content:center;padding:0 10px!important}#socialCalendarGrid>div[style*="min-height:60px"]{min-height:58px!important}#socialCalendarGrid{gap:4px!important}#socialCalendarGrid [style*="font-size:6px"],#socialCalendarGrid [style*="font-size:7px"]{font-size:9px!important;padding:2px 4px!important}}
+
+/* ── Markets intelligence desk: one module per page ── */
+.mk-subtabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 12px;padding:0 0 12px;border-bottom:1px solid color-mix(in srgb,var(--accent,#00e5a0) 22%,transparent)}
+.mk-tab{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--border,rgba(255,255,255,.18));background:rgba(255,255,255,.03);color:var(--text-secondary,#b8c9e6);font:800 12px 'Orbitron',sans-serif;letter-spacing:.07em;cursor:pointer;transition:border-color .2s,box-shadow .2s}
+.mk-tab:hover{border-color:var(--accent,#00e5a0);color:#fff}.mk-tab.on{background:var(--accent,#00e5a0);border-color:var(--accent,#00e5a0);color:#04100c;box-shadow:0 0 22px color-mix(in srgb,var(--accent,#00e5a0) 38%,transparent)}.mk-tab:focus-visible{outline:2px solid var(--accent,#00e5a0);outline-offset:2px}
+#pipelineSentiment[data-mk-tab] [data-mk-mod]{display:none!important}
+#pipelineSentiment[data-mk-tab=overview] [data-mk-mod=overview],#pipelineSentiment[data-mk-tab=signals] [data-mk-mod=signals],#pipelineSentiment[data-mk-tab=council] [data-mk-mod=council],#pipelineSentiment[data-mk-tab=whales] [data-mk-mod=whales],#pipelineSentiment[data-mk-tab=news] [data-mk-mod=news],#pipelineSentiment[data-mk-tab=chart] [data-mk-mod=chart]{display:block!important}
+#pipelineSentiment[data-mk-tab] [data-mk-grid]{grid-template-columns:1fr!important;gap:16px!important}
+#pipelineSentiment[data-mk-tab=overview] [data-mk-grid]{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))!important}
+#pipelineSentiment[data-mk-tab] [data-mk-grid]:not(:has([data-mk-mod]:not([style*="display:none"]))){display:none}
+#pipelineSentiment[data-mk-tab] [data-mk-mod]{min-height:220px;padding:18px!important}
+#pipelineSentiment[data-mk-tab=chart] [data-mk-mod=chart],#pipelineSentiment[data-mk-tab=news] [data-mk-mod=news],#pipelineSentiment[data-mk-tab=council] [data-mk-mod=council],#pipelineSentiment[data-mk-tab=whales] [data-mk-mod=whales]{min-height:340px}
+.shd-tile-ic{display:grid;place-items:center;width:100%;height:100%;color:var(--acc,var(--accent,#00e5a0));filter:drop-shadow(0 0 10px var(--acc,#00e5a0))}
+@media (max-width:640px){.mk-subtabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.mk-tab{flex:none;padding:0 14px}}
