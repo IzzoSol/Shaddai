@@ -146,7 +146,7 @@
     var navi = h('div', { class: 'sw-grid' });
     fill(el, [
       box('Furniture & items', 'what you own in the world · same inventory the 3D world reads', [inv]),
-      box('Your agents', 'forged in the 3D Forge · they walk the 3D world · seeing their bodies here is coming soon', [ops]),
+      box('Your agents', 'glowing bodies · change their style, earn badges, run tasks', [window.shdGlow ? h('div', { class: 'sw-actions', style: 'margin:0 0 10px' }, [window.shdGlow.forgeButton(), h('span', { class: 'sw-sub', text: 'Opens the 3D Forge. A new agent appears here when it is forged.' })]) : null, ops]),
       box('Navi', 'your guide in the world', [navi])
     ].concat(window.shdWorldSnapshotBox ? [window.shdWorldSnapshotBox()] : [], window.shdAgentTasksBox ? [window.shdAgentTasksBox()] : [], window.shdBridgeBox ? [window.shdBridgeBox()] : []));
 
@@ -172,8 +172,9 @@
     api('GET', '/api/operatives' + (u ? '?owner=' + encodeURIComponent(u) : '')).then(function (d) {
       var list = pick(d, 'operatives') || (Array.isArray(d) ? d : []);
       if (!list.length) { fill(ops, [msg('No agents yet. Forge your first one — it appears here and in the 3D world.', 'dim'),
-        h('div', { class: 'sw-actions' }, [btn('Open the Forge', function () { window.showView && showView('forge'); })])]); return; }
+        h('div', { class: 'sw-actions' }, [window.shdGlow ? window.shdGlow.forgeButton() : btn('Open the Forge', function () { window.showView && showView('forge'); })])]); return; }
       fill(ops, list.map(function (o) {
+        if (window.shdGlow) return window.shdGlow.agentCard(o, taskRow(o));
         return h('div', { class: 'sw-card slim' }, [h('div', { class: 'sw-row' }, [h('b', { text: o.name || o.id }), chip((o.skills || []).length + ' skills', '')]), h('div', { class: 'sw-sub', text: o.role || o.kind || '' }), taskRow(o)]);
       }));
     }).catch(function () { fill(ops, [msg('Agent service unreachable.', 'dim')]); });

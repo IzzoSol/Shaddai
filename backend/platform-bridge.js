@@ -547,6 +547,40 @@ function createBridge(opts) {
       res.json({ ok: true, learned: key, tuition_sparks: fmtSparks(paid.cents || 0), note: 'This agent now runs it free, forever, and it does not use your hourly allowance.' });
     }).catch((e) => res.status(e instanceof ToolError ? e.code : 500).json({ ok: false, error: e instanceof ToolError ? e.message : 'internal error' }));
   });
+  // ── ACHIEVEMENT BADGES: derived from real activity (succeeded runs, lessons), never stored as "earned", so they cannot be faked.
+  // The owner may PIN up to 3 earned badges to show on the agent (look.badges); the server re-checks each pin against what was really earned.
+  const BADGES = [
+    { id: 'first-run', label: 'First Run', desc: 'Finished a first task', test: (m) => [m.done, 1] },
+    { id: 'ten-runs', label: 'Getting Busy', desc: 'Finished 10 tasks', test: (m) => [m.done, 10] },
+    { id: 'fifty-runs', label: 'Workhorse', desc: 'Finished 50 tasks', test: (m) => [m.done, 50] },
+    { id: 'market-watcher', label: 'Market Watcher', desc: 'Pulled live prices', test: (m) => [m.market, 1] },
+    { id: 'researcher', label: 'Researcher', desc: 'Researched a topic', test: (m) => [m.research, 1] },
+    { id: 'news-hound', label: 'News Hound', desc: 'Read the news digest', test: (m) => [m.news, 1] },
+    { id: 'well-rounded', label: 'Well Rounded', desc: 'Finished 4 different kinds of task', test: (m) => [m.kinds, 4] },
+    { id: 'trusted', label: 'Trusted', desc: 'Finished a task you approved', test: (m) => [m.approved, 1] },
+    { id: 'quick-study', label: 'Quick Study', desc: 'Learned a skill', test: (m) => [m.learned, 1] },
+    { id: 'scholar', label: 'Scholar', desc: 'Learned 5 skills or workflows', test: (m) => [m.learned, 5] }
+  ];
+  function badgeMetrics(owner, agentId) {
+    const mine = Object.values(db.runs).filter((r) => r.owner === owner && r.agent_id === agentId && r.status === 'succeeded'), kinds = {};
+    mine.forEach((r) => { kinds[r.workflow_id] = 1; });
+    const op = (operatives && operatives.get && operatives.get(agentId)) || {};
+    return { done: mine.length, market: mine.filter((r) => r.workflow_id === 'market.snapshot' || /^lib\.(price|crypto)/.test(r.workflow_id)).length, research: mine.filter((r) => r.workflow_id === 'research.topic').length, news: mine.filter((r) => r.workflow_id === 'news.digest').length,
+      kinds: Object.keys(kinds).length, approved: mine.filter((r) => (r.approvals || []).length > 0).length, learned: (op.skills || []).filter((x) => x && x.source === 'bridge-learn').length };
+  }
+  function badgeList(owner, agentId) { const m = badgeMetrics(owner, agentId); return BADGES.map((b) => { const t = b.test(m); return { id: b.id, label: b.label, desc: b.desc, earned: t[0] >= t[1], progress: Math.min(t[0], t[1]) + '/' + t[1] }; }); }
+  router.get('/agents/:agentId/badges', needOwner, (req, res) => {
+    const id = req.params.agentId; if (!safeId(id) || agentOwner(id) !== req.owner) return res.status(403).json({ ok: false, error: 'not your agent' });
+    const op = (operatives && operatives.get && operatives.get(id)) || {}, pinned = ((op.look && op.look.badges) || []).filter((x) => BADGES.some((b) => b.id === x));
+    res.json({ ok: true, badges: badgeList(req.owner, id), pinned });
+  });
+  router.post('/agents/:agentId/badges/pin', needOwner, json, (req, res) => {
+    const id = req.params.agentId; if (!safeId(id) || agentOwner(id) !== req.owner) return res.status(403).json({ ok: false, error: 'not your agent' });
+    const ids = Array.isArray(req.body && req.body.ids) ? req.body.ids.map(String).slice(0, 3) : null; if (!ids) return res.status(400).json({ ok: false, error: 'ids must be a list (max 3)' });
+    const earned = new Set(badgeList(req.owner, id).filter((b) => b.earned).map((b) => b.id)), bad = ids.filter((x) => !earned.has(x)); if (bad.length) return res.status(400).json({ ok: false, error: 'not earned yet: ' + bad.join(', ') });
+    try { const op = operatives.get(id) || {}; operatives.update(id, { look: Object.assign({}, op.look || {}, { badges: Array.from(new Set(ids)) }) }); } catch (e) { return res.status(500).json({ ok: false, error: 'could not save the pins' }); }
+    res.json({ ok: true, pinned: Array.from(new Set(ids)) });
+  });
   router.get('/audit', needOwner, (req, res) => res.json({ ok: true, audit: db.audit.filter((a) => a.owner === req.owner).slice(-100).reverse() }));
   router.get('/world-state', (req, res) => {
     const ids = new Set(Object.values(db.runs).filter((r) => r.agent_id).map((r) => r.agent_id));

@@ -14,7 +14,7 @@ fs.writeFileSync(plotsFile, JSON.stringify({ plots: {
   'p-alice': { id: 'p-alice', name: 'Alice plot', status: 'rented', owner: 'alice', pos: [3, 4] },
   'p-bob': { id: 'p-bob', name: 'Bob plot', status: 'rented', owner: 'bob', pos: [5, 6] } } }));
 const ops = { a1: { id: 'a1', name: 'Bolt', owner: 'alice', skills: [] }, b1: { id: 'b1', name: 'Zed', owner: 'bob', skills: [] } };
-const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id) ? ops[id] : null), listByOwner: (o) => Object.values(ops).filter((x) => x.owner === o) };
+const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id) ? ops[id] : null), listByOwner: (o) => Object.values(ops).filter((x) => x.owner === o), update: (id, patch) => Object.assign(ops[id], patch) };
 
 (async () => {
   const calls = []; let lastAskExtra = null;
@@ -300,6 +300,16 @@ const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id)
   const sseRes = await fetch(base + '/mcp', { method: 'POST', headers: { 'content-type': 'application/json', accept: 'text/event-stream', authorization: 'Bearer ' + ro.token }, body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list' }) }); const sseText = await sseRes.text();
   assert.ok(/text\/event-stream/.test(sseRes.headers.get('content-type')) && /^event: message\ndata: \{/.test(sseText), 'event-stream-only clients get SSE framing'); assert.ok(JSON.parse(sseText.split('data: ')[1]).result.tools.length > 0);
   assert.strictEqual((await fetch(base + '/mcp', { method: 'DELETE' })).status, 200, 'DELETE /mcp ends a session without error'); assert.strictEqual((await fetch(base + '/mcp')).status, 405, 'GET stays 405');
+
+  // ── ACHIEVEMENT BADGES: derived from real activity, pinnable only when earned ──
+  const bd = (await http('GET', '/agents/a1/badges', { uid: 'alice' })).json; assert.strictEqual(bd.ok, true); const by = {}; bd.badges.forEach((b) => { by[b.id] = b; });
+  assert.strictEqual(by['first-run'].earned, true, 'a1 finished tasks, so First Run is earned'); assert.strictEqual(by['market-watcher'].earned, true, 'a1 ran market.snapshot'); assert.strictEqual(by['fifty-runs'].earned, false); assert.strictEqual(by['fifty-runs'].progress.split('/')[1], '50', 'progress is shown for unearned badges');
+  assert.strictEqual(by['quick-study'].earned, false, 'nothing learned yet'); assert.strictEqual((await http('GET', '/agents/b1/badges', { uid: 'alice' })).status, 403, 'not your agent'); assert.strictEqual((await http('GET', '/agents/a1/badges', {})).status, 401);
+  assert.strictEqual((await http('POST', '/agents/a1/badges/pin', { uid: 'alice', body: { ids: ['fifty-runs'] } })).status, 400, 'an unearned badge cannot be pinned');
+  assert.strictEqual((await http('POST', '/agents/a1/badges/pin', { uid: 'bob', body: { ids: ['first-run'] } })).status, 403, 'another user cannot pin on your agent');
+  const pin = await http('POST', '/agents/a1/badges/pin', { uid: 'alice', body: { ids: ['first-run', 'market-watcher', 'first-run', 'researcher', 'news-hound'] } });
+  assert.strictEqual(pin.status === 200 || pin.status === 400, true); const pin2 = await http('POST', '/agents/a1/badges/pin', { uid: 'alice', body: { ids: ['first-run', 'market-watcher'] } }); assert.strictEqual(pin2.status, 200); assert.deepStrictEqual(pin2.json.pinned, ['first-run', 'market-watcher']);
+  assert.deepStrictEqual(ops.a1.look.badges, ['first-run', 'market-watcher'], 'pins are saved on the agent so the 3D world can show them'); assert.deepStrictEqual((await http('GET', '/agents/a1/badges', { uid: 'alice' })).json.pinned, ['first-run', 'market-watcher']);
 
   // 7. revocation takes effect on the next call
   const info = (await http('GET', '/tokens', { uid: 'alice' })).json.tokens.find((t) => t.label === 'runner');
