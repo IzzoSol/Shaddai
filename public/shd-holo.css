@@ -436,3 +436,21 @@ html.shd-calm *,html.shd-calm *::before,html.shd-calm *::after{animation-duratio
 #shdOfficeDock .o3-card{position:relative;width:100%;margin:0;border:0;border-radius:0}
 #shdOfficeDock .o3-hud,#shdOfficeDock .o3-cmd,#shdOfficeDock .o3-dock,#shdOfficeDock .o3-help,#shdOfficeDock .o3-list,#shdOfficeDock .o3-panel,#shdOfficeDock .o3s-panel{display:none!important}
 @media (max-width:640px){#shdOfficeDock{right:8px;bottom:70px;width:300px}}
+
+/* ── Admin window ── */
+.ad-wrap{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:14px}.ad-scrim{position:absolute;inset:0;background:rgba(2,6,14,.74);backdrop-filter:blur(6px)}
+.ad-card{position:relative;width:min(900px,100%);max-height:92vh;overflow:auto;padding:22px;border-radius:18px;border:1px solid var(--accent,#00e5a0);background:linear-gradient(160deg,rgba(8,20,32,.98),rgba(3,9,16,.98));box-shadow:0 30px 80px rgba(0,0,0,.65),0 0 50px color-mix(in srgb,var(--accent,#00e5a0) 14%,transparent)}
+.ad-top{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:flex-end;margin-bottom:14px}.ad-kick{font:700 10px 'Share Tech Mono',monospace;letter-spacing:.3em;color:var(--accent,#00e5a0)}.ad-top h2{margin:2px 0 0;font:900 22px 'Orbitron',sans-serif;color:#fff}
+.ad-actions{display:flex;gap:8px;align-items:center}.ad-stamp{font:700 10px 'Share Tech Mono',monospace;color:var(--text-muted,#7f93bd)}
+.ad-btn{min-height:38px;padding:0 14px;border-radius:10px;border:1px solid var(--accent,#00e5a0);background:var(--accent,#00e5a0);color:#04100c;font:800 10px 'Orbitron',sans-serif;letter-spacing:.07em;cursor:pointer}.ad-btn.ghost{background:transparent;color:var(--accent,#00e5a0)}
+.ad-sec{margin-bottom:16px}.ad-sec h3{margin:0 0 8px;font:800 11px 'Orbitron',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--accent,#00e5a0)}
+.ad-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.ad-tile{padding:12px 14px;border-radius:12px;border:1px solid var(--border,rgba(255,255,255,.14));background:rgba(255,255,255,.03)}
+.ad-tile b{display:block;font:900 22px 'Orbitron',sans-serif;color:#fff}.ad-tile small{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted,#7f93bd)}
+.ad-tile.ok{border-color:rgba(0,255,136,.45)}.ad-tile.ok b{color:#00ff88}.ad-tile.warn{border-color:rgba(255,176,32,.45)}.ad-tile.warn b{color:#ffb020}.ad-tile.bad{border-color:rgba(255,84,112,.5)}.ad-tile.bad b{color:#ff5470}
+.ad-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.ad-chip{padding:3px 10px;border-radius:999px;border:1px solid var(--border,rgba(255,255,255,.2));font:700 10px 'Share Tech Mono',monospace;color:var(--text-secondary,#b8c9e6)}.ad-chip.ok{border-color:#00ff88;color:#00ff88}
+.ad-note{padding:10px 12px;border-radius:10px;border:1px solid var(--border,rgba(255,255,255,.2));font-size:13px;line-height:1.5;color:var(--text-secondary,#b8c9e6)}.ad-note.warn{border-color:rgba(255,176,32,.55);background:rgba(255,176,32,.07);color:#f0d9a0}.ad-note.bad{border-color:rgba(255,84,112,.55);background:rgba(255,84,112,.07);color:#ffc2cc}
+.ad-row{display:flex;gap:8px;margin-top:10px}.ad-in{flex:1;min-width:0;min-height:40px;padding:0 12px;border-radius:10px;border:1px solid var(--border,rgba(255,255,255,.25));background:rgba(255,255,255,.04);color:#fff}
+.ad-agents{margin-top:12px}.ad-agents h4{margin:0 0 6px;font:800 10px 'Orbitron',sans-serif;letter-spacing:.12em;color:var(--text-muted,#7f93bd);text-transform:uppercase}
+.ad-arow{display:grid;grid-template-columns:90px 1fr auto;gap:10px;align-items:center;padding:4px 0;font:700 11px 'Share Tech Mono',monospace;color:#e8eefc;text-transform:uppercase}.ad-bar{height:8px;border-radius:5px;background:rgba(255,255,255,.07);overflow:hidden}.ad-bar i{display:block;height:100%;background:var(--accent,#00e5a0)}
+.ad-foot{margin-top:10px;font:700 10px 'Share Tech Mono',monospace;color:var(--text-muted,#7f93bd)}
+@media (max-width:640px){.ad-arow{grid-template-columns:70px 1fr}.ad-arow span:last-child{grid-column:1/-1}}

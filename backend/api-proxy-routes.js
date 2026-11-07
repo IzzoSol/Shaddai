@@ -7,7 +7,7 @@
 const express = require('express');
 const router = express.Router();
 const { fail, ok, asyncHandler } = require('./lib/respond'); // shared response/error contract
-const { softAuth, requireAdmin } = require('./auth-guard');
+const { softAuth, requireAdmin, requireAdminUser } = require('./auth-guard');
 router.use(softAuth); // dev-permissive; enforces identity when REQUIRE_AUTH=true
 // Tag the current run's owner so agent tools (save_to_inbox) write per-user entries.
 router.use((req, res, next) => { try { require('./agent-engine').setInboxOwner((req.userId && req.userId !== 'local') ? req.userId : (req.headers['x-user-id'] || '')); } catch (_) {} next(); });
@@ -4453,7 +4453,8 @@ router.get('/session/:token/jobs', (req, res) => {
 // ─────────────────────────────────────────────────────────────
 // ENHANCED ADMIN ANALYTICS — real data from stored state
 // ─────────────────────────────────────────────────────────────
-router.get('/admin/analytics', (req, res) => {
+// Admin only (verified admin email via Bearer ID token, or the x-shaddai-admin master token). It used to be public; it returns job, revenue and session counts.
+router.get('/admin/analytics', requireAdminUser, (req, res) => {
   const now = Date.now();
   const oneDayAgo = now - 24 * 60 * 60 * 1000;
   const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
