@@ -342,11 +342,18 @@
   function bakeDepth(THREE, heightAt, bounds, res, level, inside) {
     var minX = bounds[0], minZ = bounds[1], sx = (bounds[2] - minX) / res, sz = (bounds[3] - minZ) / res;
     var dep = new Float32Array(res * res), msk = new Float32Array(res * res), hf = new Uint16Array(res * res * 2);
-    for (var j = 0; j < res; j++) for (var i = 0; i < res; i++) {
-      var x = minX + (i + 0.5) * sx, z = minZ + (j + 0.5) * sz, k = j * res + i;
-      var d = Math.max(-60, Math.min(400, (level - heightAt(x, z)) / PM)), m = inside(x, z) ? 1 : 0;
-      dep[k] = d; msk[k] = m;
-      hf[k * 2] = THREE.DataUtils.toHalfFloat(d); hf[k * 2 + 1] = THREE.DataUtils.toHalfFloat(m);
+    var H0 = THREE.DataUtils.toHalfFloat(0), H1 = THREE.DataUtils.toHalfFloat(1);
+    // PERF 2026-11-07: polygons give a per-row crossing list (inside.row), so the mask is O(res·edges) instead of O(res²·edges).
+    // Same predicate as pointInPoly: inside when an odd number of crossings lie strictly to the right of x.
+    for (var j = 0; j < res; j++) {
+      var z = minZ + (j + 0.5) * sz, cr = inside.row ? inside.row(z) : null, p = 0;
+      for (var i = 0; i < res; i++) {
+        var x = minX + (i + 0.5) * sx, k = j * res + i, m;
+        if (cr) { while (p < cr.length && cr[p] <= x) p++; m = (cr.length - p) & 1; } else m = inside(x, z) ? 1 : 0;
+        var d = Math.max(-60, Math.min(400, (level - heightAt(x, z)) / PM));
+        dep[k] = d; msk[k] = m;
+        hf[k * 2] = THREE.DataUtils.toHalfFloat(d); hf[k * 2 + 1] = m ? H1 : H0;
+      }
     }
     var tex = new THREE.DataTexture(hf, res, res, THREE.RGFormat, THREE.HalfFloatType);
     tex.minFilter = tex.magFilter = THREE.LinearFilter; tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
@@ -369,6 +376,15 @@
       if (((zi > z) !== (zj > z)) && (x < (xj - xi) * (z - zi) / (zj - zi) + xi)) c = !c;
     }
     return c;
+  }
+  // sorted x of every edge crossing at height z (the exact edges + intercept formula pointInPoly toggles on)
+  function polyRowCrossings(poly, z) {
+    var out = [];
+    for (var i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      var xi = poly[i][0], zi = poly[i][1], xj = poly[j][0], zj = poly[j][1];
+      if ((zi > z) !== (zj > z)) out.push((xj - xi) * (z - zi) / (zj - zi) + xi);
+    }
+    return out.sort(function (a, b) { return a - b; });
   }
 
   // ───────────────────────────── shaders ──
@@ -718,6 +734,7 @@
         var xs = b.polygon.map(function (p) { return p[0]; }), zs = b.polygon.map(function (p) { return p[1]; });
         bounds = [Math.min.apply(null, xs), Math.min.apply(null, zs), Math.max.apply(null, xs), Math.max.apply(null, zs)];
         inside = function (x, z) { return pointInPoly(b.polygon, x, z); };
+        inside.row = function (z) { return polyRowCrossings(b.polygon, z); };
       } else {
         var c = b.center || [0, 0], R = b.radius || 1000;
         bounds = [c[0] - R, c[1] - R, c[0] + R, c[1] + R];
