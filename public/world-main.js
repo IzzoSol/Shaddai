@@ -714,6 +714,10 @@ const agentBodyLoader = new GLTFLoader(__loadMgr); agentBodyLoader.setDRACOLoade
  * index at bone 0 (weights renormalised; zero-weight slots stay zero). Valid rigs are untouched. ?skinfix=0 = off. */
 function _repairSkins(root){ let fixed = 0;
   root.traverse(function(o){ if(!o.isSkinnedMesh || !o.skeleton) return; const n = o.skeleton.bones.length, si = o.geometry.attributes.skinIndex, sw = o.geometry.attributes.skinWeight; if(!si || !sw) return;
+    // 2026-11-07 SPIKE ROOT CAUSE: SHADDAI/TURTLE/ZEROX ship INTERLEAVED skin attributes (52-byte stride). This repair misread them and wrote
+    // "fixed" indices/weights over good data = the exploded council bodies (measured 271-447 u tall; 7 u with ?skinfix=0). Those files are
+    // verified clean offline (max joint 21 of 24, weights sum 1), so interleaved attributes are left untouched.
+    if(si.isInterleavedBufferAttribute || sw.isInterleavedBufferAttribute) return;
     for(let v = 0; v < si.count; v++){ let bad = false, sum = 0; const w = [0,0,0,0];
       for(let j = 0; j < 4; j++){ const b = si.getComponent(v, j); w[j] = sw.getComponent(v, j); if(b >= n || !o.skeleton.bones[b]){ w[j] = 0; bad = true; } sum += w[j]; }
       if(!bad) continue; fixed++;
@@ -723,7 +727,13 @@ function _repairSkins(root){ let fixed = 0;
   return fixed; }
 window.__repairSkins = _repairSkins;
 if(!/[?&]skinfix=0/.test(location.search) && !GLTFLoader.prototype.__skinFix){ const _gl0 = GLTFLoader.prototype.load;   /* every loader (agents, NPCs, bots, creatures) */
-  GLTFLoader.prototype.load = function(url, onLoad, onProgress, onError){ return _gl0.call(this, url, function(g){ try{ if(g && g.scene) window.__skinRepaired = (window.__skinRepaired || 0) + _repairSkins(g.scene); }catch(e){ console.warn('[skin-repair]', e && e.message); } onLoad && onLoad(g); }, onProgress, onError); };
+  // 2026-11-07 SPIKE FIX: these council GLBs are verified clean offline (max joint <= 23 of 24, weights sum 1). With the repair + the perf-guard
+  // skin override active they rendered exploded (measured 271-447 u tall); with both off all 7 agents measured a normal 7 u. Clean files are
+  // tagged __skinClean and both runtime patches leave them alone. NEXUS/ORACLE/QUILL (meshopt, zero-weight index 255 slots) still get repaired.
+  const _CLEAN_SKIN = /\/assets\/agents\/(SHADDAI|TURTLE|ZEROX|PIKADON)\.glb/i;
+  GLTFLoader.prototype.load = function(url, onLoad, onProgress, onError){ return _gl0.call(this, url, function(g){ try{ if(g && g.scene){
+      if(_CLEAN_SKIN.test(String(url))) g.scene.traverse(function(o){ if(o.isSkinnedMesh) o.userData.__skinClean = true; });
+      else window.__skinRepaired = (window.__skinRepaired || 0) + _repairSkins(g.scene); } }catch(e){ console.warn('[skin-repair]', e && e.message); } onLoad && onLoad(g); }, onProgress, onError); };
   GLTFLoader.prototype.__skinFix = true; }
 
 // ── BUILD THE ORGANIZED WORLD: walkable terrain + biome regions/water + real vehicles ──
@@ -779,7 +789,7 @@ window.__worldBuilt = false;
   }catch(e){ console.warn('world core build failed:', e && e.message); }
   // MAP v4: load terrain → water, THEN the heightAt-dependent realm modules + buildings (below).
   window.__mapV4Ready = !MAP_V4 ? Promise.resolve(null) : (_ldBegin('terrain'), _loadScript('/world-terrain-v4.js?v=20261105a'))
-    .then(()=> _loadScript('/world-water.js?v=20261023e'))
+    .then(()=> _loadScript('/world-water.js?v=20261107a'))
     .then(()=> window.buildWorldTerrainV4({ THREE, scene, camera, base: /[?&]waterways=1\b/.test(location.search) ? '/assets/terrain-ww/' : '/assets/terrain/' }))   // ?waterways=1: patched heightmap + Harbor Ring Canal (tools/carve-ring-canal.py)
     .then(function(api){
       _v4T = api; _v4Meta = api.meta || null; window.__w3dDebug.terrainV4 = api;
