@@ -19,8 +19,11 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
+const sparksCore = require('./sparksCore');
+// FORGE-AGENT-WIRING 1-9: body grants (identity from the server, ownership, idempotent collect, presence, release) - mounted FIRST so grant routes win; base-role keys fall through to the legacy routes below
+router.use(require('./agentBodies'));
 
-const DATA_DIR = path.join(__dirname, 'data');
+const DATA_DIR = process.env.SHADDAI_MMO_DATA || path.join(__dirname, 'data'); // env override = test isolation
 const AGENTS_FILE = path.join(DATA_DIR, 'agents.json');
 const CHARS_FILE = path.join(DATA_DIR, 'characters.json');
 const FORGE_AGENTS_FILE = path.join(__dirname, '..', 'backend', 'data', 'custom_agents.json');
@@ -100,6 +103,7 @@ router.post('/hire', (req, res) => {
     if ((char.currency.sparks || 0) < def.cost) return res.status(400).json({ success: false, error: 'Insufficient Sparks' });
     char.currency.sparks -= def.cost;
     saveFile(CHARS_FILE, chars);
+    if (def.cost > 0) sparksCore.recordSink(char, def.cost, 'agent-hire', { ref: key });
 
     roster[key] = { key, name: def.name, emoji: def.emoji || null, isForged: !!def.isForged, energy: def.energy, durationMs: def.durationMs, yield: def.yield, hiredAt: Date.now(), shiftEndAt: 0, shifts: 0 };
     db[characterId] = roster;
@@ -166,6 +170,7 @@ router.post('/collect/:key', (req, res) => {
       else char.inventory[item] = (char.inventory[item] || 0) + total;
     }
     saveFile(CHARS_FILE, chars);
+    if (gained.sparks) sparksCore.recordChange(char, gained.sparks, 'agent-yield', { ref: key });
 
     agent.shiftEndAt = 0;
     agent.shifts = (agent.shifts || 0) + 1;

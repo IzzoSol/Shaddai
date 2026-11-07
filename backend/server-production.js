@@ -1592,6 +1592,22 @@ app.get('/api/signals/calls', async (req, res) => {
   } catch (e) { res.status(500).json({ ok: false, error: String((e && e.message) || e) }); }
 });
 
+// GET /api/navi/signals — the Navi SIGNALS module. Tier is decided HERE from a VERIFIED Firebase identity (req.userEmail is only set on the verified path);
+// an X-User-ID header or ?userId= is never enough to unlock the paid feed. Free = delayed 3-call preview, paid = live feed. See lib/navi-signals.js.
+app.get('/api/navi/signals', async (req, res) => {
+  try {
+    const { buildSignalsResponse } = require('./lib/navi-signals');
+    let tier = 'free';
+    if ((req.headers.authorization || '').startsWith('Bearer ')) {
+      await new Promise((resolve) => { require('./auth-guard').verifyFirebaseToken(req, { status: () => ({ json: () => resolve() }), json: () => resolve() }, resolve); });
+      if (req.userEmail && req.userId) { try { const info = await BillingService.getSubscriptionInfo(req.userId); tier = (info && (info.tier || (info.subscription && info.subscription.tier))) || 'free'; } catch (e) { tier = 'free'; } }
+    }
+    const pnl = require('./telegram-pnl'); const calls = pnl.callsJson({ limit: 100 });
+    res.set('Cache-Control', 'private, no-store');
+    res.json(buildSignalsResponse({ tier, calls, now: Date.now() }));
+  } catch (e) { res.status(500).json({ ok: false, error: 'signals unavailable' }); }
+});
+
 app.get('/api/signals/stats', (req, res) => {
   try {
     const pnl = require('./telegram-pnl');
@@ -2119,6 +2135,16 @@ app.use('/api/collectables', require('./collectables/collectables-routes'));
 app.use('/api/rooms', require('./rooms/rooms-routes'));
 // Operatives — the unified Operative store (identity+look+brain+inventory+economy+stats)
 app.use('/api/operatives', require('./lib/operatives-routes'));
+// ── MMO agent layer (server/agentBodies.js + externalAgents.js): body grants, external agents (Grok/Muse/...), jobs market. Identity = softAuth's verified uid ONLY
+//    (the x-user-id header is overwritten); Sparks go through the production economy-service (SHADDAI_LEDGER=economy), so there is ONE economy. ──
+try {
+  process.env.SHADDAI_LEDGER = process.env.SHADDAI_LEDGER || 'economy';
+  const _mmoId = (req, res, next) => { req.headers['x-user-id'] = req.userId || ''; next(); };
+  const _ext = require('../server/externalAgents');
+  app.use('/api/mmo/agent', softAuth, _mmoId, require('../server/agentServer'));
+  app.use('/api/mmo/xagent', softAuth, _mmoId, _ext.xagent);
+  app.use('/api/mmo/jobs', softAuth, _mmoId, _ext.jobs);
+} catch (e) { console.warn('[mmo-agents] not mounted:', e && e.message); }
 app.use('/api/radio', require('./lib/radio-routes'));                 // Shaddai Radio: community tracks + city bulletin
 app.use('/api/portal-plots', require('./lib/portal-plots-routes'));   // rentable/buyable portal-world plots
 app.use('/api/security', require('./lib/security-routes'));           // PIKADON security scan engine + review queue
@@ -2160,7 +2186,10 @@ app.use('/x402/academy', _academyRoutes.paylabRouter); // merchant: sell the pay
 // The bot-side /xagent surface stays OFF until an agentAuth is passed in (Grok Bot bridge - see docs/V119-WORKLIST.md WP7).
 try {
   const _schoolInst = require('./lib/academy/academy-instance');
-  app.use('/api/school', softAuth, require('./academy-school-routes').createSchoolRouter({
+  // shdx_ bot bearers are not user sessions: skip softAuth for them (no wasted verification). With no agentAuth passed below they
+  // are treated as anonymous, so the bot side stays OFF until WP7 signs it off (owner decision in V119-WORKLIST).
+  const _schoolAuth = (req, res, next) => (/^Bearer\s+shdx_/.test(String(req.headers.authorization || '')) ? next() : softAuth(req, res, next));
+  app.use('/api/school', _schoolAuth, require('./academy-school-routes').createSchoolRouter({
     academy: _schoolInst.getAcademy(), operatives: require('./lib/operatives'), runner: _schoolInst.getRunner(), uidOf: _schoolInst.uidFromReq
   }));
   console.log('[prod] school mounted (/api/school)');

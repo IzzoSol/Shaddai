@@ -9,8 +9,9 @@ const router = express.Router();
 const fs = require('fs');
 const path = require('path');
 const { readTotalLevel } = require('./skillsServer');
+const sparksCore = require('./sparksCore');
 
-const DATA_DIR = path.join(__dirname, 'data');
+const DATA_DIR = process.env.SHADDAI_MMO_DATA || path.join(__dirname, 'data'); // env override = test isolation
 const LISTINGS_FILE = path.join(DATA_DIR, 'listings.json');
 const CHARS_FILE = path.join(DATA_DIR, 'characters.json');
 
@@ -156,6 +157,10 @@ router.post('/complete', (req, res) => {
     buyer.inventory = buyer.inventory || {};
     buyer.inventory[listing.itemName] = (buyer.inventory[listing.itemName] || 0) + 1;
     saveChars(chars);
+    /* the burn is no longer silent: buyer debit, seller credit, and the commission + soft-gate fee as an explicit ledgered burn */
+    sparksCore.recordChange(buyer, -price, 'market-buy', { ref: listingId, burned: 0 });
+    sparksCore.recordChange(seller, sellerNet, 'market-sale', { ref: listingId, minted: 0 });
+    sparksCore.recordBurn(commission + softFee, 'market-burn', { ref: listingId, note: 'commission ' + commission + ' + soft-gate fee ' + softFee });
 
     listing.active = false;
     listing.bids = [];
