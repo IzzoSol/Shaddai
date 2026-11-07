@@ -17,7 +17,7 @@
     { say: ['trending', 'trends', 'hot'], title: 'Trending coins', tool: 'get_trending', hint: 'trending', params: function () { return {}; } },
     { say: ['moon', 'moon phase'], title: 'Moon phase', tool: 'get_moon_phase', hint: 'moon', params: function () { return {}; } },
     { say: ['weather', 'forecast'], title: 'Weather', tool: 'get_weather', hint: 'weather london', need: 'a city, e.g. /weather london', params: function (r) { return r.rest ? { city: r.rest } : null; } },
-    { say: ['define', 'definition', 'meaning', 'what does'], title: 'Definition', tool: 'get_word_definition', hint: 'define garden', need: 'a word, e.g. /define garden', params: function (r) { return r.rest ? { word: r.words[0] } : null; } },
+    { say: ['define', 'definition', 'meaning', 'what does'], title: 'Definition', tool: 'get_word_definition', hint: 'define garden', need: 'a word, e.g. /define garden', params: function (r) { var w = r.words.filter(function (x) { return x !== 'word'; })[0]; return w ? { word: w } : null; } },
     { say: ['calc', 'calculate', 'math', 'compute'], title: 'Calculator', tool: 'calculate', hint: 'calc 12 * (3 + 4)', need: 'an expression, e.g. /calc 12 * 7', params: function (r) { return r.raw ? { expression: r.raw } : null; } },
     { say: ['joke', 'laugh'], title: 'A joke', tool: 'get_joke', hint: 'joke', params: function () { return {}; } },
     { say: ['quote', 'inspire', 'inspiration'], title: 'A quote', tool: 'get_random_quote', hint: 'quote', params: function () { return {}; } }
@@ -31,8 +31,9 @@
   function nameWords(s) { return String(s || '').toLowerCase().replace(/^lib\./, '').split(/[^a-z0-9]+/).filter(Boolean); }
   function parseInput(text) {
     var t = String(text || '').trim().replace(/^\/+/, ''), kv = {}, plain = [];
-    t.split(/\s+/).forEach(function (w) { var i = w.indexOf('='); if (i > 0 && i < w.length - 1) kv[w.slice(0, i).toLowerCase()] = w.slice(i + 1); else if (w) plain.push(w); });
-    return { raw: plain.join(' '), plain: plain, kv: kv };
+    var orig = [];
+    t.split(/\s+/).forEach(function (w) { var i = w.indexOf('='); if (i > 0 && i < w.length - 1) kv[w.slice(0, i).toLowerCase()] = w.slice(i + 1); else if (w) { orig.push(w); if (/^[a-z][a-z0-9]*([-_][a-z0-9]+)+$/i.test(w)) w.split(/[-_]+/).forEach(function (x) { plain.push(x); }); else plain.push(w); } });
+    return { raw: orig.join(' '), plain: plain, kv: kv };
   }
 
   function load(force) {
@@ -55,7 +56,8 @@
     var plain = parsed.plain.map(function (w) { return w.toLowerCase(); }), best = null;
     FRIENDLY.forEach(function (f) { f.say.forEach(function (phrase) { var pw = phrase.split(' '); if (pw.length <= plain.length && pw.every(function (w, i) { return plain[i] === w; })) { if (!best || pw.length > best.len) best = { f: f, len: pw.length }; } }); });
     if (!best) return null; var restWords = plain.slice(best.len), restRaw = parsed.plain.slice(best.len).join(' ');
-    return { f: best.f, r: { words: restWords, rest: restRaw, raw: restRaw } };
+    var origRest = parsed.raw.split(/\s+/).slice(best.len).join(' ');
+    return { f: best.f, r: { words: restWords, rest: restRaw, raw: origRest || restRaw } };
   }
 
   /* resolve(text) -> Promise of one of:

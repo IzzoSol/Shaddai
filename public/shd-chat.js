@@ -8,14 +8,17 @@
   'use strict';
   var COUNCIL = [['SHADDAI', 'Orchestrator'], ['NEXUS', 'Architect'], ['ZEROX', 'Markets'], ['ORACLE', 'Research'], ['TURTLE', 'Creative'], ['QUILL', 'Writing'], ['PIKADON', 'Security']];
   var COMMANDS = [
-    { c: '/market', d: 'Live prices, fear & greed, trending', wf: 'market.snapshot', arg: 'coins (optional, comma separated)' },
-    { c: '/news', d: 'Crypto news + Hacker News', wf: 'news.digest' },
-    { c: '/research', d: 'Web + Wikipedia on a topic', wf: 'research.topic', arg: 'topic' },
-    { c: '/report', d: 'Your account: agents, plots, balance, classes', wf: 'dashboard.report' },
-    { c: '/skill', d: 'Run a dashboard skill', arg: 'skill-id key=value …' },
+    { c: '/price', d: 'Live prices', arg: 'btc eth' },
+    { c: '/news', d: 'Crypto news + Hacker News' },
+    { c: '/research', d: 'Web + Wikipedia on a topic', arg: 'mangroves' },
+    { c: '/report', d: 'Your account: agents, plots, balance, classes' },
+    { c: '/mood', d: 'Fear & greed right now' },
+    { c: '/weather', d: 'Weather for a city', arg: 'london' },
+    { c: '/define', d: 'Define a word', arg: 'garden' },
+    { c: '/calc', d: 'Do some math', arg: '12 * (3 + 4)' },
+    { c: '/run', d: 'Run anything by name (fuzzy)', arg: 'crypto analysis' },
+    { c: '/library', d: 'Browse 180+ ready-made workflows', arg: 'search' },
     { c: '/skills', d: 'List the skills you can run' },
-    { c: '/library', d: 'Browse 150+ ready-made workflows', arg: 'search (optional)' },
-    { c: '/wf', d: 'Run a library workflow', arg: 'id key=value …' },
     { c: '/clear', d: 'Clear this conversation' }
   ];
   var legacy = function () { return document.documentElement.classList.contains('shd-legacy-nav'); };
@@ -113,10 +116,8 @@
     if (cmd === '/library') { api('GET', '/api/bridge/library?q=' + encodeURIComponent(rest) + '&limit=12').then(function (d) { var l = (d && d.workflows) || []; sys(l.length ? 'Workflow library (' + (d.total || l.length) + ' ready-made). ' + l.map(function (w) { return w.workflow_id.replace(/^lib\./, '') + (w.needs_context.length ? ' [' + w.needs_context.join(',') + ']' : ''); }).join(', ') + '\nRun one with  /wf <id> key=value' : 'No workflows match that search.'); }); return true; }
     if (cmd === '/wf') { if (!parts[1]) { sys('Usage: /wf <id> key=value …  (see /library)'); return true; } startRun('lib.' + parts[1].replace(/^lib\./, ''), { context: parseKV(parts.slice(2)) }, 'workflow · ' + parts[1]); return true; }
     if (cmd === '/skill') { if (!parts[1]) { sys('Usage: /skill <skill-id> key=value …  (see /skills)'); return true; } startRun('skill.run', { skill: parts[1], input: parseKV(parts.slice(2)) }, 'skill · ' + parts[1]); return true; }
-    var c = COMMANDS.filter(function (x) { return x.c === cmd && x.wf; })[0]; if (!c) return false;
-    var params = {}; if (c.wf === 'research.topic') { if (!rest) { sys('Usage: /research <topic>'); return true; } params.query = rest; }
-    if (c.wf === 'market.snapshot' && rest) params.symbols = rest.split(/[ ,]+/).filter(Boolean);
-    startRun(c.wf, params, c.d); return true;
+    if (window.shdWords) { window.shdWords.resolve(text).then(function (r) { if (r.ok) startRun(r.wf, r.params, r.title); else sys(r.message + (r.suggestions && r.suggestions.length ? '\n' + r.suggestions.map(function (x) { return '/' + x.say; }).join('   ·   ') : '')); }); return true; }
+    return false;
   }
   function loadSkills() { return skillsCache ? Promise.resolve(skillsCache) : api('GET', '/api/bridge/skills').then(function (d) { skillsCache = (d && d.skills) || []; return skillsCache; }).catch(function () { return []; }); }
 
@@ -144,6 +145,7 @@
   }
   function hint(t) { hintEl.textContent = t; clearTimeout(hint._t); hint._t = setTimeout(function () { hintEl.textContent = ''; }, 3500); }
   function autosize() { inputEl.style.height = 'auto'; inputEl.style.height = Math.min(140, inputEl.scrollHeight) + 'px'; }
+  function suggestNames(rest) { var l = window.shdWords.suggest(rest); menuEl.textContent = ''; if (!l.length) { menuEl.style.display = 'none'; return; } l.forEach(function (x) { menuEl.appendChild(h('button', { type: 'button', class: 'cx-cmd', onclick: function () { inputEl.value = '/' + x.say + ' '; inputEl.focus(); menu(false); } }, [h('b', { text: '/' + x.say }), h('span', { text: x.title })])); }); menuEl.style.display = 'block'; }
   function menu(show, q) {
     menuEl.textContent = ''; if (!show || !cur || cur.type === 'bot') { menuEl.style.display = 'none'; return; }
     var list = COMMANDS.filter(function (c) { return c.c.indexOf(q || '/') === 0; }); if (!list.length) { menuEl.style.display = 'none'; return; }
@@ -216,7 +218,7 @@
     inputEl = h('textarea', { class: 'cx-in', rows: '1', placeholder: 'Message…', 'aria-label': 'Message' }); sendEl = h('button', { type: 'button', class: 'cx-send', 'aria-label': 'Send', text: 'Send', onclick: send });
     menuEl = h('div', { class: 'cx-menu', style: 'display:none' }); hintEl = h('div', { class: 'cx-hint' });
     inputEl.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } if (e.key === 'Escape') menu(false); });
-    inputEl.addEventListener('input', function () { autosize(); var v = inputEl.value; if (v[0] === '/' && v.indexOf(' ') < 0) menu(true, v.toLowerCase()); else menu(false); });
+    inputEl.addEventListener('input', function () { autosize(); var v = inputEl.value; if (v[0] === '/' && v.indexOf(' ') < 0) menu(true, v.toLowerCase()); else if (/^\/(run|do)\s+\S/i.test(v) && window.shdWords) { window.shdWords.load().then(function () { suggestNames(v.replace(/^\/(run|do)\s+/i, '')); }); } else menu(false); });
     root = h('div', { id: 'shdChat', class: 'cx' }, [railEl, h('div', { class: 'cx-main' }, [headEl, msgsEl, h('div', { class: 'cx-comp' }, [menuEl, hintEl, h('div', { class: 'cx-row' }, [inputEl, sendEl])])])]);
     view.appendChild(root); return true;
   }

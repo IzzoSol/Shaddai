@@ -19,20 +19,20 @@
   };
   /* ── stations: desk position, hologram, what a click does ── */
   var STATIONS = {
-    office:    { x: 0,    z: 0.6,  label: 'Control',   color: null,      sub: 'crew, approvals, status' },
-    market:    { x: -5,   z: -3.5, label: 'Market',    color: null,      sub: 'prices, mood, momentum',   open: function () { showView('pipeline'); } },
-    library:   { x: 0,    z: -4.6, label: 'Library',   color: null,      sub: 'news and deep research',          open: function () { officeTab('library'); } },
+    office:    { x: 0,    z: 0.6,  label: 'Control',   color: null,      sub: 'crew, approvals, status', hint: 'report' },
+    market:    { x: -5,   z: -3.5, label: 'Market',    color: null,      sub: 'prices, mood, momentum', hint: 'price btc eth',   open: function () { showView('pipeline'); } },
+    library:   { x: 0,    z: -4.6, label: 'Library',   color: null,      sub: 'news and deep research', hint: 'news  ·  research mangroves',          open: function () { officeTab('library'); } },
     garden:    { x: 5,    z: -3.5, label: 'Plots',     color: null,      sub: 'your land, growing',                open: function () { worldsTab('plots'); } },
     athenaeum: { x: -5,   z: 3.4,  label: 'Athenaeum', color: null,      sub: 'classes and skills',         open: function () { worldsTab('athenaeum'); } },
-    workshop:  { x: 5,    z: 3.4,  label: 'Skills',    color: null,      sub: 'tools, tasks, workflows',            open: function () { officeTab('skills'); } },
+    workshop:  { x: 5,    z: 3.4,  label: 'Skills',    color: null,      sub: 'tools, tasks, workflows', hint: 'run crypto analysis',            open: function () { officeTab('skills'); } },
     wallet:    { x: -7.0, z: 0.2,  label: 'Wallet',    color: '#f0b429', sub: 'Sparks and payments',          open: function () { showView('wallet'); } },
     gallery:   { x: 7.0,  z: 0.2,  label: 'Gallery',   color: '#a78bfa', sub: 'everything you have made',           open: function () { officeTab('gallery'); } },
     navi:      { x: 0,    z: 4.9,  label: 'Navi',      color: '#00f0ff', sub: 'your guide, in 3D',      open: function () { naviMenu(); } }
   };
   /* holo tab actions: wf = run a real workflow on the server (as your selected agent so you SEE it walk), open = jump to the panel */
   var HOLO = {
-    office:    [{ t: 'Account report', wf: 'dashboard.report' }],
-    market:    [{ t: 'Snapshot', wf: 'market.snapshot' }, { t: 'Open', open: 1 }],
+    office:    [{ t: 'Report', wf: 'dashboard.report' }],
+    market:    [{ t: 'Prices', wf: 'market.snapshot' }, { t: 'Open', open: 1 }],
     library:   [{ t: 'News', wf: 'news.digest' }, { t: 'Research…', wf: 'research.topic', ask: 'Topic to research' }, { t: 'Open', open: 1 }],
     garden:    [{ t: 'Open', open: 1 }], athenaeum: [{ t: 'Classes', open: 1 }], workshop: [{ t: 'Skills', open: 1 }, { t: 'Tasks', tasks: 1 }],
     wallet:    [{ t: 'Open', open: 1 }], gallery: [{ t: 'Open', open: 1 }], navi: [{ t: 'Menu', open: 1 }]
@@ -233,7 +233,7 @@
       var el = h('div', { class: 'o3h' + (k === 'office' ? ' ctl' : ''), 'data-k': k, style: '--hc:' + sColor(k) }, [h('div', { class: 'o3h-head' }, [h('i', { class: 'o3h-dot' }), h('b', { text: s.label }), h('span', { text: s.sub })]), live, acts, res]);
       el.addEventListener('mouseenter', function () { focus = k; }); el.addEventListener('mouseleave', function () { if (focus === k) focus = null; });
       el.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('.o3h-b')) return; if (window.matchMedia && matchMedia('(pointer:coarse)').matches) { el.classList.toggle('pin'); return; } if (k !== 'office') goStation(k); });
-      el._live = live; el._res = res; holoLayer.appendChild(el); holos[k] = el;
+      if (s.hint) el.appendChild(h('div', { class: 'o3h-hint', text: 'say: ' + s.hint })); el._live = live; el._res = res; holoLayer.appendChild(el); holos[k] = el;
     });
   }
   function updateHolos() {
@@ -250,8 +250,11 @@
   function holoAction(k, ac, resEl) {
     if (ac.open) { STATIONS[k].open(); return; } if (ac.tasks) { officeTab('tasks'); return; }
     var params = {}; if (ac.ask) { var v = window.prompt(ac.ask); if (!v) return; params.query = v; }
+    runWf(ac.wf, params, resEl);
+  }
+  function runWf(wf, params, resEl) {
     var firstForged = Object.keys(agents).filter(function (i) { return agents[i].kind === 'forged'; })[0], as = sel && agents[sel] && agents[sel].kind === 'forged' ? sel : firstForged;
-    resEl.textContent = 'Starting…'; api('POST', '/api/bridge/run', { workflow_id: ac.wf, params: params, agent_id: as || undefined, idempotency_key: 'o3-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6) }).then(function (d) {
+    resEl.textContent = 'Starting…'; api('POST', '/api/bridge/run', { workflow_id: wf, params: params, agent_id: as || undefined, idempotency_key: 'o3-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6) }).then(function (d) {
       if (!d.ok) { resEl.textContent = d._s === 402 ? 'Out of Sparks. Top up to continue.' : (d.error || 'Could not start'); return; }
       var id = d.run.run_id, tries = 0; (function p() { if (!running) return; api('GET', '/api/bridge/runs').then(function (r) { var run = ((r && r.runs) || []).filter(function (x) { return x.run_id === id; })[0]; if (!run) return; if (run.status === 'succeeded') { resEl.textContent = briefOut(run.outputs) || 'Done'; pollCity(); return; } if (['failed', 'expired', 'cancelled'].indexOf(run.status) > -1) { resEl.textContent = run.status + (run.error ? ': ' + run.error : ''); return; } resEl.textContent = run.status.replace('_', ' ') + '…'; if (++tries < 40) setTimeout(p, 1200); }); })(); });
   }
@@ -262,6 +265,11 @@
       var x = (_v.x * 0.5 + 0.5) * rc.width, y = (-_v.y * 0.5 + 0.5) * rc.height; el.style.transform = 'translate(' + Math.round(x) + 'px,' + Math.max(Math.round(y), 96) + 'px) translate(-50%,-100%) scale(' + sc.toFixed(3) + ')'; el.style.zIndex = String(Math.round(1000 - dd * 10)); el.style.opacity = behind ? '0' : '1';
       el.classList.toggle('open', focus === k || nearKey === k || (k === 'office' && hasPending && window.innerWidth >= 700));
     });
+  }
+  function say(text) {
+    var res = holos.office && holos.office._res, note = function (t) { if (res) { res.textContent = t; } setNote(t); setTimeout(function () { if (prompt && prompt.textContent === t) setNote(''); }, 6000); };
+    if (!window.shdWords) { note('The word engine is not loaded.'); return; } if (holos.office) holos.office.classList.add('pin');
+    window.shdWords.resolve(text).then(function (r) { if (!r.ok) { note(r.message + (r.suggestions && r.suggestions.length ? '  Try: ' + r.suggestions.slice(0, 4).map(function (x) { return x.say; }).join(' · ') : '')); return; } note(r.title + '…'); runWf(r.wf, r.params, res || h('div')); });
   }
   function buildDock() { dock.textContent = ''; ['market', 'library', 'garden', 'athenaeum', 'workshop', 'wallet', 'gallery', 'navi'].forEach(function (k) { dock.appendChild(h('button', { type: 'button', class: 'o3-chip', 'data-k': k, style: '--hc:' + sColor(k), text: STATIONS[k].label, onclick: function () { goStation(k); } })); }); }
   function goStation(k) { var s = STATIONS[k]; if (!s || !s.open) return; follow = null; target = { x: s.x, z: s.z + 1.5 }; pending = function () { s.open(); }; }
@@ -373,7 +381,9 @@
     hud = h('div', { class: 'o3-hud' }, [h('button', { type: 'button', class: 'o3-btn ghost', text: 'Room', onclick: roomPanel }), h('button', { type: 'button', class: 'o3-btn ghost', text: 'Navi', onclick: naviMenu }), qBtn, recBtn, h('button', { type: 'button', class: 'o3-btn ghost', text: 'Spectate world', onclick: function () { exitFull(); worldsTab('arena'); } }), h('button', { type: 'button', class: 'o3-btn ghost', text: 'Full screen', onclick: toggleFull }), h('button', { type: 'button', class: 'o3-btn ghost', text: 'Close', onclick: close })]);
     // phones keep only Room / Full screen / Close in the scene; the rest appear in full screen (the dock handles navigation)
     [].slice.call(hud.children).forEach(function (b) { if (['Room', 'Full screen', 'Close'].indexOf(b.textContent) < 0) b.classList.add('o3-adv'); });
-    var stage = h('div', { class: 'o3-stage' }, [host, holoLayer, prompt, hud, panel, dock, h('div', { class: 'o3-help', text: 'WASD / arrows move · click a desk or a holo tab · drag to turn · wheel to zoom · E to use' })]);
+    var cmdIn = h('input', { class: 'o3-cmdin', type: 'text', placeholder: 'Say it: price btc · news · research mangroves', 'aria-label': 'Command', maxlength: '160' }), cmd = h('div', { class: 'o3-cmd' }, [cmdIn, h('button', { type: 'button', class: 'o3-btn', text: 'Go', onclick: function () { var v = cmdIn.value.trim(); if (v) { say(v); cmdIn.value = ''; } } })]);
+    cmdIn.addEventListener('keydown', function (e) { if (e.key === 'Enter') { var v = cmdIn.value.trim(); if (v) { say(v); cmdIn.value = ''; } } e.stopPropagation(); });
+    var stage = h('div', { class: 'o3-stage' }, [host, holoLayer, prompt, hud, panel, cmd, dock, h('div', { class: 'o3-help', text: 'WASD / arrows move · click a desk or a holo tab · drag to turn · wheel to zoom · E to use' })]);
     card = h('section', { id: 'shdOffice3d', class: 'o3-card' }, [intro, stage, listEl]); stage.style.display = 'none'; card._stage = stage; card._intro = intro; view.insertBefore(card, view.firstChild);
   }
   function open() {

@@ -277,3 +277,12 @@ html:not(.shd-legacy-nav) #chatView .chat-main{display:none!important}
 .o3-holos,.o3-hud,.o3-panel,.o3-dock,.o3-prompt,.o3-help,.o3-navi{z-index:2}
 
 @media (max-width:640px){.o3-hud .o3-adv{display:none}.o3-card.o3-full .o3-hud .o3-adv{display:inline-flex}}
+
+/* word engine: command bar in the 3D office + hints on the holo tabs */
+.o3-cmd{position:absolute;left:50%;transform:translateX(-50%);bottom:68px;z-index:3;display:flex;gap:6px;width:min(520px,92%)}
+.o3-cmdin{flex:1;min-width:0;background:rgba(6,10,22,.82);color:#e8eefc;border:1px solid color-mix(in srgb,var(--o3a) 70%,transparent);border-radius:999px;padding:9px 16px;font-size:13px;backdrop-filter:blur(6px)}
+.o3-cmdin:focus{outline:none;box-shadow:0 0 14px color-mix(in srgb,var(--o3a) 55%,transparent)}
+.o3-cmdin::placeholder{color:#7f93bd}
+.o3h-hint{max-height:0;opacity:0;overflow:hidden;padding:0 11px;font:10px ui-monospace,Consolas,monospace;color:#7f93bd;transition:max-height .28s ease,opacity .2s ease,padding .2s}
+.o3h.open .o3h-hint,.o3h.pin .o3h-hint{max-height:24px;opacity:1;padding:0 11px 8px}
+@media (max-width:640px){.o3-cmd{bottom:50px}.o3-cmdin{font-size:16px}}
