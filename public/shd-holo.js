@@ -327,6 +327,43 @@
     });
     [].slice.call(panes.children).forEach(function (p, i) { if (!p.children.length) { rail.children[i].style.display = 'none'; } });
     rail.addEventListener('click', function (e) { var b = e.target.closest('[data-cat]'); if (!b) return; [].forEach.call(rail.children, function (x) { x.classList.toggle('on', x === b); }); [].forEach.call(panes.children, function (p) { p.style.display = p.dataset.pane === b.dataset.cat ? 'block' : 'none'; }); });
+
+    /* ONE navigation (2026-11-07 audit). The old pill bar hid sections that sit inside panes this function had already hidden, so
+       tabs like AI & Keys came up blank and the rail did a second, different job. Now the big labelled tabs at the top drive the panes. */
+    rail.style.display = 'none';
+    var DESC = { look: 'Themes, colours, display', plan: 'Credits, costs, budgets', ai: 'AI backends, keys, APIs', data: 'Export, audit, memory', general: 'Tools, admin, terms' };
+    var ICON = { look: '🎨', plan: '💳', ai: '🔑', data: '🗂', general: '⚙' };
+    var nav = $('setTabs');
+    function showCat(cat) {
+      var all = cat === 'all';
+      [].forEach.call(panes.children, function (p) { p.style.display = (all || p.dataset.pane === cat) ? 'block' : 'none'; });
+      if (nav) [].forEach.call(nav.querySelectorAll('.setTab'), function (x) { x.classList.toggle('on', x.getAttribute('data-g') === cat); x.setAttribute('aria-pressed', x.getAttribute('data-g') === cat ? 'true' : 'false'); });
+      try { localStorage.setItem('shd_setTab', cat); } catch (e) { /* ignore */ }
+    }
+    window.shdSetTab = function (g) { var m = { appearance: 'look', usage: 'plan', advanced: 'general' }; showCat(m[g] || g); };
+    window.shdSettingsOrganize = function () { /* grouping is done once by shd-holo.js */ };
+    kids.forEach(function (el) { el.style.display = ''; });
+    if (nav) {
+      nav.textContent = '';
+      CATS.forEach(function (c, i) {
+        if (!panes.children[i].children.length) return;
+        var b = document.createElement('button'); b.type = 'button'; b.className = 'setTab'; b.setAttribute('data-g', c[0]); b.title = DESC[c[0]];
+        b.innerHTML = ICON[c[0]] + ' ' + c[1] + '<small>' + DESC[c[0]] + '</small>'; b.addEventListener('click', function () { showCat(c[0]); }); nav.appendChild(b);
+      });
+      var ab = document.createElement('button'); ab.type = 'button'; ab.className = 'setTab'; ab.setAttribute('data-g', 'all'); ab.style.marginLeft = 'auto'; ab.textContent = '▤ Show all'; ab.addEventListener('click', function () { showCat('all'); }); nav.appendChild(ab);
+    }
+    /* sections open and close by their title, so a long tab is a short list you can scan; the first one in each tab starts open */
+    [].forEach.call(panes.children, function (p) {
+      [].forEach.call(p.children, function (sec, idx) {
+        var t = sec.querySelector('.settings-title'); if (!t || p.children.length < 2) return;
+        sec.classList.add('shd-acc'); if (idx > 0) sec.classList.add('shd-collapsed');
+        t.setAttribute('role', 'button'); t.setAttribute('tabindex', '0'); t.setAttribute('aria-expanded', idx > 0 ? 'false' : 'true');
+        function flip(e) { if (e.target.closest && e.target.closest('button,input,select,a,textarea') && e.target !== t) return; var c = sec.classList.toggle('shd-collapsed'); t.setAttribute('aria-expanded', c ? 'false' : 'true'); }
+        t.addEventListener('click', flip); t.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(e); } });
+      });
+    });
+    var saved = 'look'; try { saved = localStorage.getItem('shd_setTab') || 'look'; } catch (e) { /* ignore */ }
+    window.shdSetTab(saved);
   }
 
   /* ── Agent art: new portraits everywhere (nav, Settings, wizard) ───────
