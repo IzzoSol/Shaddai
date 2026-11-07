@@ -31,7 +31,14 @@ const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id)
   const skills = { getRecipe: (id) => recipes[id], listRecipes: () => Object.keys(recipes).map((id) => ({ id, agent: recipes[id].agent, description: recipes[id].description, params: recipes[id].params })), interpolate: (t, input) => (typeof t === 'string' ? t.replace(/\{\{input\.(\w+)(?:\|\|(\w+))?\}\}/g, (_, k, d) => ((input && input[k]) || d || '')) : t) };
   const academy = { classes: { join: ({ classId, agentId }) => (classId === 'cls_full' ? { ok: false, error: 'class is full' } : classId === 'cls_open' ? { ok: true, member: { agentId } } : { ok: false, error: 'unknown class' }) } };
   const internal = { agents: async () => [{ agent_id: 'a1' }], plots: async () => [], balance: async () => ({ sparks: 42 }), classes: async () => [] };
-  const bridge = createBridge({ file: path.join(tmp, 'bridge.json'), plotsFile, operatives, tools, internal, skills, academy, asksPerHour: 3, ragSearch: (id, q, n) => [{ docName: 'doc-' + id, score: 0.9, chunkText: 'chunk about ' + q + ' key sk-' + 'w'.repeat(30) }].slice(0, n), askAgent: async (id, q, extra) => { lastAskExtra = extra; return { answer: id + ' says: ' + q, sources: ['doc-' + id] }; }, chatAsksPerHour: 3, stepMs: 60, spacingMs: 0, retryMs: 5, uidOf: (req) => req.headers['x-uid'] || '' });
+  const bridge = createBridge({ file: path.join(tmp, 'bridge.json'), plotsFile, operatives, tools, internal, skills, academy, library: [
+    { id: 'research-brief', name: 'research-brief', description: 'Research a topic', requires: [], steps: [{ tool: 'rag_search', args: { query: '{{context.q}}' } }, { tool: 'shaddai_run_agent', args: { agent: 'ORACLE', task: 'Summarize: {{step_1.output}}' } }, { tool: 'web_search', args: { query: '{{context.q}}' } }] },
+    { id: 'price-pulse', name: 'price-pulse', description: 'Price and mood', requires: [], steps: [{ tool: 'zerox_price', args: { symbol: '{{context.coin}}' } }, { tool: 'zerox_sentiment', args: {} }] },
+    { id: 'multi-price', name: 'multi-price', description: 'Several tickers', requires: [], steps: [{ tool: 'zerox_price', args: { symbols: 'BTC,ETH,SOL' } }] },
+    { id: 'no-symbol', name: 'no-symbol', description: 'forgot the symbol', requires: [], steps: [{ tool: 'zerox_price', args: {} }] },
+    { id: 'arena-game', name: 'arena-game', description: 'Needs a game tool', requires: [], steps: [{ tool: 'hall_arena', args: {} }] },
+    { id: 'admin-thing', name: 'admin-thing', description: 'Admin-ish', requires: [], steps: [{ tool: 'shaddai_create_agent', args: {} }] }
+  ], asksPerHour: 3, ragSearch: (id, q, n) => [{ docName: 'doc-' + id, score: 0.9, chunkText: 'chunk about ' + q + ' key sk-' + 'w'.repeat(30) }].slice(0, n), askAgent: async (id, q, extra) => { lastAskExtra = extra; return { answer: id + ' says: ' + q, sources: ['doc-' + id] }; }, chatAsksPerHour: 3, stepMs: 60, spacingMs: 0, retryMs: 5, uidOf: (req) => req.headers['x-uid'] || '' });
   const app = express(); app.use('/b', bridge);
   const server = await new Promise((r) => { const s = app.listen(0, () => r(s)); });
   const base = 'http://127.0.0.1:' + server.address().port + '/b';
@@ -252,6 +259,24 @@ const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id)
   const mute = await mint('alice', { label: 'mute', scopes: ['runs:read'] }); const mtid = (await http('GET', '/tokens', { uid: 'alice' })).json.tokens.find((t) => t.label === 'mute').id;
   assert.strictEqual((await http('POST', '/chat/threads/' + mtid, { uid: 'alice', body: { text: 'hi' } })).status, 403, 'a bot without chat:talk cannot be chatted with');
   assert.strictEqual((await tool(mute.token, 'post_message', { text: 'hi' })).status, 403);
+
+  // ── WORKFLOW LIBRARY (from the unified MCP): vetted, templated, scoped ──
+  await sleep(80);
+  const libTok = await mint('bob', { label: 'libber', scopes: ['workflows:read', 'workflows:run', 'runs:read', 'rag:read', 'agents:ask', 'tools:run'] });
+  const ls = out(await tool(libTok.token, 'library_search', { query: 'research' })).items; assert.ok(ls.some((x) => x.workflow_id === 'lib.research-brief' && x.needs_context.join() === 'q' && x.scopes.indexOf('rag:read') > -1), 'library entries show the context they need');
+  const allLib = out(await tool(libTok.token, 'library_search', {})).items.map((x) => x.workflow_id); assert.ok(allLib.indexOf('lib.price-pulse') > -1 && allLib.indexOf('lib.arena-game') < 0 && allLib.indexOf('lib.admin-thing') < 0, 'workflows needing game/admin tools are never offered');
+  assert.strictEqual((await tool(libTok.token, 'start_workflow', { workflow_id: 'lib.research-brief', idempotency_key: 'lb0', params: {} })).status, 400, 'missing required context refused up front');
+  const lr = out(await tool(libTok.token, 'start_workflow', { workflow_id: 'lib.research-brief', idempotency_key: 'lb1', params: { context: { q: 'mangroves' } } })); const lrd = await wait(libTok.token, lr.run_id);
+  assert.strictEqual(lrd.status, 'succeeded'); assert.deepStrictEqual(Object.keys(lrd.outputs), ['1. rag_search', '2. shaddai_run_agent', '3. web_search']);
+  assert.ok(/ORACLE says: Summarize: .*chunk about mangroves/.test(JSON.parse(lrd.outputs['2. shaddai_run_agent']).answer), 'step 1 output was templated into step 2 ({{step_1.output}})');
+  assert.ok(!/sk-w|sk-z/.test(JSON.stringify(lrd)), 'secrets in step output are redacted');
+  const pp = out(await tool(libTok.token, 'start_workflow', { workflow_id: 'lib.price-pulse', idempotency_key: 'lb2', params: { context: { coin: 'litecoin' } } })); const ppd = await wait(libTok.token, pp.run_id); assert.strictEqual(ppd.status, 'succeeded'); assert.ok(calls.indexOf('fetch_price:litecoin') > -1, 'unified zerox_price mapped to the allowlisted fetch_price with the templated symbol');
+  const mp = out(await tool(libTok.token, 'start_workflow', { workflow_id: 'lib.multi-price', idempotency_key: 'lb4', params: {} })); const mpd = await wait(libTok.token, mp.run_id); assert.strictEqual(mpd.status, 'succeeded');
+  assert.ok(calls.indexOf('fetch_price:bitcoin') > -1 && calls.indexOf('fetch_price:ethereum') > -1 && calls.indexOf('fetch_price:solana') > -1, 'a symbols list (BTC,ETH,SOL) fetches EACH asset, mapped to coin ids');
+  assert.strictEqual(JSON.parse(mpd.outputs['1. zerox_price']).length, 3);
+  const ns = out(await tool(libTok.token, 'start_workflow', { workflow_id: 'lib.no-symbol', idempotency_key: 'lb5', params: {} })); const nsd = await wait(libTok.token, ns.run_id); assert.strictEqual(nsd.status, 'failed'); assert.ok(/needs symbols/.test(nsd.error), 'a missing symbol fails clearly instead of silently returning bitcoin');
+  const noRag = await mint('bob', { label: 'norag', scopes: ['workflows:run', 'tools:run', 'agents:ask'] }); assert.strictEqual((await tool(noRag.token, 'start_workflow', { workflow_id: 'lib.research-brief', idempotency_key: 'lb3', params: { context: { q: 'x' } } })).status, 403, 'scopes follow the tools a workflow uses');
+  assert.ok((await http('GET', '/library?q=price', { uid: 'bob' })).json.workflows.some((x) => x.workflow_id === 'lib.price-pulse'), 'owner door lists the library for the dashboard chat');
 
   // 7. revocation takes effect on the next call
   const info = (await http('GET', '/tokens', { uid: 'alice' })).json.tokens.find((t) => t.label === 'runner');

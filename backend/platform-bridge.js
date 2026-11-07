@@ -45,7 +45,7 @@ const SECRET_KEY = /(api[_-]?key|secret|password|passwd|private[_-]?key|mnemonic
 const str = (v, d, n) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, n || 120) : d);
 // Input names a recipe cannot run without: referenced as {{input.x}} with no "||default".
 function requiredInputs(rec) { const out = new Set(); const txt = JSON.stringify(rec.steps || []); const re = /\{\{\s*input\.([A-Za-z0-9_]+)\s*(\|\|)?/g; let m; while ((m = re.exec(txt))) if (!m[2]) out.add(m[1]); return Array.from(out); }
-const WORKFLOWS = {
+const BASE_WORKFLOWS = {
   // Real work. Each step runs a vetted read-only tool on the server; the bot or agent never executes anything itself.
   'tool.run': { version: '1', title: 'Run one read-only data tool (see list_tools)', money_class: 'none', required_scopes: ['workflows:run', 'tools:run'],
     build: (p) => { if (!p || !safeId(p.tool) || !SAFE_TOOLS.has(p.tool)) throw new Error('tool is not on the read-only allowlist'); return [{ name: p.tool, tool: p.tool, args: p.args || {} }]; } },
@@ -86,6 +86,7 @@ function findSecret(v, depth) {
 
 function createBridge(opts) {
   opts = opts || {};
+  const WORKFLOWS = Object.assign({}, BASE_WORKFLOWS);   // per instance: registered/library workflows must not leak between bridges
   const stepMs = opts.stepMs != null ? opts.stepMs : 1200;
   const file = opts.file || path.join(__dirname, 'data', 'bridge.json');
   const plotsFile = opts.plotsFile || path.join(__dirname, 'data', 'portal-plots.json');
@@ -163,7 +164,7 @@ function createBridge(opts) {
     run.status = 'running'; next.status = 'running'; next.started_at = iso(now()); run.updated_at = iso(now()); persist();
     if (next.tool || next.internal || next.fn) {
       Promise.resolve().then(() => {
-        if (next.fn) return next.fn({ owner: run.owner, agent_id: run.agent_id, params: run.params || {}, plot_id: run.plot_id, run_id: run.run_id }); if (!next.tool) return internalStep(next.internal, run.owner); const args = next.tpl ? resolveArgs(next.tpl, run) : next.args; next.args = args; return execTool(next.tool, args); }).then((out) => {
+        if (next.fn) return next.fn({ owner: run.owner, agent_id: run.agent_id, params: run.params || {}, plot_id: run.plot_id, run_id: run.run_id, outputs: run.outputs || {} }); if (!next.tool) return internalStep(next.internal, run.owner); const args = next.tpl ? resolveArgs(next.tpl, run) : next.args; next.args = args; return execTool(next.tool, args); }).then((out) => {
         if (TERMINAL.includes(run.status)) return;
         next.status = 'done'; next.ended_at = iso(now()); run.outputs = run.outputs || {}; run.outputs[next.name] = capOut(out);
         if (next.tpl) { run.results = run.results || []; run.results.push({ tool: next.tool, params: next.args, result: run.outputs[next.name] }); }
@@ -314,6 +315,7 @@ function createBridge(opts) {
     { name: 'ask_agent', scope: 'agents:ask', description: 'Ask a council agent a question and get an answer grounded in its knowledge base (learning, research, market reasoning, design, security review). Read-only advice: it cannot trade or move money. Limited per hour.', inputSchema: { type: 'object', required: ['question'], properties: { agent: { type: 'string', enum: COUNCIL }, question: { type: 'string' } }, additionalProperties: false } },
     { name: 'read_messages', scope: 'chat:talk', description: 'Read new messages your owner wrote to you in the Shaddai dashboard chat (unread only; they are marked read).', inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
     { name: 'post_message', scope: 'chat:talk', description: 'Reply to your owner in the Shaddai dashboard chat. Plain text, max 2000 characters. Never include keys or credentials.', inputSchema: { type: 'object', required: ['text'], properties: { text: { type: 'string' } }, additionalProperties: false } },
+    { name: 'library_search', scope: 'workflows:read', description: 'Search the ready-made workflow library (from the unified SHADDAI MCP). Each entry shows the context keys it needs. Start one with start_workflow using workflow_id "lib.<id>" and params {context:{...}}.', inputSchema: { type: 'object', properties: { query: { type: 'string' }, limit: { type: 'number' } }, additionalProperties: false } },
     { name: 'join_class', scope: 'school:join', description: 'Sign YOUR agent up for an Athenaeum class (free classes only; paid skills need the owner). Uses the agent this token is bound to, or pass agent_id.', inputSchema: { type: 'object', required: ['class_id'], properties: { class_id: { type: 'string' }, agent_id: { type: 'string' } }, additionalProperties: false } },
     { name: 'get_world_snapshot', scope: 'agents:read', description: 'Who is working where right now: your agents by name, everyone else as anonymous counts per station (office, market, library, garden, athenaeum, workshop).', inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
     { name: 'list_my_agents', scope: 'agents:read', description: 'Your forged agents with presence. Use an agent_id when starting a workflow so its avatar shows the work.', inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
@@ -362,6 +364,7 @@ function createBridge(opts) {
         return { messages: fresh.map((m) => ({ id: m.id, text: m.text, at: m.ts })) };
       }
       case 'post_message': { const text = str(a.text, '', CHAT_MAX); if (!text) throw new ToolError(400, 'text required'); const m = addChat(tok.owner, tok.id, 'bot', text); return { ok: true, id: m.id }; }
+      case 'library_search': return librarySearch(a.query, a.limit);
       case 'join_class': {
         const agentId = a.agent_id || tok.agent_id; if (!agentId || !safeId(agentId)) throw new ToolError(400, 'agent_id required (bind the token to an agent or pass one)');
         if (tok.agent_id && a.agent_id && a.agent_id !== tok.agent_id) throw new ToolError(403, 'this token is bound to a different agent');
@@ -512,6 +515,7 @@ function createBridge(opts) {
       used_this_hour: { runs: runsUsed, bot_questions: hour(asks.get(req.owner) || []), chat_questions: hour(chatAsks.get(req.owner) || []) }, balance,
       recent: db.usage.filter((u) => u.owner === req.owner).slice(-20).reverse().map((u) => ({ at: u.ts, kind: u.kind, sparks: fmtSparks(u.cents) })) });
   });
+  router.get('/library', needOwner, (req, res) => res.json({ ok: true, total: libMeta.length, workflows: librarySearch(req.query.q, req.query.limit) }));
   router.get('/audit', needOwner, (req, res) => res.json({ ok: true, audit: db.audit.filter((a) => a.owner === req.owner).slice(-100).reverse() }));
   router.get('/world-state', (req, res) => {
     const ids = new Set(Object.values(db.runs).filter((r) => r.agent_id).map((r) => r.agent_id));
@@ -563,7 +567,45 @@ function createBridge(opts) {
     for (const sc of def.required_scopes) if (!SCOPES.includes(sc)) throw new Error('unknown scope ' + sc);
     WORKFLOWS[id] = Object.assign({ version: '1', title: id, money_class: 'none' }, def);
   };
-  router._test = { db, WORKFLOWS, SCOPES };
+  // ── WORKFLOW LIBRARY: ready-made workflows from the unified SHADDAI MCP (IzzoSol/shaddai-mcp data/eco-workflows.json), vetted and run by THIS executor ──
+  // Only workflows made entirely of tools we can run safely are included (154 of 1,633); the rest need game/payment/file tools. Data only: no code from that repo runs here.
+  // Unified tool names map onto what the bridge already does: rag_search, shaddai_<agent>/shaddai_run_agent/rag_ask -> ask_agent, web_search -> search_web, zerox_price -> fetch_price, zerox_sentiment -> get_fear_greed; allowlisted engine tools run as-is.
+  const TICKERS = { btc: 'bitcoin', eth: 'ethereum', sol: 'solana', doge: 'dogecoin', ada: 'cardano', xrp: 'ripple', bnb: 'binancecoin', avax: 'avalanche-2', dot: 'polkadot', matic: 'matic-network', link: 'chainlink', ltc: 'litecoin', wif: 'dogwifcoin', bonk: 'bonk', trx: 'tron', atom: 'cosmos', near: 'near', sui: 'sui', apt: 'aptos', arb: 'arbitrum', op: 'optimism', pepe: 'pepe', shib: 'shiba-inu' };
+  const libMeta = [], libSkipped = [];
+  function libInterp(str, ctxObj, outs, names) { return String(str).replace(/\{\{\s*(context\.[A-Za-z0-9_]+|step_\d+\.output)\s*\}\}/g, (_, e) => { if (e.indexOf('context.') === 0) { const v = ctxObj[e.slice(8)]; return v == null ? '' : String(v).slice(0, 300); } const n = +e.match(/\d+/)[0], v = outs[names[n - 1]]; return v == null ? '' : String(v).slice(0, 1500); }); }
+  function libStep(step, names) {
+    return async (c) => {
+      const run = db.runs[c.run_id] || {}, tok = (run.token_id && db.tokens[run.token_id]) || { owner: c.owner, id: null, scopes: [] }, ctxObj = (c.params && c.params.context && typeof c.params.context === 'object') ? c.params.context : {}, args = {};
+      Object.keys(step.args || {}).forEach((k) => { const v = step.args[k]; args[k] = typeof v === 'string' ? libInterp(v, ctxObj, c.outputs || {}, names) : v; });
+      if (JSON.stringify(args).length > 1500) throw new Error('step input too large');
+      const t = step.tool;
+      if (t === 'rag_search') return callTool(tok, 'rag_search', { agent: args.agent, query: args.query || args.q, limit: args.limit });
+      if (t === 'shaddai_run_agent' || t === 'rag_ask' || /^shaddai_(shaddai|nexus|zerox|oracle|turtle|quill|pikadon)$/.test(t)) { const who = /^shaddai_(shaddai|nexus|zerox|oracle|turtle|quill|pikadon)$/.test(t) ? t.slice(8) : args.agent; return callTool(tok, 'ask_agent', { agent: String(who || 'SHADDAI').toUpperCase(), question: args.task || args.question || args.query }); }
+      if (t === 'web_search') return execTool('search_web', { query: args.query });
+      if (t === 'zerox_price') { const raw = args.symbols || args.symbol || args.token || args.coin; if (!raw) throw new Error('zerox_price needs symbols'); const res = []; for (const sy of String(raw).split(/[ ,]+/).filter(Boolean).slice(0, 5)) res.push(await execTool('fetch_price', { symbol: TICKERS[sy.toLowerCase()] || sy.toLowerCase() })); return res; }
+      if (t === 'zerox_sentiment') return execTool('get_fear_greed', {});
+      if (SAFE_TOOLS.has(t)) return execTool(t, args);
+      throw new Error('unsupported step tool: ' + t);
+    };
+  }
+  function registerLibrary() {
+    let list = opts.library; if (!list) { try { list = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'library-workflows.json'), 'utf8')); } catch (_) { list = []; } }
+    (Array.isArray(list) ? list : []).forEach((w) => {
+      const id = 'lib.' + String(w.id || '').toLowerCase(); if (!/^lib\.[a-z0-9._-]{1,50}$/.test(id) || WORKFLOWS[id] || !Array.isArray(w.steps) || !w.steps.length || w.steps.length > 12) return;
+      const okLib = (t) => t === 'rag_search' || t === 'rag_ask' || t === 'web_search' || t === 'zerox_price' || t === 'zerox_sentiment' || t === 'shaddai_run_agent' || /^shaddai_(shaddai|nexus|zerox|oracle|turtle|quill|pikadon)$/.test(t) || SAFE_TOOLS.has(t);
+      if (!w.steps.every((st) => st && okLib(st.tool))) return;
+      const tools = w.steps.map((st) => st.tool), scopes = ['workflows:run'];
+      if (tools.indexOf('rag_search') > -1) scopes.push('rag:read'); if (tools.some((t) => t === 'rag_ask' || /^shaddai_/.test(t))) scopes.push('agents:ask'); if (tools.some((t) => t !== 'rag_search' && !(t === 'rag_ask' || /^shaddai_/.test(t)))) scopes.push('tools:run');
+      const needs = Array.from(new Set((JSON.stringify(w.steps).match(/\{\{\s*context\.([A-Za-z0-9_]+)\s*\}\}/g) || []).map((m) => m.replace(/[^A-Za-z0-9_.]/g, '').slice(8))));
+      try { router.registerWorkflow(id, { version: 'lib', title: String(w.name || id).slice(0, 80), money_class: 'none', required_scopes: scopes,
+        build: (params) => { const ctx = params && params.context && typeof params.context === 'object' ? params.context : {}, miss = needs.filter((k) => ctx[k] == null || String(ctx[k]).trim() === ''); if (miss.length) throw new Error('this workflow needs context: ' + miss.join(', ') + ' (params.context)'); const names = w.steps.map((st, i) => (i + 1) + '. ' + st.tool); return w.steps.map((st, i) => ({ name: names[i], fn: libStep(st, names) })); } });
+        libMeta.push({ workflow_id: id, name: String(w.name || id), description: String(w.description || '').slice(0, 160), steps: w.steps.length, needs_context: needs, requires: w.requires || [], scopes });
+      } catch (e) { libSkipped.push(id + ': ' + (e && e.message)); }
+    });
+  }
+  function librarySearch(q, limit) { const needle = String(q || '').toLowerCase().slice(0, 60), n = Math.max(1, Math.min(60, parseInt(limit, 10) || 25)); return libMeta.filter((m) => !needle || (m.workflow_id + ' ' + m.name + ' ' + m.description).toLowerCase().includes(needle)).slice(0, n); }
+  setImmediate(() => { try { registerLibrary(); } catch (e) { console.warn('[bridge] library not loaded:', e && e.message); } });
+  router._test = { db, WORKFLOWS, SCOPES, library: () => libMeta, libSkipped: () => libSkipped, loadLibrary: registerLibrary };
   return router;
 }
 

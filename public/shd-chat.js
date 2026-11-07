@@ -14,6 +14,8 @@
     { c: '/report', d: 'Your account: agents, plots, balance, classes', wf: 'dashboard.report' },
     { c: '/skill', d: 'Run a dashboard skill', arg: 'skill-id key=value …' },
     { c: '/skills', d: 'List the skills you can run' },
+    { c: '/library', d: 'Browse 150+ ready-made workflows', arg: 'search (optional)' },
+    { c: '/wf', d: 'Run a library workflow', arg: 'id key=value …' },
     { c: '/clear', d: 'Clear this conversation' }
   ];
   var legacy = function () { return document.documentElement.classList.contains('shd-legacy-nav'); };
@@ -108,6 +110,9 @@
     var parts = text.trim().split(/\s+/), cmd = parts[0].toLowerCase(), rest = text.trim().slice(parts[0].length).trim();
     if (cmd === '/clear') { convo = []; save(cur, []); msgsEl.textContent = ''; empty(); return true; }
     if (cmd === '/skills') { loadSkills().then(function (l) { sys(l.length ? 'Runnable skills (' + l.length + '): ' + l.slice(0, 40).map(function (s) { return s.skill + (s.required_input.length ? ' [' + s.required_input.join(',') + ']' : ''); }).join(', ') + (l.length > 40 ? ' …' : '') + '\nRun one with  /skill <id> key=value' : 'No skills available on this server.'); }); return true; }
+    if (cmd === '/library') { api('GET', '/api/bridge/library?q=' + encodeURIComponent(rest) + '&limit=12').then(function (d) { var l = (d && d.workflows) || []; sys(l.length ? 'Workflow library (' + (d.total || l.length) + ' ready-made). ' + l.map(function (w) { return w.workflow_id.replace(/^lib./, '') + (w.needs_context.length ? ' [' + w.needs_context.join(',') + ']' : ''); }).join(', ') + '
+Run one with  /wf <id> key=value' : 'No workflows match that search.'); }); return true; }
+    if (cmd === '/wf') { if (!parts[1]) { sys('Usage: /wf <id> key=value …  (see /library)'); return true; } startRun('lib.' + parts[1].replace(/^lib./, ''), { context: parseKV(parts.slice(2)) }, 'workflow · ' + parts[1]); return true; }
     if (cmd === '/skill') { if (!parts[1]) { sys('Usage: /skill <skill-id> key=value …  (see /skills)'); return true; } startRun('skill.run', { skill: parts[1], input: parseKV(parts.slice(2)) }, 'skill · ' + parts[1]); return true; }
     var c = COMMANDS.filter(function (x) { return x.c === cmd && x.wf; })[0]; if (!c) return false;
     var params = {}; if (c.wf === 'research.topic') { if (!rest) { sys('Usage: /research <topic>'); return true; } params.query = rest; }
