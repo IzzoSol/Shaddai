@@ -325,6 +325,7 @@
       for (var i = 0; i < CATS.length - 1; i++) { if (CATS[i][2].test(t)) { cat = CATS[i][0]; break; } }
       panes.querySelector('[data-pane="' + cat + '"]').appendChild(el);
     });
+    try { var lookPane = panes.querySelector('[data-pane="look"]'); if (lookPane && window.shdDisplay) lookPane.insertBefore(window.shdDisplay.panel(), lookPane.firstChild); } catch (e) { /* ignore */ }
     [].slice.call(panes.children).forEach(function (p, i) { if (!p.children.length) { rail.children[i].style.display = 'none'; } });
     rail.addEventListener('click', function (e) { var b = e.target.closest('[data-cat]'); if (!b) return; [].forEach.call(rail.children, function (x) { x.classList.toggle('on', x === b); }); [].forEach.call(panes.children, function (p) { p.style.display = p.dataset.pane === b.dataset.cat ? 'block' : 'none'; }); });
 
