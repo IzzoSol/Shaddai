@@ -148,7 +148,7 @@
       box('Furniture & items', 'what you own in the world · same inventory the 3D world reads', [inv]),
       box('Your agents', 'forged in the 3D Forge · they walk the 3D world · seeing their bodies here is coming soon', [ops]),
       box('Navi', 'your guide in the world', [navi])
-    ].concat(window.shdWorldSnapshotBox ? [window.shdWorldSnapshotBox()] : [], window.shdBridgeBox ? [window.shdBridgeBox()] : []));
+    ].concat(window.shdWorldSnapshotBox ? [window.shdWorldSnapshotBox()] : [], window.shdAgentTasksBox ? [window.shdAgentTasksBox()] : [], window.shdBridgeBox ? [window.shdBridgeBox()] : []));
 
     var local = localInv(), keys = Object.keys(local).filter(function (k) { return local[k] > 0 || (local[k] && local[k].qty > 0) || (local[k] && local[k].n > 0); });
     api('GET', '/api/economy/inventory').catch(function () { return {}; }).then(function (d) {

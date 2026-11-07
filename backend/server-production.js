@@ -2129,6 +2129,9 @@ app.use('/api/grok', require('./grok-connect'));                      // Import 
 // Outside-Bot Bridge (Grok Bot / Muse / any MCP client): scoped tokens, remote MCP at POST /api/bridge/mcp, runs + receipts + owner approval, avatar presence.
 try { app.use('/api/bridge', require('./platform-bridge')); console.log('[prod] outside-bot bridge mounted (/api/bridge)'); }
 catch (e) { console.warn('[prod] bridge NOT mounted:', e && e.message); }
+// World agents (3D terminal contract C4): server-authoritative agent tasks (goto/work/study/idle), per-user, kernel-gated, audit-logged. The world only renders it.
+try { app.use('/api/world/agents', require('./world-agents-routes')); console.log('[prod] world agents mounted (/api/world/agents)'); }
+catch (e) { console.warn('[prod] world agents NOT mounted:', e && e.message); }
 app.use('/api', require('./dashboard-patches'));                      // P0 patch: auction/pricing/city-boost/news-analyze (dashboard wired calls)
 app.use('/api/leaderboard', require('./lib/leaderboard-routes'));     // SHADDAI games leaderboards
 app.use('/api/chat', require('./lib/chat-routes'));                   // realm + per-room chat (PIKADON-scanned)

@@ -95,5 +95,28 @@
     var t = setInterval(function () { if (!body.isConnected) { clearInterval(t); return; } fill(body); }, 15000);
     return box;
   };
+
+  /* ── C4: give agents a task in the world (server decides; the world renders) ── */
+  function ah(path, method, body) { var hd = {}; if (body) hd['Content-Type'] = 'application/json'; try { var t = localStorage.getItem('shd_token'); if (t) hd.Authorization = 'Bearer ' + t; } catch (e) { /* ignore */ } return fetch(path, { method: method || 'GET', headers: hd, credentials: 'same-origin', body: body ? JSON.stringify(body) : undefined }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { d._s = r.status; return d; }); }); }
+  var PINS = [['academy', 'Athenaeum'], ['park', 'Park'], ['colo', 'Colosseum']];
+  window.shdAgentTasksBox = function () {
+    var list = h('div', { class: 'sw-grid' }), result = h('div', { class: 'sw-sub', style: 'min-height:16px' });
+    var agentSel = h('select', { class: 'sw-sel', 'aria-label': 'Agent' }), verbSel = h('select', { class: 'sw-sel', 'aria-label': 'Task' }, [['goto', 'Go to'], ['study', 'Study a class'], ['work', 'Work at an office'], ['idle', 'Stand down']].map(function (v) { return h('option', { value: v[0], text: v[1] }); }));
+    var pinSel = h('select', { class: 'sw-sel', 'aria-label': 'Place' }, PINS.map(function (p) { return h('option', { value: p[0], text: p[1] }); })), argIn = h('input', { class: 'sw-sel', placeholder: 'class id', 'aria-label': 'Class or office id', style: 'display:none;min-width:0;flex:1' });
+    function sync() { var v = verbSel.value; pinSel.style.display = v === 'goto' ? '' : 'none'; argIn.style.display = (v === 'study' || v === 'work') ? '' : 'none'; argIn.placeholder = v === 'study' ? 'class id' : 'office id'; }
+    verbSel.addEventListener('change', sync); sync();
+    function load() { ah('/api/world/agents').then(function (d) {
+      list.textContent = ''; if (!d.ok) { list.appendChild(h('div', { class: 'sw-msg dim', text: 'The world agent service is not running on this server yet.' })); return; }
+      var cur = agentSel.value; agentSel.textContent = '';
+      (d.agents || []).forEach(function (a) { agentSel.appendChild(h('option', { value: a.id, text: a.name + (a.kind === 'bot' ? ' (yours)' : '') })); if (a.state !== 'idle' || a.kind === 'bot') list.appendChild(h('div', { class: 'sw-card slim' }, [h('div', { class: 'sw-row' }, [h('b', { text: a.name }), chip(a.state, a.state === 'idle' ? '' : 'ok')]), h('div', { class: 'sw-sub', text: a.task ? a.task.label : 'idle' })])); });
+      if (cur) agentSel.value = cur; if (!list.childNodes.length) list.appendChild(h('div', { class: 'sw-msg dim', text: 'Every agent is idle. Give one a task below.' })); }).catch(function () { list.textContent = ''; list.appendChild(h('div', { class: 'sw-msg dim', text: 'World agents unreachable.' })); }); }
+    var send = h('button', { type: 'button', class: 'sw-btn', text: 'Send task', onclick: function () {
+      var v = verbSel.value, args = v === 'goto' ? { pin: pinSel.value } : v === 'study' ? { classId: argIn.value.trim() } : v === 'work' ? { officeId: argIn.value.trim() } : {};
+      result.textContent = 'Sending…'; ah('/api/world/agents/' + encodeURIComponent(agentSel.value) + '/task', 'POST', { verb: v, args: args }).then(function (d) {
+        result.textContent = d.ok ? 'Task accepted. It shows in the 3D world and the Navi.' : (d._s === 401 ? 'Sign in to give tasks.' : d._s === 403 ? 'Refused: ' + (d.why || 'not allowed') : d._s === 400 ? 'Not valid: ' + (d.why || 'check the task') : 'Could not send (' + d._s + ')'); load(); }); } });
+    var box = h('section', { class: 'sw-box' }, [h('div', { class: 'sw-hd' }, [h('b', { text: 'Agent tasks' }), h('span', { text: 'direct your agents in the 3D world · the server decides, the world shows it' })]),
+      h('div', { class: 'sw-body' }, [list, h('div', { class: 'sw-actions' }, [agentSel, verbSel, pinSel, argIn, send, h('button', { type: 'button', class: 'sw-btn ghost', text: 'See in 3D', onclick: go('bots') })]), result])]);
+    load(); return box;
+  };
   window.shdLink = { route: route, worldQuery: worldQuery, snapshot: snapshot };
 })();

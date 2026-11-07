@@ -38,6 +38,10 @@
 8. **`index.html` is 3.8 MB**, `ZEROX.glb` is 12 MB (plain, no meshopt/webp). Performance work (WP8) not started.
 9. **Real-money paths untouched and unaudited here:** SAP treasury, Hyperliquid, x402, plot payouts. Handoff rules R1–R7 still apply; nothing in V119 touches them.
 
+10. **Kernel audit path.** `gateway/pikadon-kernel.js` builds its job-log path as `path.join(__dirname, '..', '..', 'backend', 'data', 'gateway-jobs.jsonl')`, which resolves one level ABOVE the repo; its audit lines only write when a quote is supplied. Not edited (shared security file); someone should check where those lines land.
+11. **Mini 3D office** (`public/shd-office3d.js`) is a first version: walkable room, live agents at their desks, orb customization, desks that open the real Dashboard panels, Navi menu (opens the 3D world), Record-10s clip, High/Low quality. Not built yet: spectating inside the office, wallet/PayBox flows beyond opening the existing Wallet tab (no money logic added), the gallery inside the room (desk opens the Gallery tab), unlocking Crystal/Figure forms with Sparks, importing uploaded models.
+12. **C4 council tasks are per-user views**, not a shared world state. If the owner wants council agents to do shared, visible-to-all things, that needs a separate admin-only path.
+
 ## 5. NOT covered (say so plainly)
 - **The diagrams** (`shaddai-design-studio/portfolio/*`, e.g. `mcp`, `mcp-surface`, `revenue`) were **not** compared against the implementation. I only confirmed the folder exists.
 - The other 3.7 MB of legacy `index.html` and older scripts were not audited line by line.
@@ -48,4 +52,4 @@
 
 ## 6. Where the plan stands
 Done: command center pieces (Worlds hub, Agent City, body viewer, command chat), bridge phase 1 with headless council, skills/workflows on real tools, Sparks metering (off), dashboard<->3D link per the world terminal's contract (hash routing, deep links, snapshot box).
-Not done: OAuth for bots, Postgres store, academy tiers 1–7 + `/api/school/progress` (contract C3), `/api/world/agents` + tasks through the kernel (C4), bot bodies bought with Sparks, projects/co-creation, model upload marketplace, server-side gates, push/deploy.
+Done since: the world terminal's C4 (`/api/world/agents` + tasks through the kernel, tested) and the mini 3D office. Not done: OAuth for bots, Postgres store (owner: skip), academy tiers 1–7 + `/api/school/progress` (contract C3, owner: skip), bot bodies bought with Sparks, projects/co-creation, model upload marketplace, server-side gates, push/deploy.
