@@ -152,7 +152,7 @@
     d.querySelector('.shdProMsg').innerHTML = msg(name, isIn);
     document.body.appendChild(d);
     d.querySelector('.shdProPri').onclick = function () {
-      if (isIn) { location.href = '/pricing.html'; }
+      if (isIn) { if (window.shdPlans) { d.classList.remove('on'); shdPlans.open(); } else location.href = '/?plans=1'; }
       else { try { if (window.shdSignIn) shdSignIn(); else location.href = '/dashboard'; } catch (e) { location.href = '/dashboard'; } }
     };
     d.querySelector('.shdProX').onclick = function () { d.classList.remove('on'); };

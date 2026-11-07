@@ -4417,9 +4417,8 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   <button class="nav-btn" onclick="window.open('/games/academy.html','_blank')" style="color:#b07aff;font-weight:700;border-color:rgba(150,80,255,0.3)" title="SHADDAI Academy — lessons, badges, pay-lab">🎓 Academy</button>
   <button class="nav-btn nav-img" onclick="showView('aura');try{loadAuraTab()}catch(e){}" data-guest-lock="AURA" style="color:#27e0ff;font-weight:700;--nav-img:url(/assets/nav/aura.jpg)" title="AURA token-saver — live savings + MCP"><img src="/api/forge/art/part-aura-neon-pulse.png" alt="" onerror="this.outerHTML='⚡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(39,224,255,0.45)"> AURA</button>
   <!-- Games live in-world (NEXUS arcade) + on the Codex as "Shaddai Games" — no standalone dashboard games page (owner) -->
-  <button class="nav-btn" onclick="window.open('/prove.html','_blank')" style="color:#00e5a0;font-weight:700" title="Live platform demo — no signup">▶ Demo</button>
   <button class="nav-btn" onclick="window.open('/forge-demo.html','_blank')" data-guest-lock="3D Forge" style="color:#e8c45c;font-weight:700;border-color:rgba(232,196,92,0.3)" title="3D Forge — generate & trade GLB agent models">⬡ 3D Forge</button>
-  <button class="nav-btn nav-img" onclick="window.open('/pricing.html','_blank')" style="color:#00ff88;font-weight:700;--nav-img:url(/assets/nav/plans.jpg)" title="Plans & pricing">◈ Plans</button>
+  <button class="nav-btn nav-img" onclick="window.shdPlans&&shdPlans.open()" style="color:#00ff88;font-weight:700;--nav-img:url(/assets/nav/plans.jpg)" title="Plans & pricing">◈ Plans</button>
   <button class="nav-btn" onclick="location.href='/signals.html'" style="color:#e8c45c;font-weight:700;border-color:rgba(232,196,92,0.3)" title="SHADDAI Master Terminal — Signals, Markets, MiroFish Swarm">📡 Terminal</button>
   <button class="nav-btn" onclick="location.href='/tufish.html'" style="color:#00d4dc;font-weight:700;border-color:rgba(0,212,220,0.3)" title="TuFish Sentiment Swimmer — scan coins & topics, the fish reacts">🐟 TuFish</button>
   <button class="nav-btn" onclick="location.href='/signals.html#swarm'" style="color:#b07fff;font-weight:700;border-color:rgba(150,80,255,0.3)" title="MiroFish Swarm — 7-fish consensus, inside the Master Terminal">🐟 MiroFish</button>
@@ -11400,53 +11399,6 @@ window.enter3DWorld=function(){
         <div style="display:flex;gap:8px;align-items:center">
           <button class="btn btn-ghost" style="font-size:9px;border-color:rgba(0,229,160,0.3);color:var(--accent)" onclick="toggleMediaClassic()">☰ Classic View</button>
         </div>
-      </div>
-    </div>
-
-    <!-- ═══ HIRE THE COUNCIL · CONTENT PACKS — productized offers (open standalone pages) ═══ -->
-    <div style="margin-bottom:18px">
-      <div style="font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;letter-spacing:.12em;color:var(--text-muted);margin-bottom:10px">🪙 HIRE THE COUNCIL — content packs · <span style="color:#00e5a0">free preview, no signup</span></div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
-
-        <div onclick="window.open('/coin-launch.html','_blank')" style="cursor:pointer;position:relative;overflow:hidden;border:1px solid rgba(177,108,255,0.35);border-radius:12px;padding:16px 18px;background:linear-gradient(150deg,rgba(177,108,255,0.10),rgba(20,10,36,0.4));transition:transform .15s,box-shadow .15s" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 12px 30px rgba(177,108,255,0.22)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-          <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
-            <span style="font-size:22px">🪙</span>
-            <div>
-              <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:#fff;letter-spacing:0.05em">COIN LAUNCH KIT</div>
-              <div style="font-size:8px;color:rgba(177,108,255,0.85);letter-spacing:0.16em;text-transform:uppercase;margin-top:2px">QUILL + TURTLE</div>
-            </div>
-            <span style="margin-left:auto;font-size:8px;font-family:'Share Tech Mono',monospace;letter-spacing:0.1em;color:#b16cff;border:1px solid rgba(177,108,255,0.4);border-radius:100px;padding:3px 9px">FREE</span>
-          </div>
-          <div style="font-size:12px;color:var(--text-secondary);line-height:1.5">Launch posts · meme concepts · a ready-to-post banner — from one coin idea.</div>
-          <div style="margin-top:10px;font-size:9px;font-family:'Share Tech Mono',monospace;color:#b16cff;letter-spacing:0.08em">OPEN KIT →</div>
-        </div>
-
-        <div onclick="window.open('/thread-pack.html','_blank')" style="cursor:pointer;position:relative;overflow:hidden;border:1px solid rgba(0,214,143,0.35);border-radius:12px;padding:16px 18px;background:linear-gradient(150deg,rgba(0,214,143,0.10),rgba(8,19,15,0.4));transition:transform .15s,box-shadow .15s" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 12px 30px rgba(0,214,143,0.22)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-          <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
-            <span style="font-size:22px">🧵</span>
-            <div>
-              <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:#fff;letter-spacing:0.05em">TWITTER THREAD PACK</div>
-              <div style="font-size:8px;color:rgba(0,214,143,0.85);letter-spacing:0.16em;text-transform:uppercase;margin-top:2px">QUILL</div>
-            </div>
-            <span style="margin-left:auto;font-size:8px;font-family:'Share Tech Mono',monospace;letter-spacing:0.1em;color:#00d68f;border:1px solid rgba(0,214,143,0.4);border-radius:100px;padding:3px 9px">FREE</span>
-          </div>
-          <div style="font-size:12px;color:var(--text-secondary);line-height:1.5">A full numbered thread + hook variants you can post today — from one topic.</div>
-          <div style="margin-top:10px;font-size:9px;font-family:'Share Tech Mono',monospace;color:#00d68f;letter-spacing:0.08em">OPEN PACK →</div>
-        </div>
-
-        <div onclick="window.open('/turtle-music-bot.html','_blank')" style="cursor:pointer;position:relative;overflow:hidden;border:1px solid rgba(0,229,160,0.35);border-radius:12px;padding:16px 18px;background:linear-gradient(150deg,rgba(0,229,160,0.10),rgba(6,18,14,0.4));transition:transform .15s,box-shadow .15s" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 12px 30px rgba(0,229,160,0.22)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-          <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
-            <span style="font-size:22px">🐢</span>
-            <div>
-              <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:#fff;letter-spacing:0.05em">TURTLE MUSIC BOT</div>
-              <div style="font-size:8px;color:rgba(0,229,160,0.85);letter-spacing:0.16em;text-transform:uppercase;margin-top:2px">ShaddaiLabs · in-browser</div>
-            </div>
-            <span style="margin-left:auto;font-size:8px;font-family:'Share Tech Mono',monospace;letter-spacing:0.1em;color:#00e5a0;border:1px solid rgba(0,229,160,0.4);border-radius:100px;padding:3px 9px">FREE</span>
-          </div>
-          <div style="font-size:12px;color:var(--text-secondary);line-height:1.5">Compose an original track — drums, bass, chords &amp; melody — right in your browser. No keys.</div>
-          <div style="margin-top:10px;font-size:9px;font-family:'Share Tech Mono',monospace;color:#00e5a0;letter-spacing:0.08em">OPEN STUDIO →</div>
-        </div>
-
       </div>
     </div>
 
@@ -59318,6 +59270,7 @@ body.in-world #mainNav, body.in-world #sbNav { display:none !important; }
 <script defer src="/shd-agent-viewer.js?v=119"></script>
 <script defer src="/shd-chat.js?v=119"></script>
 <script defer src="/shd-glow.js?v=119"></script>
+<script defer src="/shd-plans.js?v=119"></script>
 <script defer src="/shd-words.js?v=119"></script>
 <script defer src="/shd-colosseum.js?v=119"></script>
 <script defer src="/shd-link.js?v=119"></script>
