@@ -279,3 +279,21 @@ html[data-theme-skin="holo"] ::-webkit-scrollbar-thumb{background:hsl(var(--hh) 
 .pbw-note{font-size:11px;min-height:15px;color:var(--text-secondary,#b8c9e6)}.pbw-empty{padding:18px;color:var(--text-secondary,#b8c9e6);font-size:13px}
 
 .pbw-chips .pbw-btn{border-color:var(--accent,#00e5a0);color:var(--accent,#00e5a0);min-height:34px}
+
+/* ── WINDOW DEPTH (2026-11-07): one shared treatment so every panel reads as a window with layers, not a flat box.
+   Cards that set their own border/background inline keep their own colours; they only gain the shadow stack. ───────────── */
+html body .card:not([style*="border:"]):not([style*="background"]),
+html body #settingsView .settings-section:not([style*="background"]){
+  background:linear-gradient(168deg,rgba(14,32,48,.84) 0%,rgba(6,14,24,.93) 55%,rgba(3,9,16,.97) 100%)!important;
+  border:1px solid color-mix(in srgb,var(--accent,#00e5a0) 24%,rgba(255,255,255,.05))!important;
+  border-radius:14px!important;
+}
+html body .card,html body #settingsView .settings-section{
+  box-shadow:inset 0 1px 0 color-mix(in srgb,var(--accent,#00e5a0) 42%,transparent),inset 0 -26px 44px rgba(0,0,0,.34),inset 0 0 0 1px rgba(255,255,255,.02),0 12px 32px rgba(0,0,0,.45),0 2px 0 rgba(0,0,0,.55);
+  transition:box-shadow .2s ease,transform .2s ease;
+}
+html body .card:hover{box-shadow:inset 0 1px 0 color-mix(in srgb,var(--accent,#00e5a0) 60%,transparent),inset 0 -26px 44px rgba(0,0,0,.3),0 16px 40px rgba(0,0,0,.5),0 0 28px color-mix(in srgb,var(--accent,#00e5a0) 14%,transparent)}
+html body .card-head{position:relative;padding:2px 0 10px!important;margin-bottom:12px!important;border-bottom:1px solid color-mix(in srgb,var(--accent,#00e5a0) 20%,transparent)!important}
+html body .card-head::after{content:'';position:absolute;left:0;bottom:-1px;width:56px;height:2px;background:var(--accent,#00e5a0);box-shadow:0 0 10px var(--accent,#00e5a0);border-radius:2px}
+html body .card-title{font-family:'Orbitron','Rajdhani',sans-serif!important;letter-spacing:.14em!important;font-size:11px!important}
+@media (prefers-reduced-motion:reduce){html body .card{transition:none}}
