@@ -51,7 +51,7 @@
   }
   /* emoji → glyph. Anything not listed becomes a small spark so no stock emoji is left on a cleaned screen. */
   var MAP = { '🔌': 'plug', '🔑': 'key', '🔄': 'orbit', '⚡': 'bolt', '🆓': 'spark', '🤖': 'chip', '🦙': 'chip', '📊': 'chart', '📈': 'chart', '📉': 'chart', '📰': 'news', '🎵': 'music', '🎶': 'music', '🎬': 'video', '🎥': 'video', '🎨': 'image', '🖼': 'image', '🔍': 'search', '💬': 'chat', '✈': 'send', '💳': 'card', '💰': 'coin', '🪙': 'coin', '👛': 'wallet', '🔒': 'lock', '🛡': 'shield', '🌍': 'globe', '🌐': 'globe', '🪐': 'orbit', '🚀': 'rocket', '🖥': 'server', '📦': 'cube', '🧊': 'cube', '✅': 'check', '✨': 'spark', '⭐': 'spark', '🌟': 'spark', '⚙': 'gear', '👤': 'user', '👥': 'user', '🗂': 'folder', '📁': 'folder', '📂': 'folder', '🔧': 'gear', '🛠': 'gear', '💾': 'server', '🧩': 'cube', '🎯': 'orbit', '🏆': 'spark', '🔔': 'spark', '📡': 'globe', '🛒': 'card' };
-  var EMO = /(?:\p{Extended_Pictographic}️?(?:‍\p{Extended_Pictographic}️?)*)/gu;
+  var EMO = new RegExp("(?:\\p{Emoji_Presentation}|\\p{Extended_Pictographic}\\uFE0F)(?:\\u200D(?:\\p{Emoji_Presentation}|\\p{Extended_Pictographic}\\uFE0F?))*", "gu");
   var SKIP = 'script,style,textarea,input,select,svg,code,pre,[contenteditable],.cx-msgs,.shd-keep-emoji';
   function scrub(root) {
     if (!root) return; var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: function (n) { if (!n.nodeValue || !EMO.test(n.nodeValue)) { EMO.lastIndex = 0; return NodeFilter.FILTER_REJECT; } EMO.lastIndex = 0; var p = n.parentElement; return p && p.closest(SKIP) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; } }), nodes = [], n;
