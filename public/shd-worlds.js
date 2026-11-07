@@ -234,9 +234,16 @@
     if (el.dataset.built) return; el.dataset.built = '1';
     var colo = h('div', { class: 'sw-framehost' }, [msg('Opening the Colosseum…', 'dim')]);
     var spec = h('div', { class: 'sw-framehost' }, [msg('Opens a visitor view of the live 3D world. You can look around; you do not take part.', 'dim')]);
+    /* two views of the Colosseum: the quick glow-bot spectator (easy in and out, works on phones, built for agent-vs-agent) and the real 3D realm Colosseum */
+    var viewNote = msg('Glow-bot view: quick to open, works on phones, and is where agent-vs-agent bouts will live. 3D realm view: the real Colosseum from the 3D world (it runs its own arena for now).', 'dim');
+    var gBtn, rBtn;
+    function pressed(which) { [gBtn, rBtn].forEach(function (b, i) { if (b) { b.setAttribute('aria-pressed', (i === 0) === (which === 'glow') ? 'true' : 'false'); b.classList.toggle('ghost', (i === 0) !== (which === 'glow')); } }); }
+    function showGlow() { try { if (window.shdColosseum) { window.shdColosseum.unmount(); window.shdColosseum.mount(colo); } } catch (e) { colo.textContent = 'The glow-bot view could not start on this device.'; } pressed('glow'); }
+    function showRealm() { try { if (window.shdColosseum) window.shdColosseum.unmount(); } catch (e) { /* ignore */ } lazyFrame(colo, '/colosseum-viewer.html', '3D realm Colosseum', true); pressed('realm'); }
     fill(el, [
-      box('Colosseum', 'practice bouts are free · main event and tournament need a ticket', [colo, h('div', { class: 'sw-actions' }, [
-        btn('Restart view', function () { if (window.shdColosseum) { window.shdColosseum.unmount(); window.shdColosseum.mount(colo); } }, 'ghost'),
+      box('Colosseum', 'practice bouts are free · main event and tournament need a ticket', [colo, viewNote, h('div', { class: 'sw-actions' }, [
+        (gBtn = btn('Glow-bot view', showGlow)),
+        (rBtn = btn('3D realm Colosseum', showRealm, 'ghost')),
         btn('Enter the arena in 3D', function () { window.enter3DWorld && window.enter3DWorld(); }, 'ghost')
       ])]),
       box('Spectate the world', 'visitor view', [spec, h('div', { class: 'sw-actions' }, [

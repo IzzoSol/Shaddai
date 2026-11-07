@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" data-theme-skin="glitch">
 <head>
+<script src="/shd-user.js?v=119"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
 <meta name="theme-color" content="#00ff88">
@@ -238,6 +239,10 @@
 <script>
 (function(){
   function gate(){ return document.getElementById('shdAuthGate'); }
+  /* Returning users are recognised from what the browser already stored, so the sign-in does not flash over their dashboard;
+     new visitors get the sign-in in the very first paint instead of seeing the dashboard for a moment. */
+  function hint(){ try{ if(localStorage.getItem('shd_signed_in')==='1'||localStorage.getItem('shd_mode')==='signed') return true; for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i)||''; if(k.indexOf('firebase:authUser:')===0) return true; } }catch(e){} return false; }
+  (function prepaint(){ var local=location.hostname==='localhost'||location.hostname==='127.0.0.1', guest=false; try{ guest=sessionStorage.getItem('shd_guest')==='1'; }catch(e){} var g=gate(); if(g&&!local&&!guest&&!hint()) g.classList.add('on'); })();
   function msg(t,color){ var m=document.getElementById('shdAuthMsg'); if(m){ m.textContent=t||''; m.style.color=color||'#ff6b6b'; } }
   var G={
     show:function(){ var g=gate(); if(g) g.classList.add('on'); },
@@ -297,7 +302,7 @@
     if(u){ try{ localStorage.setItem('shd_mode','signed'); sessionStorage.removeItem('shd_guest'); }catch(e){} G.hide();
       var b=document.getElementById('shdGuestBadge'); if(b) b.classList.remove('on'); }
   };
-  function decide(){
+  function decide(tries){
     // Allow signed-in users, localhost (dev bypass for the owner), AND guests who clicked
     // "Continue as guest" (session flag). Guests get a fully working dashboard — their
     // app data is just written to sessionStorage instead of localStorage (see GUEST MODE block above)
@@ -307,10 +312,11 @@
     var guest=false; try{ guest=sessionStorage.getItem('shd_guest')==='1'; }catch(e){}
     if(/[?&]gate=1\b/.test(location.search)){ G.show(); return; }   // preview the sign-in on localhost: /?gate=1
     if(signed||local||guest){ G.hide(); return; }
+    if(hint() && (+tries||0) < 14){ setTimeout(function(){ decide((+tries||0)+1); }, 300); return; }   // returning user: wait for the session to come back
     G.show();
   }
   // Wait briefly for Firebase to restore any existing session before deciding.
-  document.addEventListener('DOMContentLoaded',function(){ setTimeout(decide, 700); });
+  document.addEventListener('DOMContentLoaded',function(){ setTimeout(function(){ decide(0); }, 700); });
 })();
 </script>
 <script>
@@ -59289,6 +59295,7 @@ body.in-world #mainNav, body.in-world #sbNav { display:none !important; }
 <script defer src="/shd-icons.js?v=119"></script>
 <script defer src="/shd-apis.js?v=119"></script>
 <script defer src="/shd-agents.js?v=119"></script>
+<script defer src="/shd-forge.js?v=119"></script>
 <script defer src="/shd-hub.js?v=119"></script>
 <script defer src="/shd-paybox.js?v=119"></script>
 <script defer src="/shd-words.js?v=119"></script>

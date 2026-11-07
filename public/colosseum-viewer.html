@@ -39,7 +39,7 @@
 <body>
   <div id="ui">
     <b>SHADDAI COLOSSEUM</b><br>
-    <small>Drag to look · Scroll to zoom</small><br>
+    <small>Drag to orbit · Scroll or pinch to zoom</small><br>
     <br>
     <b>Theme:</b><br>
     <button onclick="setTheme('classic')">Classic</button>
@@ -58,8 +58,8 @@
   <script type="importmap">
   {
     "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      "three": "/vendor/three/three.module.js",
+      "three/addons/": "/vendor/three/addons/"
     }
   }
   </script>
@@ -82,59 +82,49 @@
     renderer.shadowMap.enabled = true;
     document.body.appendChild(renderer.domElement);
 
-    // Load colosseum
-    const { buildColosseumArena } = await import('./world-colosseum.js');
-    const arena = buildColosseumArena(THREE, { scene });
-    scene.add(arena);
+    // Light the scene (the arena builder expects the host page to provide lights)
+    scene.add(new THREE.HemisphereLight(0xeaf1ff, 0x4a3f2c, 1.6));
+    const sun = new THREE.DirectionalLight(0xfff1d6, 2.2); sun.position.set(60, 140, 40); scene.add(sun);
 
-    // Make it visible
-    arena.visible = true;
+    // Load the real 3D realm Colosseum. world-colosseum.js is a classic script: it registers window.buildColosseumArena
+    // and returns a record whose .group is the 3D object (the record also carries tick/setTheme/setField for pages like this one).
+    await new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = './world-colosseum.js?v=119'; sc.onload = res; sc.onerror = () => rej(new Error('world-colosseum.js failed to load')); document.head.appendChild(sc); });
+    const api = window.buildColosseumArena(THREE, { scene });
+    const arena = api.group; arena.visible = true; scene.add(arena);
 
-    // Camera controls
-    let isDragging = false;
-    let previousMousePosition = { x: 0, y: 0 };
-    const cameraRotation = { x: 0, y: 0 };
+    // Frame the whole arena and orbit around its centre
+    // frame from the arena floor (the whole group includes a huge sky dome that would push the camera far away)
+    let framed = api.floorMesh || arena; arena.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(framed), centre = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3());
+    const radius = Math.max(40, Math.max(size.x, size.z) * 1.15);
+    try { if (api.setTheme) api.setTheme('classic'); } catch (e) { /* keep default */ }
+    let theta = 0.6, phi = 0.95, dist = radius * 1.35;     // spherical orbit: theta around, phi down from the top
+    function placeCamera() {
+      phi = Math.max(0.25, Math.min(1.45, phi)); dist = Math.max(25, Math.min(radius * 3, dist));
+      camera.position.set(centre.x + dist * Math.sin(phi) * Math.sin(theta), centre.y + dist * Math.cos(phi), centre.z + dist * Math.sin(phi) * Math.cos(theta));
+      camera.lookAt(centre.x, centre.y + size.y * 0.15, centre.z);
+    }
+    camera.far = radius * 12; camera.updateProjectionMatrix(); placeCamera();
 
-    document.addEventListener('mousedown', (e) => {
-      isDragging = true;
-      previousMousePosition = { x: e.clientX, y: e.clientY };
-    });
+    // Drag to orbit (mouse and touch), wheel / pinch to zoom
+    let drag = null, pinch = 0;
+    const dom = renderer.domElement; dom.style.touchAction = 'none';
+    dom.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY }; dom.setPointerCapture(e.pointerId); });
+    dom.addEventListener('pointermove', (e) => { if (!drag) return; theta -= (e.clientX - drag.x) * 0.006; phi -= (e.clientY - drag.y) * 0.006; drag = { x: e.clientX, y: e.clientY }; placeCamera(); });
+    const stop = () => { drag = null; }; dom.addEventListener('pointerup', stop); dom.addEventListener('pointercancel', stop);
+    dom.addEventListener('wheel', (e) => { e.preventDefault(); dist += e.deltaY * 0.12; placeCamera(); }, { passive: false });
+    window.addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
 
-    document.addEventListener('mousemove', (e) => {
-      if (!isDragging) return;
-      const deltaX = e.clientX - previousMousePosition.x;
-      const deltaY = e.clientY - previousMousePosition.y;
-      cameraRotation.y += deltaX * 0.01;
-      cameraRotation.x += deltaY * 0.01;
-      camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), -deltaX * 0.01);
-      previousMousePosition = { x: e.clientX, y: e.clientY };
-    });
+    // Theme and field switches (the buttons in the panel)
+    window.setTheme = (name) => { if (api.setTheme) api.setTheme(name); };
+    window.setField = (name) => { if (api.setField) api.setField(name); };
 
-    document.addEventListener('mouseup', () => {
-      isDragging = false;
-    });
-
-    // Zoom
-    document.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      const direction = camera.position.clone().normalize();
-      const distance = camera.position.length();
-      const newDistance = distance + e.deltaY * 0.1;
-      camera.position.copy(direction.multiplyScalar(Math.max(20, Math.min(300, newDistance))));
-    });
-
-    // Global functions for theme/field switching
-    window.setTheme = (themeName) => {
-      if (arena.setTheme) arena.setTheme(themeName);
-    };
-
-    window.setField = (fieldName) => {
-      if (arena.setField) arena.setField(fieldName);
-    };
-
-    // Animation loop
+    // Animation loop: the arena's own tick drives the crowd, lights and field
+    let last = performance.now();
     function animate() {
       requestAnimationFrame(animate);
+      const now = performance.now(), dt = Math.min(0.1, (now - last) / 1000); last = now;
+      try { if (api.tick) api.tick(dt); } catch (e) { /* keep rendering */ }
       renderer.render(scene, camera);
     }
     animate();

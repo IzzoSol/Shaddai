@@ -1,5 +1,6 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en"><head>
+<script src="/shd-user.js?v=119"></script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SHADDAI Forge Wizard</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tomorrow:wght@500;600&family=Albert+Sans:wght@400;500;600&family=Martian+Mono:wght@400;500&family=Marcellus&display=swap">
@@ -116,7 +117,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-acti
   <div id="fallback"><p>This browser could not start the 3D Forge. The steps below still work.</p></div>
 
   <div class="ui hud" id="tl"><div><b>SD.FORGE // PROTOCOL 7</b></div><div class="sub">Agent summoning sequence</div><div class="seg" id="seg"></div></div>
-  <div class="ui" id="tr"><div><span class="k">SPARKS</span><span class="v" id="sparks">0</span></div><div><span class="k">FIRST JOB</span><span class="v" id="fj" style="font-size:.9rem">FREE</span></div></div>
+  <div class="ui" id="tr"><div><span class="k">WALLET</span><span class="v" id="sparks">0</span></div><div><span class="k">FIRST JOB</span><span class="v" id="fj" style="font-size:.9rem">FREE ALLOWANCE</span></div></div>
   <div class="ui" id="br"><div class="st">STATUS <b id="status">AWAITING OATH</b></div><div class="pal" role="group" aria-label="Theme family" id="pal"></div><div class="row" style="justify-content:flex-end"><button class="ghost" id="glow" type="button" aria-pressed="true">Glow on</button><button class="ghost" id="replay" type="button">Replay intro</button></div></div>
   <div class="ui" id="bl"><div class="panel" aria-live="polite"><div class="in" id="panel"></div></div></div>
 
@@ -145,8 +146,28 @@ var PAL={grid:{n:'The Grid',a:0x2FD6FF,t:0xE6B84A,bg:0x04101C,css:['#2FD6FF','#E
          void:{n:'Deep Void',a:0x8B6BFF,t:0xC9B6FF,bg:0x0A0716,css:['#8B6BFF','#C9B6FF','#0A0716','#16102E','#33285E','#E6DCFF','#A99BD6']}};
 var STEPS=[{k:'bind',t:'Bind',s:'Seal the oath'},{k:'body',t:'Body',s:'Shape the form'},{k:'license',t:'License',s:'Grant the right'},{k:'labor',t:'Labor',s:'Perform the work'},{k:'vault',t:'PayBox',s:'Open the vault'}];
 var STATUS=['AWAITING OATH','FORM UNSHAPED','LICENSE PENDING','NO JOB RUN','VAULT SEALED'];
-var S={i:0,max:0,name:'',purpose:'Research and summaries',oath:false,kind:'SHADDAI',look:'glow',glow:'figure',acc:'none',finish:'auto',skills:{Research:true},job:'Summarise a document',labor:0,vault:0,sparks:0,pal:'grid'};
-var SKILLS=['Research','Writing','Design','Code review','Market scan','Audit'],CAP=3;
+var S={i:0,max:0,name:'',purpose:'Research and summaries',oath:false,kind:'SHADDAI',look:'glow',glow:'figure',acc:'none',finish:'auto',skills:{'research.topic':true},job:'research.topic',topic:'',jobOut:'',jobErr:false,labor:0,vault:0,sparks:0,pal:'grid'};
+/* Real skills: every one is a workflow the dashboard can run (platform bridge). The four core ones always exist; the library adds more once you are signed in. */
+var CORE=[['research.topic','Research a topic','Look into any subject and summarise it'],['news.digest','News digest','Today\'s headlines in one read'],['market.snapshot','Market snapshot','Live prices and the fear and greed index'],['dashboard.report','Daily report','A summary of what happened in your dashboard']],LIB=[],CAP=3;
+var PACKS=[['Researcher',['research.topic','news.digest']],['Market watcher',['market.snapshot','news.digest']],['Reporter',['dashboard.report','news.digest','market.snapshot']]];
+function nice(id){return String(id).replace(/^lib\./,'').replace(/[-_.]/g,' ').replace(/^./,function(c){return c.toUpperCase()})}
+function skillList(){var seen={};return CORE.concat(LIB).filter(function(k){if(seen[k[0]])return false;seen[k[0]]=1;return true})}
+function skillName(id){var f=skillList().filter(function(k){return k[0]===id})[0];return f?f[1]:nice(id)}
+function loadLib(){try{fetch('/api/bridge/library',{credentials:'same-origin'}).then(function(r){return r.ok?r.json():null}).then(function(d){
+  if(!d||!d.workflows)return;LIB=d.workflows.filter(function(w){return !(w.needs_context&&w.needs_context.length)}).slice(0,9).map(function(w){return [w.workflow_id,nice(w.workflow_id),'From the workflow library']});if(S.i===2&&typeof render==='function')render()}).catch(function(){})}catch(e){}}
+function brief(outs){if(!outs)return '';var k=Object.keys(outs)[0],v=String(outs[k]||'');try{var j=JSON.parse(v);v=typeof j==='object'?(j.price?(j.symbol||k)+' '+j.price:j.title||j.summary||(Array.isArray(j)?(j[0]&&(j[0].title||j[0].name)):'')||JSON.stringify(j)):String(j)}catch(e){}return String(v).slice(0,300)}
+function realJob(){
+  S.jobOut='';S.jobErr=false;
+  if(!authed()){S.jobErr=true;S.jobOut='Sign in to run real jobs. You can still create your agent.';return}
+  var params={};if(S.job==='research.topic')params.query=S.topic;
+  fetch('/api/bridge/run',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({workflow_id:S.job,params:params,idempotency_key:'forge-'+Date.now()+'-'+Math.random().toString(36).slice(2,6)})})
+  .then(function(r){return r.json().catch(function(){return {}}).then(function(d){if(!r.ok||!d.ok)throw new Error((d&&d.error)||('HTTP '+r.status));return d.run})})
+  .then(function(run){var id=run.run_id,tries=0;(function poll(){fetch('/api/bridge/runs',{credentials:'same-origin'}).then(function(r){return r.json()}).then(function(d){
+      var x=((d&&d.runs)||[]).filter(function(y){return y.run_id===id})[0];
+      if(x&&x.status==='succeeded'){S.jobOut=brief(x.outputs)||'Done.';if(S.i===3)render();return}
+      if(x&&/failed|expired|cancelled/.test(x.status)){S.jobErr=true;S.jobOut=x.status+(x.error?': '+x.error:'');if(S.i===3)render();return}
+      if(++tries<30)setTimeout(poll,1200);else{S.jobOut='Still running. Check your office for the result.';if(S.i===3)render()}}).catch(function(){S.jobErr=true;S.jobOut='Could not read the result.';if(S.i===3)render()})})()})
+  .catch(function(e){S.jobErr=true;S.jobOut=/auth|sign in|401/i.test(e.message)?'Sign in to run real jobs. You can still create your agent.':'Could not start: '+e.message;if(S.i===3)render()})}
 /* The bodies a forged agent can wear in Shaddai World: the 7 council GLBs (backend/lib/operatives.js VALID_MODELS). */
 var BODY_ROLE={SHADDAI:'Sovereign',NEXUS:'Architect',ORACLE:'Seer',TURTLE:'Creative',QUILL:'Scribe',PIKADON:'Guardian',ZEROX:'Trader'},BODIES=Object.keys(BODY_ROLE);
 var bodyNoteText='';function bodyNote(t){bodyNoteText=t;var n=document.getElementById('bodyNote');if(n)n.textContent=t}
@@ -498,7 +519,7 @@ var UI={
   next:function(){if(S.i<4){S.i++;S.max=Math.max(S.max,S.i);render();W&&W.sync()}},
   back:function(){if(S.i>0){S.i--;render();W&&W.sync()}},
   laborDone:function(){S.labor=2;S.i=3;render()},
-  sparks:function(n){S.sparks=n;$('sparks').textContent=n;if(n>=100){S.vault=2;$('status').textContent='VAULT OPEN';render()}}
+  sparks:function(n){S.sparks=0;$('sparks').textContent='0';if(n>=100){S.vault=2;$('status').textContent='VAULT OPEN';render()}}
 };
 function seg(){var h='';for(var i=0;i<5;i++)h+='<i class="'+(i<S.i?'on':(i===S.i?'cur':''))+'"></i>';$('seg').innerHTML=h}
 function render(){
@@ -510,25 +531,26 @@ function render(){
     '<label class="f">What it is for<select id="f-purpose">'+['Research and summaries','Writing and threads','Design briefs','Market scanning'].map(function(o){return '<option'+(o===S.purpose?' selected':'')+'>'+o+'</option>'}).join('')+'</select></label>'+
     '<label class="chk"><input type="checkbox" id="f-oath"'+(S.oath?' checked':'')+'><span>It acts only through SHADDAI tools, within the spend cap I set, and I can pause it at any time.</span></label>'+
     '<div class="row"><button class="btn primary grow" id="nx" type="button"><span>Seal the oath</span></button></div>'}
-  else if(S.i===1){h='<h2>Body</h2><p>Your agent is a glow bot. Pick its shape and accessory, or switch to a council body.</p>'+
-    '<div class="opts" role="radiogroup" aria-label="Look">'+[['glow','Glow bot'],['council','Council body']].map(function(k){return '<label class="opt"><input type="radio" name="look" value="'+k[0]+'"'+(S.look===k[0]?' checked':'')+'><span>'+k[1]+'</span></label>'}).join('')+'</div>'+
-    '<div class="opts" role="radiogroup" aria-label="Glow shape">'+[['figure','Figure'],['orb','Orb'],['crystal','Crystal']].map(function(k){return '<label class="opt"><input type="radio" name="glow" value="'+k[0]+'"'+(S.glow===k[0]?' checked':'')+'><span>'+k[1]+'</span></label>'}).join('')+'</div>'+
-    '<div class="opts" role="radiogroup" aria-label="Accessory">'+['none','halo','ring','hat','antenna','crown'].map(function(k){return '<label class="opt"><input type="radio" name="acc" value="'+k+'"'+(S.acc===k?' checked':'')+'><span>'+title(k)+'</span></label>'}).join('')+'</div>'+
-    '<p class="fine">Role (also the council body if you pick one):</p>'+
+  else if(S.i===1){h='<h2>Body</h2><p>Your agent is a glow bot that lives in your office. Pick its shape and style. You can import it into the 3D realm from the office later.</p>'+
+    (S.look==='glow'?('<div class="opts" role="radiogroup" aria-label="Glow shape">'+[['figure','Figure'],['orb','Orb'],['crystal','Crystal']].map(function(k){return '<label class="opt"><input type="radio" name="glow" value="'+k[0]+'"'+(S.glow===k[0]?' checked':'')+'><span>'+k[1]+'</span></label>'}).join('')+'</div>'):'')+
+    (S.look==='glow'?('<div class="opts" role="radiogroup" aria-label="Accessory">'+['none','halo','ring','hat','antenna','crown'].map(function(k){return '<label class="opt"><input type="radio" name="acc" value="'+k+'"'+(S.acc===k?' checked':'')+'><span>'+title(k)+'</span></label>'}).join('')+'</div>'):'')+
+    '<p class="fine">'+('Role (what it is good at):')+'</p>'+
     '<div class="opts" role="radiogroup" aria-label="Body">'+BODIES.map(function(k){return '<label class="opt"><input type="radio" name="kind" value="'+k+'"'+(S.kind===k?' checked':'')+'><span>'+title(k)+' <small class="fine">'+BODY_ROLE[k]+'</small></span></label>'}).join('')+'</div>'+
     '<p class="fine" id="bodyNote" aria-live="polite">'+esc(bodyNoteText)+'</p>'+
     '<div class="row" role="group" aria-label="Hologram tint"><span class="fine">Hologram tint</span>'+[['auto','Theme'],['gold','#E6B84A'],['violet','#8B6BFF'],['green','#4CC96A'],['cyan','#2FD6FF']].map(function(f){return '<button type="button" class="sw" data-fin="'+f[0]+'" aria-label="'+f[0]+'" aria-pressed="'+(S.finish===f[0])+'" style="background:'+(f[0]==='auto'?'conic-gradient(var(--accent),var(--trim),var(--accent))':f[1])+'"></button>'}).join('')+'</div>'+
     navRow('Lock the form')}
-  else if(S.i===2){var n=Object.keys(S.skills).length;h='<h2>License</h2><p>Choose what it may do. Each skill is checked by PIKADON before it can run.</p>'+
-    '<div class="opts" role="group" aria-label="Skills">'+SKILLS.map(function(k){var on=!!S.skills[k];return '<label class="opt"><input type="checkbox" data-sk="'+k+'"'+(on?' checked':'')+(!on&&n>=CAP?' disabled':'')+'><span>'+k+'</span></label>'}).join('')+'</div>'+
-    '<p class="fine" id="skn">'+n+' of '+CAP+' skills. The cap here is an example; the real limit per tier is read from prices.json.</p>'+navRow('Grant the license')}
-  else if(S.i===3){var run=S.labor;h='<h2>Labor</h2><p>Give it a first job. Your first workflow is free.</p>'+
-    '<div class="opts" role="radiogroup" aria-label="First job">'+['Summarise a document','Draft a post thread','Scan a market'].map(function(k){return '<label class="opt"><input type="radio" name="job" value="'+k+'"'+(S.job===k?' checked':'')+(run?' disabled':'')+'><span>'+k+'</span></label>'}).join('')+'</div>'+
-    (run===2?'<div class="receipt"><b>RECEIPT (example)</b><br>Job: '+esc(S.job)+'<br>Agent: '+esc(S.name||'Unnamed')+'<br>Cost: 0 Sparks, first workflow free<br>Logged to your ledger</div>':'')+
-    '<div class="row">'+(S.i>0?'<button class="ghost" id="bk" type="button">Back</button>':'')+(run===2?'<button class="btn primary grow" id="nx" type="button"><span>Go to the vault</span></button>':'<button class="btn primary grow'+(run===1?' loading':'')+'" id="runjob" type="button"'+(run===1?' disabled':'')+'><span>'+(run===1?'Working in the field':'Run first job')+'</span></button>')+'</div>'}
-  else{var v=S.vault;h='<h2>PayBox</h2><p>'+(v===0?'Your wallet is created and owner-controlled. Opening it releases your starter Sparks.':v===1?'Opening the vault.':'The vault is open. Your first job cost nothing, so all 100 Sparks are yours.')+'</p>'+
-    '<div class="row">'+(v===0?'<button class="ghost" id="bk" type="button">Back</button><button class="btn primary grow" id="openv" type="button"><span>Open the vault</span></button>':v===2?'<button class="ghost" id="again" type="button">Forge another</button><button class="btn primary grow" id="enter" type="button"><span>Enter Shaddai World</span></button>':'<button class="btn primary grow loading" type="button" disabled><span>Releasing Sparks</span></button>')+'</div>'+
-    (v===2?'<p class="fine" id="regNote" aria-live="polite">'+esc(S.name||'Your agent')+' will wear the '+title(S.kind)+' body in the world. Sparks stay inside SHADDAI; there is no cash-out.</p>':'')}
+  else if(S.i===2){var n=Object.keys(S.skills).length;h='<h2>Skills</h2><p>Real skills your agent can run. Each one is a real workflow in your dashboard, and PIKADON checks it before it runs.</p>'+
+    '<div class="row" role="group" aria-label="Starter packs">'+PACKS.map(function(pk,i){return '<button type="button" class="ghost" data-pack="'+i+'">'+pk[0]+'</button>'}).join('')+'</div>'+
+    '<div class="opts" role="group" aria-label="Skills">'+skillList().map(function(k){var on=!!S.skills[k[0]];return '<label class="opt"><input type="checkbox" data-sk="'+esc(k[0])+'"'+(on?' checked':'')+(!on&&n>=CAP?' disabled':'')+'><span>'+esc(k[1])+' <small class="fine">'+esc(k[2])+'</small></span></label>'}).join('')+'</div>'+
+    '<p class="fine" id="skn">'+n+' of '+CAP+' skills on the free plan.</p>'+navRow('Grant the skills')}
+  else if(S.i===3){var run=S.labor,ids=Object.keys(S.skills);if(ids.indexOf(S.job)<0)S.job=ids[0];h='<h2>First job</h2><p>Run one of its skills for real. It uses your free allowance.</p>'+
+    '<div class="opts" role="radiogroup" aria-label="First job">'+ids.map(function(k){return '<label class="opt"><input type="radio" name="job" value="'+esc(k)+'"'+(S.job===k?' checked':'')+(run?' disabled':'')+'><span>'+esc(skillName(k))+'</span></label>'}).join('')+'</div>'+
+    (S.job==='research.topic'&&!run?'<label class="f">Topic<input type="text" id="f-topic" maxlength="80" placeholder="e.g. mangrove restoration" value="'+esc(S.topic||'')+'"></label>':'')+
+    (run===2?'<div class="receipt"><b>'+(S.jobErr?'COULD NOT RUN':'RESULT')+'</b><br>Job: '+esc(skillName(S.job))+'<br>'+esc(S.jobOut||'Waiting for the result...')+'</div>':'')+
+    '<div class="row">'+(S.i>0?'<button class="ghost" id="bk" type="button">Back</button>':'')+(run===2?'<button class="btn primary grow" id="nx" type="button"><span>Open the wallet</span></button>':'<button class="btn primary grow'+(run===1?' loading':'')+'" id="runjob" type="button"'+(run===1?' disabled':'')+'><span>'+(run===1?'Working in the field':'Run first job')+'</span></button>')+'</div>'}
+  else{var v=S.vault;h='<h2>Wallet</h2><p>'+(v===0?'Every agent has its own PAYBOX wallet, controlled by you. Open it to see it.':v===1?'Opening the wallet.':'Your agent\'s PAYBOX wallet is ready. It starts at 0 credits, and you can add funds any time from the Wallet page.')+'</p>'+
+    '<div class="row">'+(v===0?'<button class="ghost" id="bk" type="button">Back</button><button class="btn primary grow" id="openv" type="button"><span>Open the wallet</span></button>':v===2?'<button class="ghost" id="again" type="button">Forge another</button><button class="btn primary grow" id="enter" type="button"><span>Create my agent</span></button>':'<button class="btn primary grow loading" type="button" disabled><span>Opening the wallet</span></button>')+'</div>'+
+    (v===2?'<p class="fine" id="regNote" aria-live="polite">'+esc(S.name||'Your agent')+' will join your office as a glow bot. From the office you can import it into the 3D realm. Sparks stay inside SHADDAI; there is no cash-out.</p>':'')}
   panel.innerHTML=h;wire();if(W)W.resize()
 }
 function navRow(label){return '<div class="row">'+(S.i>0?'<button class="ghost" id="bk" type="button">Back</button>':'')+'<button class="btn primary grow" id="nx" type="button"><span>'+label+'</span></button></div>'}
@@ -538,31 +560,52 @@ function wire(){var q=function(s){return panel.querySelector(s)},qa=function(s){
   if(q('#f-name')){var nm=q('#f-name'),oa=q('#f-oath'),pu=q('#f-purpose');var chk=function(){S.name=nm.value.trim();S.oath=oa.checked;S.purpose=pu.value;nx.disabled=!(S.name.length>=2&&S.oath)};chk();
     nm.oninput=chk;oa.onchange=chk;pu.onchange=chk;nx.onclick=function(){chk();if(!nx.disabled)UI.next()};nm.onkeydown=function(e){if(e.key==='Enter'&&!nx.disabled)UI.next()}}
   qa('input[name=kind]').forEach(function(r){r.onchange=function(){S.kind=r.value;W&&W.sync()}});
-  ['look','glow','acc'].forEach(function(n){qa('input[name='+n+']').forEach(function(r){r.onchange=function(){S[n]=r.value;W&&W.sync()}})});
+  ['look','glow','acc'].forEach(function(n){qa('input[name='+n+']').forEach(function(r){r.onchange=function(){S[n]=r.value;W&&W.sync();if(n==='look')render()}})});
   qa('[data-fin]').forEach(function(b){b.onclick=function(){S.finish=b.dataset.fin;W&&W.finish(S.finish);qa('[data-fin]').forEach(function(x){x.setAttribute('aria-pressed',x===b)})}});
+  qa('[data-pack]').forEach(function(b){b.onclick=function(){var pk=PACKS[+b.dataset.pack];S.skills={};pk[1].slice(0,CAP).forEach(function(id){S.skills[id]=true});render()}});
   qa('[data-sk]').forEach(function(c){c.onchange=function(){if(c.checked)S.skills[c.dataset.sk]=true;else delete S.skills[c.dataset.sk];var n=Object.keys(S.skills).length;nx.disabled=n<1;
-    qa('[data-sk]').forEach(function(o){o.disabled=!o.checked&&n>=CAP});q('#skn').textContent=n+' of '+CAP+' skills. The cap here is an example; the real limit per tier is read from prices.json.'}});
+    qa('[data-sk]').forEach(function(o){o.disabled=!o.checked&&n>=CAP});q('#skn').textContent=n+' of '+CAP+' skills on the free plan.'}});
   if(S.i===2&&nx)nx.disabled=Object.keys(S.skills).length<1;
-  qa('input[name=job]').forEach(function(r){r.onchange=function(){S.job=r.value}});
-  var rj=q('#runjob');if(rj)rj.onclick=function(){S.labor=1;W&&W.runLabor();if(!W){setTimeout(UI.laborDone,1200)}render()};
+  qa('input[name=job]').forEach(function(r){r.onchange=function(){S.job=r.value;render()}});
+  var rj=q('#runjob');if(rj)rj.onclick=function(){var t=q('#f-topic');if(t)S.topic=t.value.trim();if(S.job==='research.topic'&&!S.topic){if(t){t.focus();t.placeholder='Type a topic first'}return}
+    S.labor=1;W&&W.runLabor();realJob();if(!W){setTimeout(UI.laborDone,1200)}render()};
   var ov=q('#openv');if(ov)ov.onclick=function(){S.vault=1;if(!W)UI.sparks(100);render()};
   var ag=q('#again');if(ag)ag.onclick=function(){location.hash='#nointro';location.reload()};
   var en=q('#enter');if(en)en.onclick=function(){var note=q('#regNote'),who=S.name||'Your agent';
-    if(en.dataset.go){location.href='/SHADDAI-WORLD-3D.html';return}
-    en.disabled=true;en.classList.add('loading');en.firstChild.textContent='Registering '+who;
-    enterWorld().then(function(){note.textContent=who+' is registered and wears the '+title(S.kind)+' body. Opening the world.';setTimeout(function(){location.href='/SHADDAI-WORLD-3D.html'},900)})
-    .catch(function(e){en.disabled=false;en.classList.remove('loading');en.dataset.go='1';en.firstChild.textContent='Enter the world anyway';
-      note.textContent='The server did not answer ('+e.message+'), so '+who+' is saved on this device only. Try again after you sign in.'})}}
+    if(en.dataset.go==='world'){goWorld();return}
+    if(en.dataset.go==='office'){goOffice();return}
+    if(!authed()){askSignIn(note,en,who);return}
+    en.disabled=true;en.classList.add('loading');en.firstChild.textContent='Creating '+who;
+    enterWorld().then(function(d){en.disabled=false;en.classList.remove('loading');en.dataset.go='office';en.firstChild.textContent='See '+who+' in my office';
+      note.textContent=who+' is created and joined your office.';announceForged(d);setTimeout(goOffice,900)})
+    .catch(function(e){en.disabled=false;en.classList.remove('loading');
+      if(e&&e.code==='AUTH'){askSignIn(note,en,who);return}
+      en.dataset.go='world';en.firstChild.textContent='Enter the world anyway';
+      note.textContent='The server did not answer ('+e.message+'), so '+who+' is saved on this device only. Try again in a moment.'})}
+  /* after the dashboard finishes a sign-in it tells this page, so the same button just works */
+  window.addEventListener('message',function(ev){if(ev.origin!==location.origin||!ev.data||ev.data.type!=='shd:signedin')return;
+    var n=q('#regNote'),e2=q('#enter');if(n&&e2&&e2.dataset.go!=='office'){n.textContent='Signed in. Press the button to create '+(S.name||'your agent')+'.';e2.firstChild.textContent='Create my agent';e2.disabled=false}})}
+function embedded(){try{return window.parent!==window}catch(e){return false}}
+function authed(){
+  try{if(embedded()&&window.parent.shdIsSignedIn)return !!window.parent.shdIsSignedIn()}catch(e){/* cross-frame guard */}
+  try{return localStorage.getItem('shd_signed_in')==='1'||/^(localhost|127\.0\.0\.1)$/.test(location.hostname)}catch(e){return false}}
+function askSignIn(note,en,who){
+  note.textContent='Sign in to save '+who+'. Everything you chose is kept.';en.firstChild.textContent='Sign in to save '+who;
+  if(embedded()){window.parent.postMessage({type:'shd:signin'},location.origin)}else{location.href='/?gate=1&next=forge'}}
+function announceForged(d){try{if(embedded())window.parent.postMessage({type:'shd:forged',name:S.name||'',id:(d&&((d.operative&&d.operative.id)||d.id))||null},location.origin)}catch(e){/* ignore */}}
+function goWorld(){if(embedded())window.parent.postMessage({type:'shd:goto',view:'world'},location.origin);else location.href='/SHADDAI-WORLD-3D.html'}
+function goOffice(){if(embedded())window.parent.postMessage({type:'shd:goto',view:'office'},location.origin);else location.href='/?view=office'}
 /* FINISH: register the operative with the same endpoint forge.html uses. The server sets the owner from the session (never the client)
    and validates `model` against the 7 council bodies, so this record is what makes the agent appear in Shaddai World. */
 function enterWorld(){
   var rec={codename:(S.name||'Unnamed').slice(0,24),archetype:S.kind.toLowerCase(),model:S.kind,look:Object.assign({archetype:S.kind.toLowerCase(),model:S.kind},S.look==='glow'?{orb:(function(){var G={auto:['#00e5a0','#00b4ff'],gold:['#f0b429','#fb923c'],violet:['#a78bfa','#f43f5e'],green:['#34d399','#fde047'],cyan:['#00f0ff','#7c3aed']}[S.finish]||['#00e5a0','#00b4ff'];return {form:S.glow,c1:G[0],c2:G[1],acc:S.acc,glow:1}})()}:{}),
     brain:{tier:'free',persona:'You are '+(S.name||'an operative')+', a SHADDAI operative. Purpose: '+S.purpose+'.'},tools:Object.keys(S.skills)};
+  rec.look.bodyType='glow';   // made for the office; an agent body for the 3D realm is added later by importing it from the office
   try{localStorage.setItem('shd_forge_demo_agent_v1',JSON.stringify(Object.assign({savedAt:Date.now(),firstJob:S.job},rec)))}catch(e){}
   return fetch('/api/operatives',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(rec)})
-    .then(function(r){return r.json().catch(function(){return {}}).then(function(d){if(!r.ok||d.ok===false)throw new Error((d&&d.error)||('HTTP '+r.status));return d})})}
+    .then(function(r){return r.json().catch(function(){return {}}).then(function(d){if(r.status===401||r.status===403){var er=new Error('sign in required');er.code='AUTH';throw er}if(!r.ok||d.ok===false)throw new Error((d&&d.error)||('HTTP '+r.status));return d})})}
 
-function mount(){
+function mount(){loadLib();
   var pal=$('pal');Object.keys(PAL).forEach(function(k){var b=document.createElement('button');b.type='button';b.textContent=PAL[k].n;b.setAttribute('aria-pressed',k===S.pal);b.onclick=function(){S.pal=k;W?W.setPal(k):0;[].forEach.call(pal.children,function(x){x.setAttribute('aria-pressed',x===b)})};pal.appendChild(b)});
   $('skip').onclick=function(){W&&W.skip();$('skip').style.display='none'};
   $('replay').onclick=function(){W&&W.replay()};

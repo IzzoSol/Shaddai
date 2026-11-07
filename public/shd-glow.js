@@ -26,6 +26,10 @@
     if (look.acc !== 'none') stage.appendChild(h('div', { class: 'gl-acc ' + look.acc + ' on-' + look.form }));
   }
 
+  function skillChips(op) {
+    var list = (op.tools || op.skills || []).map(function (x) { return typeof x === 'string' ? x : (x && (x.name || x.id || x.skill)) || ''; }).filter(Boolean).slice(0, 6); if (!list.length) return null;
+    var row = h('div', { class: 'gl-row gl-skills', 'aria-label': 'Skills' }); list.forEach(function (id) { row.appendChild(h('span', { class: 'gl-skill', text: String(id).replace(/^lib\./, '').replace(/[-_.]/g, ' ') })); }); return row;
+  }
   function agentCard(op, extra) {
     var look = lookOf(op), L = JSON.parse(JSON.stringify(look)), stage = h('div', { class: 'gl-stage' }), pinned = [], status = h('div', { class: 'gl-note' }), badgeRow = h('div', { class: 'gl-badges' });
     drawBody(stage, look);
@@ -52,8 +56,36 @@
     }
     api('GET', '/api/bridge/agents/' + encodeURIComponent(op.id) + '/badges').then(function (d) { if (d.ok) { pinned = d.pinned || []; drawBadges(d.badges); } else badgeRow.appendChild(h('div', { class: 'gl-note', text: 'Achievements appear once the bot bridge is running on this server.' })); });
     var skills = (op.skills || []).length;
-    return h('div', { class: 'gl-card' }, [h('div', { class: 'gl-left' }, [stage, h('button', { type: 'button', class: 'gl-btn ghost', text: 'Style it', onclick: function () { panel.style.display = panel.style.display === 'none' ? 'block' : 'none'; } })]),
-      h('div', { class: 'gl-main' }, [h('div', { class: 'gl-head' }, [h('b', { text: op.name || op.id }), h('span', { class: 'gl-lvl', text: 'Lv ' + (1 + Math.floor(skills / 2)) + ' · ' + skills + ' skill' + (skills === 1 ? '' : 's') }), h('span', { class: 'gl-sub', text: 'body: ' + String(op.model || 'SHADDAI').toLowerCase() })]), extra || null, badgeRow, panel])]);
+    return h('div', { class: 'gl-card' }, [h('div', { class: 'gl-left' }, [stage, h('button', { type: 'button', class: 'gl-btn ghost', text: 'Style it', onclick: function () { panel.style.display = panel.style.display === 'none' ? 'block' : 'none'; } }), h('button', { type: 'button', class: 'gl-btn ghost', text: 'Import to 3D realm', title: 'Pick the agent body it wears in the 3D realm', onclick: function () { importToWorld(op); } })]),
+      h('div', { class: 'gl-main' }, [h('div', { class: 'gl-head' }, [h('b', { text: op.name || op.id }), h('span', { class: 'gl-lvl', text: 'Lv ' + (1 + Math.floor(skills / 2)) + ' · ' + skills + ' skill' + (skills === 1 ? '' : 's') }), h('span', { class: 'gl-sub', text: 'body: ' + String(op.model || 'SHADDAI').toLowerCase() })]), skillChips(op), extra || null, badgeRow, panel])]);
+  }
+
+  /* Import to the 3D realm: the agent keeps its glow body in the office; here you pick the agent body it wears in the 3D realm. */
+  var WORLD_BODIES = [['SHADDAI', 'Sovereign', '#f0b429'], ['NEXUS', 'Architect', '#00b4ff'], ['ORACLE', 'Seer', '#a78bfa'], ['TURTLE', 'Creative', '#2dd4bf'], ['QUILL', 'Scribe', '#fb923c'], ['PIKADON', 'Guardian', '#f43f5e'], ['ZEROX', 'Trader', '#00e5a0']];
+  function importToWorld(op) {
+    var old = document.getElementById('shdImportWorld'); if (old) old.remove();
+    var pick = (op.model && WORLD_BODIES.some(function (b) { return b[0] === String(op.model).toUpperCase(); })) ? String(op.model).toUpperCase() : WORLD_BODIES[0][0];
+    var note = h('div', { class: 'iw-note', role: 'status', 'aria-live': 'polite' }), grid = h('div', { class: 'iw-grid', role: 'radiogroup', 'aria-label': 'Agent body' }), actions = h('div', { class: 'iw-actions' });
+    function paintGrid() { grid.textContent = ''; WORLD_BODIES.forEach(function (b) {
+      var card = h('button', { type: 'button', role: 'radio', 'aria-checked': pick === b[0] ? 'true' : 'false', class: 'iw-card' + (pick === b[0] ? ' on' : ''), style: '--c:' + b[2], onclick: function () { pick = b[0]; paintGrid(); } });
+      card.innerHTML = (window.shdIcons ? window.shdIcons.mark(b[0], b[2], 54) : '') + '<b></b><small></small>'; card.querySelector('b').textContent = b[0]; card.querySelector('small').textContent = b[1]; grid.appendChild(card); }); }
+    function close() { wrap.remove(); }
+    var importBtn = h('button', { type: 'button', class: 'gl-btn', text: 'Import', onclick: function () {
+      importBtn.disabled = true; note.textContent = 'Importing…';
+      var look = Object.assign({}, op.look || {}, { bodyType: 'both', world: { body: pick, imported_at: new Date().toISOString() } });
+      api('PATCH', '/api/operatives/' + encodeURIComponent(op.id), { model: pick, look: look }).then(function (d) {
+        if (!d.ok && /model/i.test(String(d.error || ''))) return api('PATCH', '/api/operatives/' + encodeURIComponent(op.id), { look: look });
+        return d; }).then(function (d) {
+        importBtn.disabled = false;
+        if (!d.ok) { note.textContent = d._s === 401 ? 'Sign in first.' : 'Could not import: ' + (d.error || d._s || 'try again'); return; }
+        op.model = pick; op.look = (d.operative && d.operative.look) || look; note.textContent = (op.name || 'Your agent') + ' is imported. It wears the ' + pick + ' body in the 3D realm and keeps its glow body in your office.';
+        actions.textContent = ''; actions.appendChild(h('button', { type: 'button', class: 'gl-btn', text: 'Enter the 3D realm', onclick: function () { close(); try { if (window.enter3DWorld) window.enter3DWorld(); } catch (e) { /* ignore */ } } })); actions.appendChild(h('button', { type: 'button', class: 'gl-btn ghost', text: 'Stay in the office', onclick: close })); }); } });
+    actions.appendChild(importBtn); actions.appendChild(h('button', { type: 'button', class: 'gl-btn ghost', text: 'Cancel', onclick: close }));
+    var wrap = h('div', { id: 'shdImportWorld', class: 'iw-wrap', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Import to the 3D realm' }, [h('div', { class: 'iw-scrim', onclick: close }), h('div', { class: 'iw-card' }, [
+      h('div', { class: 'iw-kick', text: 'IMPORT' }), h('h3', { class: 'iw-h', text: 'Send ' + (op.name || 'your agent') + ' to the 3D realm' }),
+      h('p', { class: 'iw-sub', text: 'Your glow bot stays in the office. In the 3D realm it wears an agent body. Pick one.' }), grid, note, actions])]);
+    document.body.appendChild(wrap); paintGrid(); wrap.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+    var f = wrap.querySelector('.iw-card.on'); if (f) f.focus();
   }
 
   /* Forge a bot: opens the 3D Forge from the dashboard and notices when a new agent shows up */
@@ -70,5 +102,5 @@
       list().then(function (l) { var fresh = l.filter(function (o) { return base.indexOf(o.id) < 0; }); if (fresh.length) { base = l.map(function (o) { return o.id; }); toast(fresh[0].name + ' was forged. Open Worlds → My Space to give it a glow.'); if (typeof onNew === 'function') onNew(fresh); try { if (window.shdWorlds && document.getElementById('swTab-space') && document.getElementById('swTab-space').offsetParent) window.shdWorlds.loadSpace(); } catch (e) { /* ignore */ } } });
     }, 4000);
   }
-  window.shdGlow = { agentCard: agentCard, forgeButton: forgeButton, lookOf: lookOf, sane: sane, GRADS: GRADS, FORMS: FORMS, ACCS: ACCS };
+  window.shdGlow = { importToWorld: importToWorld, agentCard: agentCard, forgeButton: forgeButton, lookOf: lookOf, sane: sane, GRADS: GRADS, FORMS: FORMS, ACCS: ACCS };
 })();
