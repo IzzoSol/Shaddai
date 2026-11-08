@@ -63,10 +63,9 @@ html::after{ content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
 #mktChips .mkt{ border:1px solid rgba(232,196,92,.35); color:#f4e3b2; background:rgba(232,196,92,.07);
   font-size:11px; font-weight:700; letter-spacing:.08em; padding:4px 9px; border-radius:3px;
   box-shadow:inset 0 0 12px rgba(232,196,92,.06); white-space:nowrap; }
-#ticker{ color:var(--ink-soft); text-shadow:0 1px 2px rgba(0,0,0,.6); overflow:hidden; }
-#ttrack{ position:relative; width:max-content; min-width:100%; display:flex; gap:34px; padding-right:34px;
-  animation:ticker 180s linear infinite; will-change:transform; }
-@keyframes ticker{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
+#ticker{ overflow:hidden; color:var(--ink-soft); text-shadow:0 1px 2px rgba(0,0,0,.6); }
+#ttrack{ position: relative; width: 200%; animation: ticker 180s linear infinite; }
+@keyframes ticker { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
 
 /* ── header ────────────────────────────────────────────────────────────── */
 header{ flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:8px;
