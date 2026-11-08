@@ -369,7 +369,7 @@
     { id: 'ev2', t: 'Cosmetic Wager Bracket', s: 'Entry: 1 skin', pin: { x: 0, z: 1500, label: 'Colosseum Door', kind: 'Colosseum' } }
   ];
   var RACE_ENTRY = { casual: 25, ranked: 50 };
-  function raceRows() { var WR = window.WorldRace; return WR ? Object.keys(WR.CIRCUITS).map(function (k) { var c = WR.CIRCUITS[k]; return { id: 'race:' + k, t: '🏁 ' + c.name, s: c.laps + ' laps · ' + c.gates.length + ' gates' + (c.prime ? ' · PRIME' : ''), tag: 'RACE' }; }) : []; }
+  function raceRows() { var WR = window.WorldRace; return WR ? Object.keys(WR.CIRCUITS).map(function (k) { var c = WR.CIRCUITS[k]; return { id: 'race:' + k, t: '' + c.name, s: c.laps + ' laps · ' + c.gates.length + ' gates' + (c.prime ? ' · PRIME' : ''), tag: 'RACE' }; }) : []; }
   function raceDetail(id) {
     var WR = window.WorldRace, c = WR.CIRCUITS[id.slice(5)], kinds = {}; c.gates.forEach(function (g) { kinds[g.kind] = (kinds[g.kind] || 0) + 1; });
     return '<h3>' + esc(c.name.toUpperCase()) + '</h3><div>' + c.laps + ' laps · rooms: ' + esc(c.rooms.join(' → ')) + '</div><div style="margin:6px 0">Gates: ' + Object.keys(kinds).map(function (k) { return kinds[k] + ' ' + k; }).join(' · ') + '</div>' +
@@ -486,7 +486,7 @@
     var SC = window.WorldShowcase, rows = [], items = SC ? SC.list(null, { status: 'ok' }) : [];
     LISTINGS.forEach(function (l) { rows.push({ id: l.id, t: l.t, s: l.s, tag: l.price + ' ' + l.cur }); });
     items.forEach(function (i) { rows.push({ id: 'sc:' + i.id, t: i.title, s: SC.KINDS[i.kind].label + ' · ' + i.creator, tag: i.priceSparks ? i.priceSparks + ' SPK' : 'FREE' }); });
-    if (SC) { Object.keys(SC.KINDS).forEach(function (k) { rows.push({ id: 'sub:' + k, t: '＋ Submit ' + SC.KINDS[k].label.toLowerCase(), s: 'shown in ' + SC.KINDS[k].where, tag: 'YOURS' }); });
+    if (SC) { Object.keys(SC.KINDS).forEach(function (k) { rows.push({ id: 'sub:' + k, t: 'Submit ' + SC.KINDS[k].label.toLowerCase(), s: 'shown in ' + SC.KINDS[k].where, tag: 'YOURS' }); });
       SC.ads.slots.forEach(function (a) { var st = SC.ads.state(a.id); rows.push({ id: 'ad:' + a.id, t: 'Ad space · ' + a.name, s: 'shaddai city', tag: st.free ? SC.TUNE.adPricePerDay + '/day' : 'TAKEN' }); }); }
     return {
       title: 'MARKET', list: rows, empty: 'Nothing listed right now.',
