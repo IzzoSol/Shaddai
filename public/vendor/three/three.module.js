@@ -16261,7 +16261,9 @@ class WebGLRenderer {
 						const materialProperties = properties.get( material );
 						const program = materialProperties.currentProgram;
 
-						if ( program.isReady() ) {
+						// SHADDAI 2026-11-08: a material whose program was never built (lost/failed WebGL context, swapped mid-warmup) left
+						// program undefined -> 'reading isReady' crash inside the timer (uncatchable by the caller). Treat it as done.
+						if ( program === undefined || program.isReady() ) {
 
 							// remove any programs that report they're ready to use from the list
 							materials.delete( material );

@@ -33,7 +33,7 @@ t('build sets data-style; Settings has the row + buttons; API exported', () => {
   assert(/id: 'st-navistyle'/.test(src) && /data-a="style:' \+ s\[0\]/.test(src) && /\/\^style:\/\.test\(a\)\) \{ setStyle\(a\.slice\(6\)\)/.test(src));
   assert(/style: getStyle, setStyle: setStyle/.test(src));
 });
-t('world page loads the bumped Navi', () => { const h = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'SHADDAI-WORLD-3D.html'), 'utf8'); assert(h.includes('/world-navi.js?v=20261107a')); });
+t('world page loads the bumped Navi', () => { const h = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'SHADDAI-WORLD-3D.html'), 'utf8'); assert(h.includes('/world-navi.js?v=20261107c')); });
 
 (async () => { for (const [n, fn] of tests) { try { await fn(); pass++; console.log('  ok ', n); } catch (e) { console.log('  FAIL', n, '\n      ', e.message); process.exitCode = 1; } }
   console.log(`world-navi-styles: ${pass} passed, ${tests.length - pass} failed`); })();

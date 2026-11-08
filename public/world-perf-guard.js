@@ -10,13 +10,14 @@
  */
 (function (root) {
   'use strict';
-  var MIN_PX = 2.0, HIDE_LAYER = 31, SCAN_S = 1.5, STEP_S = 0.25;   // scan often: skinned meshes must be guarded before their first frustum test
+  var MIN_PX = (function () { var m = typeof location !== 'undefined' && /[?&]specpx=([\d.]+)/.exec(location.search); return m ? +m[1] : 2.0; })(), HIDE_LAYER = 31, SCAN_S = 1.5, STEP_S = 0.25;   // scan often: skinned meshes must be guarded before their first frustum test
   var S = { on: true, list: [], scanT: 0, stepT: 0, hidden: 0, checked: 0, badSkins: [], o: null, sph: null, v: null };
   function path(o) { var a = []; for (var x = o; x && x.parent; x = x.parent) a.push(x.name || x.type); return a.reverse().join(' > ').slice(0, 160); }
   function guardSkin(m) {
-    if (m.userData.__skinChecked) return; m.userData.__skinChecked = true;
+    if (m.userData.__skinChecked || m.userData.__skinClean) return; m.userData.__skinChecked = true;   // __skinClean: verified council GLB (world-main SPIKE FIX)
     var g = m.geometry, si = g && g.attributes && g.attributes.skinIndex, nb = m.skeleton && m.skeleton.bones ? m.skeleton.bones.length : 0, bad = !m.skeleton;
-    if (si && !bad) { var a = si.array, mx = 0; for (var i = 0; i < a.length; i++) if (a[i] > mx) mx = a[i]; bad = mx >= nb; }
+    // per component, not si.array: an interleaved attribute's array is the whole shared vertex buffer (positions, uvs...) = false "255"
+    if (si && !bad) { var mx = 0; for (var i = 0; i < si.count; i++) for (var c = 0; c < si.itemSize; c++) { var b = si.getComponent(i, c); if (b > mx) mx = b; } bad = mx >= nb; }
     if (!bad && m.skeleton) for (var k = 0; k < nb; k++) if (!m.skeleton.bones[k]) { bad = true; break; }
     if (!bad) return;
     if (!g.boundingSphere) g.computeBoundingSphere(); m.boundingSphere = g.boundingSphere.clone(); m.boundingBox = null;
@@ -65,7 +66,7 @@
       SM.prototype.__pgPatched = true;
       var abt = SM.prototype.applyBoneTransform;   // 2026-10-24: raycasts hit the same bad-skin crash (three.core applyBoneTransform -> bones[i].matrixWorld)
       if (abt) SM.prototype.applyBoneTransform = function (index, target) { var sk = this.skeleton, si = this.geometry && this.geometry.attributes.skinIndex;
-        if (sk && si) { for (var c = 0; c < 4; c++) { var bi = si.getComponent(index, c); if (bi >= sk.bones.length || !sk.bones[bi]) return target; } } return abt.call(this, index, target); };
+        if (sk && si && !this.userData.__skinClean) { for (var c = 0; c < 4; c++) { var bi = si.getComponent(index, c); if (bi >= sk.bones.length || !sk.bones[bi]) return target; } } return abt.call(this, index, target); };
       ['computeBoundingSphere', 'computeBoundingBox'].forEach(function (fn) {
         var orig = SM.prototype[fn]; if (!orig) return;
         SM.prototype[fn] = function () {
@@ -80,6 +81,6 @@
     }
     scan(); return api;
   }
-  var api = { attach: attach, tick: tick, enable: enable, stats: function () { return { on: S.on, checked: S.checked, hidden: S.hidden, badSkins: S.badSkins.slice() }; } };
+  var api = { attach: attach, tick: tick, enable: enable, setMinPx: function (px) { if (px > 0) { MIN_PX = +px; step(); } return MIN_PX; }, stats: function () { return { on: S.on, checked: S.checked, hidden: S.hidden, badSkins: S.badSkins.slice() }; } };
   root.WorldPerfGuard = api;
 })(typeof window !== 'undefined' ? window : this);

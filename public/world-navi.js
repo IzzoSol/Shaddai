@@ -199,6 +199,11 @@
     try { localStorage.setItem('shd_navi_style', v); } catch (e) { }
     if (root) root.setAttribute('data-style', v); emit('style'); return true;
   }
+  function getSwivel() { try { return localStorage.getItem('shd_navi_swivel') === '1'; } catch (e) { return false; } }
+  function setSwivel(on) {
+    try { localStorage.setItem('shd_navi_swivel', on ? '1' : '0'); } catch (e) { }
+    if (!on && root) { root.style.removeProperty('--nvSw'); root.style.removeProperty('--nvTilt'); }   // back to the static HOLO ARC pose
+  }
   var root, elL, elR, elSw, elKp, elNodes, elCore, modalEl;
   function build() {
     var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
@@ -209,7 +214,8 @@
       '<div class="plate pl" id="nvL"></div><div class="plate pr" id="nvR"></div>' +
       '<div class="swivel" id="nvSw"></div><div class="kpis" id="nvKp"></div><div class="slots" id="nvSlots"></div><div class="x" id="nvX">ESC · CLOSE</div></div>';
     document.body.appendChild(root);
-    root.addEventListener('mousemove', function (e) {   // HOLO ARC swivel: pointer parallax (cheap: two CSS vars, no layout)
+    root.addEventListener('mousemove', function (e) {   // HOLO ARC swivel: pointer parallax (cheap: two CSS vars, no layout). OFF by default (owner 2026-11-07), Settings > Navi swivel
+      if (!getSwivel()) return;
       var sw = ((e.clientX / innerWidth) - 0.5) * 18, tl = 14 - ((e.clientY / innerHeight) - 0.5) * 12;
       root.style.setProperty('--nvSw', sw.toFixed(1) + 'deg'); root.style.setProperty('--nvTilt', tl.toFixed(1) + 'deg');
     });
@@ -363,7 +369,7 @@
     { id: 'ev2', t: 'Cosmetic Wager Bracket', s: 'Entry: 1 skin', pin: { x: 0, z: 1500, label: 'Colosseum Door', kind: 'Colosseum' } }
   ];
   var RACE_ENTRY = { casual: 25, ranked: 50 };
-  function raceRows() { var WR = window.WorldRace; return WR ? Object.keys(WR.CIRCUITS).map(function (k) { var c = WR.CIRCUITS[k]; return { id: 'race:' + k, t: '🏁 ' + c.name, s: c.laps + ' laps · ' + c.gates.length + ' gates' + (c.prime ? ' · PRIME' : ''), tag: 'RACE' }; }) : []; }
+  function raceRows() { var WR = window.WorldRace; return WR ? Object.keys(WR.CIRCUITS).map(function (k) { var c = WR.CIRCUITS[k]; return { id: 'race:' + k, t: '' + c.name, s: c.laps + ' laps · ' + c.gates.length + ' gates' + (c.prime ? ' · PRIME' : ''), tag: 'RACE' }; }) : []; }
   function raceDetail(id) {
     var WR = window.WorldRace, c = WR.CIRCUITS[id.slice(5)], kinds = {}; c.gates.forEach(function (g) { kinds[g.kind] = (kinds[g.kind] || 0) + 1; });
     return '<h3>' + esc(c.name.toUpperCase()) + '</h3><div>' + c.laps + ' laps · rooms: ' + esc(c.rooms.join(' → ')) + '</div><div style="margin:6px 0">Gates: ' + Object.keys(kinds).map(function (k) { return kinds[k] + ' ' + k; }).join(' · ') + '</div>' +
@@ -426,18 +432,21 @@
     var H = window.WorldHudPrefs, p = H ? H.get() : {}, list = [];
     var cs = getStyle(), cst = STYLES.filter(function (s) { return s[0] === cs; })[0];
     list.push({ id: 'st-navistyle', t: 'Navi style', s: cst[1] + ' · ' + cst[2], tag: 'STYLE' });
+    list.push({ id: 'st-swivel', t: 'Navi swivel', s: getSwivel() ? 'panels follow the pointer' : 'panels stay still', tag: getSwivel() ? 'ON' : 'OFF' });
     list.push({ id: 'st-controls-list', t: 'Controls', s: 'every key, in one place (F1 flashes them in game)', tag: 'VIEW' });
     list.push({ id: 'st-cam', t: 'Camera', s: 'look speed x' + (p.lookSens || 1).toFixed(1) + (p.invertY ? ' · inverted' : ''), tag: 'TUNE' });
     if (H) Object.keys(H.LABELS).forEach(function (k) { list.push({ id: 'st-' + k, t: H.LABELS[k], s: p[k] ? 'shown' : 'hidden', tag: p[k] ? 'ON' : 'OFF' }); });
     return { title: 'SETTINGS', list: list, empty: 'Settings are loading.',
       detail: function (id) {
         if (id === 'st-navistyle') return '<h3>NAVI STYLE</h3>' + STYLES.map(function (s) { return '<div style="margin:8px 0"><button class="b' + (s[0] === getStyle() ? ' g' : '') + '" data-a="style:' + s[0] + '">' + s[1] + (s[0] === getStyle() ? ' ✓' : '') + '</button><div style="font-size:12px;opacity:.8">' + s[2] + '</div></div>'; }).join('');
+        if (id === 'st-swivel') return '<h3>NAVI SWIVEL</h3><div>' + (getSwivel() ? 'The panels tilt to follow the pointer.' : 'The panels stay still.') + '</div><button class="b g" data-a="swivel">' + (getSwivel() ? 'TURN OFF' : 'TURN ON') + '</button>';
         if (id === 'st-controls-list') return '<h3>CONTROLS</h3><div style="line-height:1.9">' + [['W A S D', 'move'], ['Shift', 'run'], ['Space', 'jump'], ['Mouse', 'look'], ['E', 'interact / doors / lifts'], ['V', 'camera (1st / 3rd person)'], ['O', 'hoverboard'], ['I', 'mounts & travel'], ['U', 'maglev'], ['Y', 'NAVI'], ['H', 'map'], ['Tab', 'cursor'], ['B', 'venue board (Colosseum / Garage)'], ['L', 'Listening Room (on the ring)'], ['F1', 'flash these controls'], ['Esc', 'menu']].map(function (r) { return '<b>' + r[0] + '</b> &nbsp;' + r[1]; }).join('<br>') + '</div>';
         if (id === 'st-cam') return '<h3>CAMERA</h3><div>Look speed: x' + (p.lookSens || 1).toFixed(1) + '</div><button class="b" data-a="slow">SLOWER</button> <button class="b" data-a="fast">FASTER</button><div style="margin-top:8px">Invert Y: ' + (p.invertY ? 'on' : 'off') + '</div><button class="b" data-a="inv">TOGGLE INVERT</button>';
         var k = String(id).slice(3); return H && H.LABELS[k] ? '<h3>' + esc(H.LABELS[k]) + '</h3><div>' + (p[k] ? 'Shown on screen.' : 'Hidden for a clean screen.') + '</div><button class="b g" data-a="tog">' + (p[k] ? 'HIDE' : 'SHOW') + '</button>' : '';
       },
       act: function (id, a) {
         if (/^style:/.test(a)) { setStyle(a.slice(6)); render(); return; }
+        if (a === 'swivel') { setSwivel(!getSwivel()); render(); return; }
         if (!H) return; var q = H.get();
         if (id === 'st-cam') { if (a === 'slow') H.set('lookSens', Math.max(0.3, Math.round((q.lookSens - 0.1) * 10) / 10)); if (a === 'fast') H.set('lookSens', Math.min(3, Math.round((q.lookSens + 0.1) * 10) / 10)); if (a === 'inv') H.set('invertY', !q.invertY); }
         else if (a === 'tog') { var k = String(id).slice(3); H.set(k, !q[k]); }
@@ -477,7 +486,7 @@
     var SC = window.WorldShowcase, rows = [], items = SC ? SC.list(null, { status: 'ok' }) : [];
     LISTINGS.forEach(function (l) { rows.push({ id: l.id, t: l.t, s: l.s, tag: l.price + ' ' + l.cur }); });
     items.forEach(function (i) { rows.push({ id: 'sc:' + i.id, t: i.title, s: SC.KINDS[i.kind].label + ' · ' + i.creator, tag: i.priceSparks ? i.priceSparks + ' SPK' : 'FREE' }); });
-    if (SC) { Object.keys(SC.KINDS).forEach(function (k) { rows.push({ id: 'sub:' + k, t: '＋ Submit ' + SC.KINDS[k].label.toLowerCase(), s: 'shown in ' + SC.KINDS[k].where, tag: 'YOURS' }); });
+    if (SC) { Object.keys(SC.KINDS).forEach(function (k) { rows.push({ id: 'sub:' + k, t: 'Submit ' + SC.KINDS[k].label.toLowerCase(), s: 'shown in ' + SC.KINDS[k].where, tag: 'YOURS' }); });
       SC.ads.slots.forEach(function (a) { var st = SC.ads.state(a.id); rows.push({ id: 'ad:' + a.id, t: 'Ad space · ' + a.name, s: 'shaddai city', tag: st.free ? SC.TUNE.adPricePerDay + '/day' : 'TAKEN' }); }); }
     return {
       title: 'MARKET', list: rows, empty: 'Nothing listed right now.',

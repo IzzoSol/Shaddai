@@ -231,7 +231,7 @@ window.buildWorldActions = function (opts) {
   var chip = document.createElement('div');
   chip.style.cssText = 'position:fixed;top:12px;right:14px;z-index:70;font-family:system-ui,sans-serif;font-size:13px;font-weight:800;color:#e8c45c;background:rgba(6,10,16,.72);border:1px solid rgba(232,196,92,.4);border-radius:8px;padding:6px 12px;pointer-events:none;letter-spacing:.06em';
   document.body.appendChild(chip);
-  function hud() { chip.textContent = '⚡ ' + sparks() + ' SPARKS'; }
+  function hud() { chip.textContent = sparks() + ' SPARKS'; }
   hud();
 
   var toast = document.createElement('div');
@@ -340,7 +340,7 @@ window.buildWorldActions = function (opts) {
     else if (spinDeg > 150) { name = '180 SPIN'; pts += 12; }
     if (!name) { name = 'OLLIE'; pts = 5; }
     if (air > 1.1) { name = 'BIG AIR ' + name; pts = Math.round(pts * 1.6); }
-    if (pts > 0) { addSparks(pts); pop(name + '  +' + pts + ' ⚡'); }
+    if (pts > 0) { addSparks(pts); pop(name + '  +' + pts + ' SPARKS'); }
   }
 
   function dismountAllowed() {
@@ -459,7 +459,7 @@ window.buildWorldActions = function (opts) {
   // ── SHOP MODAL (B) + ARENA MODAL (E at colosseum) ──
   var modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;background:rgba(4,6,12,.72);backdrop-filter:blur(4px)';
-  modal.innerHTML = '<div style="min-width:320px;max-width:400px;background:linear-gradient(160deg,#0d1220,#06080b);border:1px solid rgba(232,196,92,.45);border-radius:14px;padding:22px 24px;font-family:system-ui,sans-serif;color:#e8c45c;box-shadow:0 0 40px rgba(232,196,92,.15)"><div id="shTitle" style="font-weight:900;letter-spacing:.14em;font-size:15px;margin-bottom:14px"></div><div id="shBody" style="font-size:13px;color:#9fe8c4;line-height:1.55"></div><div id="shBtns" style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap"></div><div style="margin-top:10px;text-align:right;font-size:11px;opacity:.8">⚡ <span id="shBal"></span></div></div>';
+  modal.innerHTML = '<div style="min-width:320px;max-width:400px;background:linear-gradient(160deg,#0d1220,#06080b);border:1px solid rgba(232,196,92,.45);border-radius:14px;padding:22px 24px;font-family:system-ui,sans-serif;color:#e8c45c;box-shadow:0 0 40px rgba(232,196,92,.15)"><div id="shTitle" style="font-weight:900;letter-spacing:.14em;font-size:15px;margin-bottom:14px"></div><div id="shBody" style="font-size:13px;color:#9fe8c4;line-height:1.55"></div><div id="shBtns" style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap"></div><div style="margin-top:10px;text-align:right;font-size:11px;opacity:.8">SP <span id="shBal"></span></div></div>';
   document.body.appendChild(modal);
   function closeModal() { modal.style.display = 'none'; }
   modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
@@ -485,9 +485,9 @@ window.buildWorldActions = function (opts) {
     var G = garage();
     var boardT = G.boardTier, carT = G.carTier;
     var btns = [];
-    if (boardT < 3) btns.push({ label: 'BOARD TIER ' + (boardT + 1) + ' — ' + (boardT === 1 ? 300 : 600) + '⚡', disabled: sparks() < (boardT === 1 ? 300 : 600), fn: function () { buy('BOARD T' + (boardT + 1), boardT === 1 ? 300 : 600, function () { G.boardTier++; saveGarage(G); }); } });
-    if (!G.car) btns.push({ label: 'HOVERCAR — 500⚡', disabled: sparks() < 500, fn: function () { buy('HOVERCAR', 500, function () { G.car = 1; saveGarage(G); seatCar(); }); } });
-    else if (carT < 4) btns.push({ label: 'CAR TIER ' + (carT + 1) + ' — ' + (carT === 1 ? 500 : 900) + '⚡', disabled: sparks() < (carT === 1 ? 500 : 900), fn: function () { buy('CAR T' + (carT + 1), carT === 1 ? 500 : 900, function () { G.carTier++; saveGarage(G); }); } });
+    if (boardT < 3) btns.push({ label: 'BOARD TIER ' + (boardT + 1) + ' — ' + (boardT === 1 ? 300 : 600) + 'SP', disabled: sparks() < (boardT === 1 ? 300 : 600), fn: function () { buy('BOARD T' + (boardT + 1), boardT === 1 ? 300 : 600, function () { G.boardTier++; saveGarage(G); }); } });
+    if (!G.car) btns.push({ label: 'HOVERCAR — 500SP', disabled: sparks() < 500, fn: function () { buy('HOVERCAR', 500, function () { G.car = 1; saveGarage(G); seatCar(); }); } });
+    else if (carT < 4) btns.push({ label: 'CAR TIER ' + (carT + 1) + ' — ' + (carT === 1 ? 500 : 900) + 'SP', disabled: sparks() < (carT === 1 ? 500 : 900), fn: function () { buy('CAR T' + (carT + 1), carT === 1 ? 500 : 900, function () { G.carTier++; saveGarage(G); }); } });
     btns.push({ label: 'CLOSE', fn: closeModal });
     openModal('◈ SHADDAI GARAGE',
       'Hoverboard <b>Tier ' + boardT + '</b> — speed ×' + BOARD_SPD[boardT] + (G.car ? '<br>Hovercar <b>Tier ' + carT + '</b> — speed ×' + CAR_SPD[carT] + ' <span style="opacity:.7">(E to ride, parked at the beacon)</span>' : '<br>Hovercar — <span style="opacity:.7">not owned</span>')
@@ -503,17 +503,18 @@ window.buildWorldActions = function (opts) {
   function signedUp() { try { return localStorage.getItem(SIGN_KEY) === '1'; } catch (e) { return false; } }
   /* MODE SCREEN (owner 2026-10-23: "normal entry walk in, and when you get to the colosseum inside doors THEN you get asked what mode or
    * spectate, tournament sign up (coming soon)"). Opens at the lobby's inner arena doors (or B inside). Each mode opens its own picker. */
+  window.__openArenaDesk = function () { openArena(); };
   function openArena() {
     var ev = window.__colosseumEvent || null, T = tourney(), btns = [];
-    btns.push({ label: '👁  SPECTATE · walk into the arena', fn: closeModal });
-    if (window.__hoverLeague && window.__hoverLeague.open) btns.push({ label: '🛹  HOVER LEAGUE · hover-skate match', fn: function () { closeModal(); try { window.__hoverLeague.open(); } catch (e) { pop('Hover League is warming up, try again in a moment.', '#ff6a5a'); } } });
-    if (window.__naval && window.__naval.open) btns.push({ label: '⚓  NAVAL BATTLE · flood the arena', fn: function () { closeModal(); try { window.__naval.open(); } catch (e) { pop('Naval battle is warming up, try again in a moment.', '#ff6a5a'); } } });
-    btns.push({ label: '♟  PRACTICE · classic tactics (free)', fn: function () { closeModal(); var X = window.__worldTactics; if (X && X.startFight({ entry: 0, pool: 0, tier: 0 })) pop('Practice match: no entry fee, no pool.', '#c084fc'); else pop('Practice is loading, try again in a moment.', '#ff6a5a'); } });
-    if (ev && ev.fee > 0) btns.push({ label: '🏆  ENTER EVENT · ' + (ev.name || 'tournament') + ' (' + ev.fee + '⚡)', disabled: sparks() < ev.fee, fn: function () { addSparks(-ev.fee); var t = tourney(); t.fightPool += ev.fee; t.fightN++; saveTourney(t); closeModal(); pop('ENTERED: ' + (ev.name || 'event'), '#e8c45c'); } });
-    else btns.push({ label: '🏆  TOURNAMENT SIGN-UP · coming soon', disabled: true, fn: function () {} });
-    openModal('⚔ SHADDAI COLOSSEUM',
-      '<b>Choose how you enter.</b> Spectating and practice are always free.' + (ev ? '<br><b>EVENT LIVE: ' + (ev.name || 'Tournament') + '</b> · pool ' + T.fightPool + '⚡' : '') +
-      '<br><span style="opacity:.65;font-size:11px">B reopens this screen anywhere inside the Colosseum.</span>', btns);
+    btns.push({ label: 'SPECTATE · broadcast cameras (] next, X back)', fn: function () { closeModal(); if (window.ShaddaiSpectate) window.ShaddaiSpectate.watch('colosseum', 0); } });
+    if (window.__hoverLeague && window.__hoverLeague.open) btns.push({ label: 'HOVER LEAGUE · hover-skate match', fn: function () { closeModal(); try { window.__hoverLeague.open(); } catch (e) { pop('Hover League is warming up, try again in a moment.', '#ff6a5a'); } } });
+    if (window.__naval && window.__naval.open) btns.push({ label: 'NAVAL BATTLE · flood the arena', fn: function () { closeModal(); try { window.__naval.open(); } catch (e) { pop('Naval battle is warming up, try again in a moment.', '#ff6a5a'); } } });
+    btns.push({ label: 'PRACTICE · classic tactics (free)', fn: function () { closeModal(); var X = window.__worldTactics; if (X && X.startFight({ entry: 0, pool: 0, tier: 0 })) pop('Practice match: no entry fee, no pool.', '#c084fc'); else pop('Practice is loading, try again in a moment.', '#ff6a5a'); } });
+    if (ev && ev.fee > 0) btns.push({ label: 'ENTER EVENT · ' + (ev.name || 'tournament') + ' (' + ev.fee + 'SP)', disabled: sparks() < ev.fee, fn: function () { addSparks(-ev.fee); var t = tourney(); t.fightPool += ev.fee; t.fightN++; saveTourney(t); closeModal(); pop('ENTERED: ' + (ev.name || 'event'), '#e8c45c'); } });
+    else btns.push({ label: 'TOURNAMENT SIGN-UP · coming soon', disabled: true, fn: function () {} });
+    openModal('SHADDAI COLOSSEUM',
+      '<b>Choose how you enter.</b> Spectating and practice are always free.' + (ev ? '<br><b>EVENT LIVE: ' + (ev.name || 'Tournament') + '</b> · pool ' + T.fightPool + 'SP' : '') +
+      '<br><span style="opacity:.65;font-size:11px">The ARENA DESK in the lobby (or B anywhere inside) reopens this screen.</span>', btns);
   }
 
   addEventListener('keydown', function (e) {
@@ -545,7 +546,7 @@ window.buildWorldActions = function (opts) {
     if (!inColosseum()) { _doorArmed = true; return; }
     var I = window.COLOSSEUM_ISLAND, p = P(); if (!I || !p) return;
     var dx = (p.x - I.x) / I.U, dz = (p.z - I.z) / I.U - (I.lobbyZ0 + 2), d = Math.hypot(dx, dz);   // arena metres; inner doors = lobby back wall
-    if (_doorArmed && d < 7 && Math.abs(dx) < 10) { _doorArmed = false; openArena(); }
+    if (_doorArmed && d < 7 && Math.abs(dx) < 10) { _doorArmed = false; }   /* 2026-11-07: no auto-pop - the ARENA DESK kiosk in the lobby opens the mode screen (world-colosseum.js) */
     else if (!_doorArmed && d > 14) _doorArmed = true;
   }, 300);
 

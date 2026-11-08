@@ -711,9 +711,73 @@
     addEventListener('keydown', function (e) {
       if (!group.visible || /input|textarea/i.test((document.activeElement || {}).tagName || '')) return;
       // 2026-11-05: was C, which is also the dodge roll (player controller) + hoverboard roll-right, so every roll in the arena switched cameras
-      if (e.code === 'BracketRight') { var n = spectate(camIdx + 1); if (window.__toast) window.__toast('📺 ' + n + '  ·  ] next · X back'); }
-      if (e.code === 'KeyX' && camIdx >= 0) spectate(-1);
+      if (e.code === 'BracketRight') { var n = spectate(camIdx + 1); if (window.__toast) window.__toast('Camera: ' + n + '   ] next · X back'); specPost(); }
+      if (e.code === 'KeyX' && camIdx >= 0) { spectate(-1); specPost(); }
     });
+
+    // ── ARENA DESK KIOSK (owner 2026-11-07: "the menu doesn't just pop up, you go to the kiosk in the lobby before the doors") ──
+    // A lit desk stands in the lobby 5 m before the inner arena doors. Walk up (3.5 m) -> "E · ARENA DESK" prompt -> E opens the mode screen
+    // (world-actions.js openArena via window.__openArenaDesk). Replaces the old auto-pop at the doors.
+    var DESK_L = [-7, 0, LOBBY_Z0 + 7], deskW = W2(DESK_L[0], 0, DESK_L[2]), deskNear = false, deskTip = null;
+    (function buildDesk() {
+      var d = new THREE.Group(); d.name = 'colosseum-arena-desk';
+      var sc = group.scale.x || 1, toL = function (w) { return [(w[0] - group.position.x) / sc, (w[1] - group.position.y) / sc, (w[2] - group.position.z) / sc]; };
+      var lp = toL(deskW); d.position.set(lp[0], lp[1], lp[2]); d.scale.setScalar(U / sc);   // children below are in metres
+      var dark = new THREE.MeshStandardMaterial({ color: 0x14181f, roughness: 0.5, metalness: 0.6 });
+      var gold = new THREE.MeshStandardMaterial({ color: 0xe8c45c, emissive: 0xe8c45c, emissiveIntensity: 0.9, roughness: 0.3, metalness: 0.8 });
+      var base = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.05, 0.7), dark); base.position.y = 0.525; d.add(base);
+      var trim = new THREE.Mesh(new THREE.BoxGeometry(1.64, 0.05, 0.74), gold); trim.position.y = 1.07; d.add(trim);
+      var cv = document.createElement('canvas'); cv.width = 512; cv.height = 256; var cx = cv.getContext('2d');
+      cx.fillStyle = '#06080b'; cx.fillRect(0, 0, 512, 256); cx.strokeStyle = '#e8c45c'; cx.lineWidth = 6; cx.strokeRect(8, 8, 496, 240);
+      cx.fillStyle = '#e8c45c'; cx.font = 'bold 64px sans-serif'; cx.textAlign = 'center'; cx.fillText('ARENA DESK', 256, 112);
+      cx.fillStyle = '#27e0ff'; cx.font = '30px sans-serif'; cx.fillText('MODES  ·  SPECTATE  ·  EVENTS', 256, 172);
+      var tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+      var scr = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.75), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }));
+      scr.position.set(0, 1.55, -0.05); scr.rotation.x = -0.25; d.add(scr);
+      var post = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.5, 0.08), gold); post.position.set(0, 1.3, -0.15); d.add(post);
+      var ring = new THREE.Mesh(new THREE.RingGeometry(1.5, 1.62, 48), new THREE.MeshBasicMaterial({ color: 0xe8c45c, transparent: true, opacity: 0.85, toneMapped: false, depthWrite: false }));
+      ring.rotation.x = -Math.PI / 2; ring.position.y = 0.02; d.add(ring);   // TURTLE: findable from the lobby doors
+      cx.fillStyle = '#27e0ff'; cx.fillRect(156, 128, 200, 3); tex.needsUpdate = true;
+      d.rotation.y = 0;   // screen faces +z = toward the lobby entrance, so you read it walking in
+      group.add(d);
+    })();
+    function deskPrompt(on) {
+      if (on === deskNear) return; deskNear = on;
+      if (!deskTip) { deskTip = document.createElement('div'); deskTip.style.cssText = 'position:fixed;left:50%;bottom:22%;transform:translateX(-50%);z-index:60;padding:8px 16px;background:rgba(6,8,11,.88);border:1px solid #e8c45c;border-radius:8px;color:#e8c45c;font:600 13px system-ui,sans-serif;letter-spacing:.08em;pointer-events:none;display:none'; deskTip.innerHTML = '<b style="color:#fff">E</b> &nbsp;ARENA DESK'; document.body.appendChild(deskTip); }
+      deskTip.style.display = on ? 'block' : 'none';
+    }
+    setInterval(function () {
+      var D = window.__w3dDebug, p = D && D.playerPos;
+      if (!group.visible || !p || camIdx >= 0) { deskPrompt(false); return; }
+      deskPrompt(Math.hypot(p.x - deskW[0], p.z - deskW[2]) < 3.5 * U);
+    }, 200);
+    addEventListener('keydown', function (e) {
+      if (e.code !== 'KeyE' || !deskNear || e.repeat || /input|textarea/i.test((document.activeElement || {}).tagName || '')) return;
+      if (window.__openArenaDesk) { e.stopImmediatePropagation(); window.__openArenaDesk(); }
+    }, true);
+
+    // ── SPECTATE API for the dashboard (2026-11-07) ──
+    // window.ShaddaiSpectate.watch('colosseum', cam) / .next() / .stop() / .state(). The dashboard can also drive it without code access:
+    //   URL  SHADDAI-WORLD-3D.html?spectate=colosseum[&cam=N]          (opens straight into the broadcast cams)
+    //   BroadcastChannel('shd-world') or window.postMessage  {type:'spectate', venue:'colosseum', cam:N}   (cam -1 = stop)
+    // Every change answers {type:'spectate-state', venue, cam, name, cams:[names]} on the same channel + to window.parent (iframe embed).
+    var specBC = null; try { specBC = new BroadcastChannel('shd-world'); } catch (e) { }
+    function specState() { return { type: 'spectate-state', venue: 'colosseum', cam: camIdx, name: camIdx >= 0 ? cams[camIdx].name : null, cams: cams.map(function (c) { return c.name; }) }; }
+    function specPost() { var s = specState(); try { if (specBC) specBC.postMessage(s); } catch (e) { } try { if (window.parent && window.parent !== window) window.parent.postMessage(s, '*'); } catch (e) { } return s; }
+    function watch(cam) {
+      var go = function () { var n = spectate(Math.max(0, cam | 0)); if (window.__toast) window.__toast('Spectating: ' + n + '   ] next camera · X back'); return specPost(); };
+      if (group.visible) return go();
+      if (window.__interiorsEnter) window.__interiorsEnter('COLOSSEUM');
+      var tries = 0, t = setInterval(function () { if (group.visible || ++tries > 50) { clearInterval(t); if (group.visible) go(); } }, 200);
+      return specState();
+    }
+    function onSpec(m) { if (!m || m.type !== 'spectate' || (m.venue && m.venue !== 'colosseum')) return; if (m.cam != null && m.cam < 0) { spectate(-1); specPost(); } else watch(m.cam || 0); }
+    if (specBC) specBC.addEventListener('message', function (e) { onSpec(e.data); });
+    addEventListener('message', function (e) { if (e.origin === location.origin || (window.parent && e.source === window.parent)) onSpec(e.data); });
+    window.ShaddaiSpectate = { venues: ['colosseum'], watch: function (v, cam) { return v && v !== 'colosseum' ? null : watch(cam); }, next: function () { return watch(camIdx + 1); },
+      stop: function () { spectate(-1); return specPost(); }, state: specState };
+    (function () { var q = /[?&]spectate=colosseum\b/.test(location.search), m = /[?&]cam=(\d+)/.exec(location.search); if (!q) return;
+      var t = setInterval(function () { if (window.__loadPlayable && window.__interiorsEnter) { clearInterval(t); watch(m ? +m[1] : 0); } }, 1000); })();
 
     // ── environment swap: the outdoor world's fog + view distance are tuned for the open map; inside this
     //    800-unit bowl they turn everything navy. While the arena is visible use a light warm haze + long view. ──

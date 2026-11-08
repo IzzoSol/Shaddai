@@ -103,9 +103,16 @@ fetch('/api/operatives').then(r=>r.ok?r.json():null).then(d=>{
 const world = { ready:false, placeAgents:()=>{} };
 
 // ── Three.js scene ──
+if(window.__noWebGL) throw new Error('[world] WebGL2 unavailable - showing the no-WebGL screen instead of loading');   // see WEBGL GATE in the page head
 const canvas = document.getElementById('c3d');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias:false, powerPreference:'high-performance' });  // AA off: the bloom composer already softens edges, and MSAA under a render-target composer is wasted GPU
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));  // cap for smoothness on high-DPI screens
+// CONTEXT LOSS (2026-11-08, spec §1.2): phones / iframes drop the GL context under memory pressure. Was a silent freeze; now a clear reload card.
+canvas.addEventListener('webglcontextlost', function(e){ e.preventDefault(); console.warn('[world] WebGL context lost');
+  if(document.getElementById('glLost')) return; const d = document.createElement('div'); d.id = 'glLost';
+  d.style.cssText = 'position:fixed;inset:0;z-index:2147483646;display:flex;align-items:center;justify-content:center;background:rgba(5,9,20,.92);color:#e6edf3;font:15px system-ui,sans-serif;text-align:center';
+  d.innerHTML = '<div><div style="color:#e8c45c;font:700 18px system-ui;letter-spacing:.1em">GRAPHICS RESET</div><p style="opacity:.8">The device paused the 3D view to save memory.</p><a href="" style="display:inline-block;margin-top:8px;padding:10px 18px;background:#e8c45c;color:#050914;border-radius:8px;text-decoration:none;font-weight:700">RELOAD</a> <a href="/" style="display:inline-block;margin-top:8px;padding:10px 18px;border:1px solid #27e0ff;color:#27e0ff;border-radius:8px;text-decoration:none">SIMPLE MODE</a></div>';
+  document.body.appendChild(d); }, false);
 renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.97;  // ATMOSPHERE POLISH: 0.85→0.9→0.97 — lifts the muddy mid-tones so agents/buildings read richer & more cohesive, still <1.0 so ACES keeps the night mood and never blows out the blacks/highlights.
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -714,6 +721,10 @@ const agentBodyLoader = new GLTFLoader(__loadMgr); agentBodyLoader.setDRACOLoade
  * index at bone 0 (weights renormalised; zero-weight slots stay zero). Valid rigs are untouched. ?skinfix=0 = off. */
 function _repairSkins(root){ let fixed = 0;
   root.traverse(function(o){ if(!o.isSkinnedMesh || !o.skeleton) return; const n = o.skeleton.bones.length, si = o.geometry.attributes.skinIndex, sw = o.geometry.attributes.skinWeight; if(!si || !sw) return;
+    // 2026-11-07 SPIKE ROOT CAUSE: SHADDAI/TURTLE/ZEROX ship INTERLEAVED skin attributes (52-byte stride). This repair misread them and wrote
+    // "fixed" indices/weights over good data = the exploded council bodies (measured 271-447 u tall; 7 u with ?skinfix=0). Those files are
+    // verified clean offline (max joint 21 of 24, weights sum 1), so interleaved attributes are left untouched.
+    if(si.isInterleavedBufferAttribute || sw.isInterleavedBufferAttribute) return;
     for(let v = 0; v < si.count; v++){ let bad = false, sum = 0; const w = [0,0,0,0];
       for(let j = 0; j < 4; j++){ const b = si.getComponent(v, j); w[j] = sw.getComponent(v, j); if(b >= n || !o.skeleton.bones[b]){ w[j] = 0; bad = true; } sum += w[j]; }
       if(!bad) continue; fixed++;
@@ -723,7 +734,13 @@ function _repairSkins(root){ let fixed = 0;
   return fixed; }
 window.__repairSkins = _repairSkins;
 if(!/[?&]skinfix=0/.test(location.search) && !GLTFLoader.prototype.__skinFix){ const _gl0 = GLTFLoader.prototype.load;   /* every loader (agents, NPCs, bots, creatures) */
-  GLTFLoader.prototype.load = function(url, onLoad, onProgress, onError){ return _gl0.call(this, url, function(g){ try{ if(g && g.scene) window.__skinRepaired = (window.__skinRepaired || 0) + _repairSkins(g.scene); }catch(e){ console.warn('[skin-repair]', e && e.message); } onLoad && onLoad(g); }, onProgress, onError); };
+  // 2026-11-07 SPIKE FIX: these council GLBs are verified clean offline (max joint <= 23 of 24, weights sum 1). With the repair + the perf-guard
+  // skin override active they rendered exploded (measured 271-447 u tall); with both off all 7 agents measured a normal 7 u. Clean files are
+  // tagged __skinClean and both runtime patches leave them alone. NEXUS/ORACLE/QUILL (meshopt, zero-weight index 255 slots) still get repaired.
+  const _CLEAN_SKIN = /\/assets\/agents\/(SHADDAI|TURTLE|ZEROX|PIKADON)\.glb/i;
+  GLTFLoader.prototype.load = function(url, onLoad, onProgress, onError){ return _gl0.call(this, url, function(g){ try{ if(g && g.scene){
+      if(_CLEAN_SKIN.test(String(url))) g.scene.traverse(function(o){ if(o.isSkinnedMesh) o.userData.__skinClean = true; });
+      else window.__skinRepaired = (window.__skinRepaired || 0) + _repairSkins(g.scene); } }catch(e){ console.warn('[skin-repair]', e && e.message); } onLoad && onLoad(g); }, onProgress, onError); };
   GLTFLoader.prototype.__skinFix = true; }
 
 // ── BUILD THE ORGANIZED WORLD: walkable terrain + biome regions/water + real vehicles ──
@@ -779,7 +796,7 @@ window.__worldBuilt = false;
   }catch(e){ console.warn('world core build failed:', e && e.message); }
   // MAP v4: load terrain → water, THEN the heightAt-dependent realm modules + buildings (below).
   window.__mapV4Ready = !MAP_V4 ? Promise.resolve(null) : (_ldBegin('terrain'), _loadScript('/world-terrain-v4.js?v=20261105a'))
-    .then(()=> _loadScript('/world-water.js?v=20261023e'))
+    .then(()=> _loadScript('/world-water.js?v=20261107b'))
     .then(()=> window.buildWorldTerrainV4({ THREE, scene, camera, base: /[?&]waterways=1\b/.test(location.search) ? '/assets/terrain-ww/' : '/assets/terrain/' }))   // ?waterways=1: patched heightmap + Harbor Ring Canal (tools/carve-ring-canal.py)
     .then(function(api){
       _v4T = api; _v4Meta = api.meta || null; window.__w3dDebug.terrainV4 = api;
@@ -5331,7 +5348,7 @@ function _updateGovernor(dt){
 _applyQualityTier(_Q.tier);
 // Public handles: the Navi caps quality while open, the ?perf=1 HUD forces tiers (keys 1-5, 0 = auto). cooldownS holds the governor off so it can't fight the request.
 window.__setQualityTier = function(i, cooldownS){ _applyQualityTier(i); _Q.cooldown = cooldownS == null ? 8 : cooldownS; _Q.below45 = 0; _Q.above58 = 0; };
-if(window.__isMobile) try{ window.__setQualityTier(2, 20); }catch(_){}   // MOBILE: start at MEDIUM (owner: keep quality); the governor adjusts from there - the crash fix is skipping the merge, not low quality
+if(window.__isMobile) try{ window.__setQualityTier(1, 20); }catch(_){}   /* 2026-11-08: phones start LOW (owner: 'doesn't work on mobile'); the governor steps up after 20 s if fps allows */   // MOBILE: start at MEDIUM (owner: keep quality); the governor adjusts from there - the crash fix is skipping the merge, not low quality
 window.__getQualityTier = function(){ return _Q.tier; };
 // ── MAGLEV SHORTCUT: press U to go to the nearest maglev station (walk onto the glowing lift pad, press E, pick a destination / ride the ring) ──
 addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) return; const tg = e.target && e.target.tagName; if(tg === 'INPUT' || tg === 'TEXTAREA') return;
