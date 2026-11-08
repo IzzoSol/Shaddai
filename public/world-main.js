@@ -789,7 +789,7 @@ window.__worldBuilt = false;
   }catch(e){ console.warn('world core build failed:', e && e.message); }
   // MAP v4: load terrain → water, THEN the heightAt-dependent realm modules + buildings (below).
   window.__mapV4Ready = !MAP_V4 ? Promise.resolve(null) : (_ldBegin('terrain'), _loadScript('/world-terrain-v4.js?v=20261105a'))
-    .then(()=> _loadScript('/world-water.js?v=20261107a'))
+    .then(()=> _loadScript('/world-water.js?v=20261107b'))
     .then(()=> window.buildWorldTerrainV4({ THREE, scene, camera, base: /[?&]waterways=1\b/.test(location.search) ? '/assets/terrain-ww/' : '/assets/terrain/' }))   // ?waterways=1: patched heightmap + Harbor Ring Canal (tools/carve-ring-canal.py)
     .then(function(api){
       _v4T = api; _v4Meta = api.meta || null; window.__w3dDebug.terrainV4 = api;

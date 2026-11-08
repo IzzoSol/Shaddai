@@ -146,8 +146,14 @@
   // Tileable 128² COMPLEX slope fields (Re∂h/∂x, Im∂h/∂x, Re∂h/∂z, Im∂h/∂z) over a 33.3 m tile (Tidewater
   // cascade 3). All components of one band share ω, so slope(t) = Re·cos ωt + Im·sin ωt reproduces true
   // travelling waves. Separable e^{ik·x} tables keep the bake at ~10M multiply-adds (~30 ms).
+  // PERF 2026-11-07: split in two. detailComps (cheap, consumes the seeded rand stream) stays on the main thread; accumulateDetail
+  // (the ~2 s pixel loop) is self-contained (Math only) so it can run in the bake Worker below. Same math = same bytes.
   function bakeDetailBand(p, L, nLo, nHi, size, rand) {
-    var dk = TWO_PI / L, comps = [], nx, nz, i;
+    var dc = detailComps(p, L, nLo, nHi, rand), r = accumulateDetail(dc.comps, size);
+    return { data: r.data, scale: r.scale, omega: dc.omega };
+  }
+  function detailComps(p, L, nLo, nHi, rand) {
+    var dk = TWO_PI / L, comps = [], nx, nz;
     for (nx = -nHi; nx <= nHi; nx++) for (nz = -nHi; nz <= nHi; nz++) {
       var n = Math.sqrt(nx * nx + nz * nz); if (n < nLo || n >= nHi) continue;
       var kx = nx * dk, kz = nz * dk, k = n * dk, w = Math.sqrt(G * k), th = Math.atan2(kz, kx);
@@ -158,6 +164,10 @@
     }
     var aMax = comps.reduce(function (m, c) { return Math.max(m, c[5]); }, 0);
     comps = comps.filter(function (c) { return c[5] > aMax * 0.01; });   // upwind leftovers add nothing visible
+    return { comps: comps, omega: Math.sqrt(G * dk * (nLo + nHi) * 0.5) };
+  }
+  function accumulateDetail(comps, size) {
+    var TWO_PI = Math.PI * 2, i;
     var cosT = new Float32Array(size), sinT = new Float32Array(size);
     for (i = 0; i < size; i++) { cosT[i] = Math.cos(TWO_PI * i / size); sinT[i] = Math.sin(TWO_PI * i / size); }
     var f = new Float32Array(size * size * 4);
@@ -179,7 +189,30 @@
     var m = 1e-6; for (i = 0; i < f.length; i++) m = Math.max(m, Math.abs(f[i]));
     var u8 = new Uint8Array(f.length);
     for (i = 0; i < f.length; i++) u8[i] = Math.max(0, Math.min(255, Math.round((f[i] / m * 0.5 + 0.5) * 255)));
-    return { data: u8, scale: m, omega: Math.sqrt(G * dk * (nLo + nHi) * 0.5) };
+    return { data: u8, scale: m };
+  }
+
+  // Bake Worker: runs accumulateDetail + bakeFoam off the main thread (~6.5 s of the boot freeze measured 2026-11-07).
+  // Built from the functions' own source, so there is one copy of the math. ?waterworker=0 or no Worker = old synchronous bake.
+  var _bakeWorker = null, _bakeSeq = 0, _bakeCb = {};
+  function bakeAsync(job, args, done) {
+    var sync = function () { done(job === 'foam' ? bakeFoam(args.size) : accumulateDetail(args.comps, args.size)); };
+    if (typeof Worker === 'undefined' || typeof Blob === 'undefined' || (typeof location !== 'undefined' && /[?&]waterworker=0\b/.test(location.search))) return sync();
+    try {
+      if (!_bakeWorker) {
+        var src = accumulateDetail.toString() + '\n' + bakeFoam.toString() +
+          '\nonmessage=function(e){var d=e.data,r=d.job==="foam"?{data:bakeFoam(d.size)}:accumulateDetail(d.comps,d.size);postMessage({id:d.id,data:r.data,scale:r.scale},[r.data.buffer]);};';
+        var url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+        _bakeWorker = new Worker(url); URL.revokeObjectURL(url);
+        _bakeWorker.onmessage = function (e) { var cb = _bakeCb[e.data.id]; delete _bakeCb[e.data.id]; if (cb) cb.done(e.data); };
+        _bakeWorker.onerror = function (ev) {   // worker failed: finish every pending job synchronously (never leave the water flat)
+          console.warn('[water] bake worker failed, baking on the main thread:', ev && ev.message); var pend = _bakeCb; _bakeCb = {}; _bakeWorker = null;
+          Object.keys(pend).forEach(function (k) { pend[k].sync(); });
+        };
+      }
+      var id = ++_bakeSeq; _bakeCb[id] = { done: done, sync: sync };
+      _bakeWorker.postMessage({ id: id, job: job, comps: args.comps, size: args.size });
+    } catch (e) { sync(); }
   }
 
   // ───────────────────────────── foam mat (CPU port of FoamTexture.js compute kernel) ──
@@ -654,17 +687,31 @@
     var rand = mulberry((opts.seed || 1337) + 7), lp = sysParams(LOCAL_SYS);   // (detail bake timed below with the upload)
     var TILE1 = 33.3, TILE2 = 7.1, DS = 128;   // Tidewater cascade tile sizes (m)
     var timings = { waves: Math.round(performance.now() - t0) }, tq = performance.now();
-    var bandA = bakeDetailBand(lp, TILE1, 3, 8, DS, rand), bandB = bakeDetailBand(lp, TILE1, 8, 20, DS, rand);
+    // comps on the main thread (same rand order as before), pixel loops in the bake Worker. Until a bake lands the texture is neutral:
+    // detail = 128 grey with scale ~0 (flat, no ripples), foam = 0 (no foam). Results fill the same textures in place.
+    var dcA = detailComps(lp, TILE1, 3, 8, rand), dcB = detailComps(lp, TILE1, 8, 20, rand);
+    var bandA = { scale: 1e-6, omega: dcA.omega }, bandB = { scale: 1e-6, omega: dcB.omega };
     var aniso = renderer && renderer.capabilities ? Math.min(8, renderer.capabilities.getMaxAnisotropy()) : 4;
     function repTex(data, size) {
       var t = new THREE.DataTexture(data, size, size, THREE.RGBAFormat, THREE.UnsignedByteType);
       t.wrapS = t.wrapT = THREE.RepeatWrapping; t.generateMipmaps = true; t.minFilter = THREE.LinearMipmapLinearFilter;
       t.magFilter = THREE.LinearFilter; t.anisotropy = aniso; t.needsUpdate = true; return t;
     }
-    var texA = repTex(bandA.data, DS), texB = repTex(bandB.data, DS);
-    timings.detail = Math.round(performance.now() - tq); tq = performance.now();
-    var foamTex = repTex(bakeFoam(256), 256);
-    timings.foam = Math.round(performance.now() - tq); timings.bodies = [];
+    var texA = repTex(new Uint8Array(DS * DS * 4).fill(128), DS), texB = repTex(new Uint8Array(DS * DS * 4).fill(128), DS);
+    var foamTex = repTex(new Uint8Array(256 * 256 * 4), 256);
+    timings.detail = Math.round(performance.now() - tq); timings.foam = 0; timings.bodies = [];
+    var tBake = performance.now(), bakesLeft = 3;
+    function landed(tex, r, k) {
+      tex.image.data.set(r.data); tex.needsUpdate = true;
+      if (k >= 0 && U && U.uDetailScale) { if (k === 0) U.uDetailScale.value.z = r.scale; else U.uDetailScale.value.w = r.scale; }
+      if (--bakesLeft === 0) timings.bakeAsyncMs = Math.round(performance.now() - tBake);
+    }
+    // deferred one tick so U (declared below) exists when a synchronous fallback returns immediately
+    setTimeout(function () {
+      bakeAsync('detail', { comps: dcA.comps, size: DS }, function (r) { landed(texA, r, 0); });
+      bakeAsync('detail', { comps: dcB.comps, size: DS }, function (r) { landed(texB, r, 1); });
+      bakeAsync('foam', { size: 256 }, function (r) { landed(foamTex, r, -1); });
+    }, 0);
     var r12 = Math.sqrt(TILE1 / TILE2);   // same pattern shrunk → k × L1/L2 → ω × sqrt(L1/L2)
 
     var U = {   // shared {value} objects: one time/sun update drives every body
