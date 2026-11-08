@@ -2,6 +2,16 @@
 <html lang="en">
 <head>
 <script>window.__isMobile = (function(){ try{ return /[?&]mobile=1/.test(location.search) || (matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) < 900); }catch(e){ return false; } })();</script>
+<script>/* WEBGL GATE (2026-11-08, spec §1.2): no WebGL2 = no 3D download, a plain message instead of a white canvas (in-app browsers like Muse, old phones). */
+(function(){ var ok=false; try{ var c=document.createElement('canvas'); ok=!!(window.WebGL2RenderingContext && c.getContext('webgl2')); }catch(e){}
+  if(ok || /[?&]nogate=1/.test(location.search)) return; window.__noWebGL = true;
+  document.addEventListener('DOMContentLoaded', function(){ var d=document.createElement('div'); d.id='noWebGL';
+    d.style.cssText='position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;background:#050914;color:#e6edf3;font:15px/1.5 system-ui,sans-serif;text-align:center;padding:24px';
+    d.innerHTML='<div style="max-width:420px"><div style="color:#e8c45c;font:700 22px system-ui;letter-spacing:.12em;margin-bottom:10px">SHADDAI WORLD</div>'+
+      '<p>This browser can't draw the 3D world (it needs WebGL2).</p><p style="opacity:.75;font-size:13px">In-app browsers often block it. Open this page in Chrome, Safari or Firefox, or use Simple Mode.</p>'+
+      '<div style="margin-top:18px;display:flex;gap:10px;justify-content:center"><a href="" style="padding:10px 18px;border:1px solid #27e0ff;color:#27e0ff;border-radius:8px;text-decoration:none">RETRY</a>'+
+      '<a href="/" style="padding:10px 18px;background:#e8c45c;color:#050914;border-radius:8px;text-decoration:none;font-weight:700">SIMPLE MODE</a></div></div>';
+    document.body.appendChild(d); }); })();</script>
 <script src="/beta-api-shim.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
@@ -17,12 +27,12 @@
 window.__INTRO_CINEMATIC = /[?&]intro=cinematic(?:&|$|#)/.test(location.search); if(!window.__INTRO_CINEMATIC) document.documentElement.classList.add('intro-lite');</script>
 <script type="importmap">
 { "imports": {
-  "three": "/vendor/three/three.module.js",
+  "three": "/vendor/three/three.module.js?v=20261108a",
   "three/addons/": "/vendor/three/addons/"
 } }
 </script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%276%27 fill=%27%2306080b%27/%3E%3Cpath d=%27M9 21c0 3 3 4 7 4s7-1 7-4-3-4-7-4-7-1-7-4 3-4 7-4 7 1 7 4%27 fill=%27none%27 stroke=%27%2300ff9c%27 stroke-width=%273%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
-<link rel="modulepreload" href="/vendor/three/three.module.js"><link rel="modulepreload" href="/vendor/three/three.core.js"><link rel="modulepreload" href="/vendor/three/addons/loaders/GLTFLoader.js">
+<link rel="modulepreload" href="/vendor/three/three.module.js?v=20261108a"><link rel="modulepreload" href="/vendor/three/three.core.js"><link rel="modulepreload" href="/vendor/three/addons/loaders/GLTFLoader.js">
 <style>
   :root{ --gold:#ffcf4a; --cyan:#27e0ff; --void:#04060d; }
   *{margin:0;padding:0;box-sizing:border-box}
@@ -432,13 +442,13 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 </template>
 <script>/* BOOT BUNDLES (2026-10-24, docs/SPEED-BRIEF-20261024.md): the scripts in #boot-scripts above are minified + concatenated in this order into
    public/dist by `node tools/build-dist.cjs` (rerun after editing any of them). ?bundle=0 = load the original files one by one. */
-window.__BOOT_BUNDLES = ["/dist/boot-1.87edd4e5b2.js","/dist/boot-2.b05b81765b.js","/dist/boot-3.18ab80db0e.js"];
+window.__BOOT_BUNDLES = ["/dist/boot-1.c282aa9dad.js","/dist/boot-2.b05b81765b.js","/dist/boot-3.18ab80db0e.js"];
 (function(){ var useB = window.__BOOT_BUNDLES.length && !/[?&]bundle=0/.test(location.search), h = "";
   if (useB) window.__BOOT_BUNDLES.forEach(function(s){ h += '<script src="' + s + '"><\/script>'; });
   else h = document.getElementById("boot-scripts").innerHTML;
   document.write(h); })();
 </script>
-<script type="module" src="/world-main.js?v=66c322a3a8"></script>
+<script type="module" src="/world-main.js?v=1c71bd9827"></script>
 <!-- ════════ AGENT DISTRICTS ════════ -->
 <div id="district" class="dist"><div class="dist-card">
   <button class="dist-x" onclick="closeDistrict()">✕ EXIT</button>

@@ -10,7 +10,7 @@
  */
 (function (root) {
   'use strict';
-  var MIN_PX = 2.0, HIDE_LAYER = 31, SCAN_S = 1.5, STEP_S = 0.25;   // scan often: skinned meshes must be guarded before their first frustum test
+  var MIN_PX = (function () { var m = typeof location !== 'undefined' && /[?&]specpx=([\d.]+)/.exec(location.search); return m ? +m[1] : 2.0; })(), HIDE_LAYER = 31, SCAN_S = 1.5, STEP_S = 0.25;   // scan often: skinned meshes must be guarded before their first frustum test
   var S = { on: true, list: [], scanT: 0, stepT: 0, hidden: 0, checked: 0, badSkins: [], o: null, sph: null, v: null };
   function path(o) { var a = []; for (var x = o; x && x.parent; x = x.parent) a.push(x.name || x.type); return a.reverse().join(' > ').slice(0, 160); }
   function guardSkin(m) {
@@ -81,6 +81,6 @@
     }
     scan(); return api;
   }
-  var api = { attach: attach, tick: tick, enable: enable, stats: function () { return { on: S.on, checked: S.checked, hidden: S.hidden, badSkins: S.badSkins.slice() }; } };
+  var api = { attach: attach, tick: tick, enable: enable, setMinPx: function (px) { if (px > 0) { MIN_PX = +px; step(); } return MIN_PX; }, stats: function () { return { on: S.on, checked: S.checked, hidden: S.hidden, badSkins: S.badSkins.slice() }; } };
   root.WorldPerfGuard = api;
 })(typeof window !== 'undefined' ? window : this);
