@@ -77,13 +77,17 @@
         try{ if(u){ localStorage.setItem('shd_signed_in','1'); if(u.email) localStorage.setItem('shd_email',u.email); if(u.displayName) localStorage.setItem('shd_displayName',u.displayName);
           // Unify identity: your account uid becomes shd_userid, so gallery/rooms/office follow your account across devices.
           try{ var _uid=u.uid, _old=localStorage.getItem('shd_userid'); if(_uid){ if(_old&&_old!==_uid){ try{ var _r=localStorage.getItem('shaddai.rooms.'+_old); if(_r&&!localStorage.getItem('shaddai.rooms.'+_uid)) localStorage.setItem('shaddai.rooms.'+_uid,_r); }catch(_e){} try{ if(window.__shdMergeIdentity) window.__shdMergeIdentity(_old,_uid); }catch(_e){} } localStorage.setItem('shd_userid',_uid); } }catch(_e){}
-          // Monthly spark stipend: $30/month = 300 sparks
-          try{ var _sparks = Number(localStorage.getItem('shd_sparks')||0||localStorage.getItem('shaddai.sparks')||0); localStorage.setItem('shd_sparks', _sparks + 300); }catch(_e){}
+          // No local Sparks mint here: the old code added +300 to
+          // localStorage on EVERY sign-in (not monthly), which is exactly
+          // how the City panel came to disagree with the header by
+          // +300/load. Sparks live only in the server ledger now
+          // (/api/economy/balance, read by shd-sparks.js).
           // Dispatch storage event so nav updates immediately
           try{ window.dispatchEvent(new Event('storage')); }catch(_e){}
         } else { localStorage.setItem('shd_signed_in','0'); } }catch(e){}
         if(typeof window.shdRenderAuth==='function') window.shdRenderAuth();   // close the gate IMMEDIATELY on sign-in
         window.SHD_AUTH.token=u? await u.getIdToken().catch(function(){return null;}) : null;   // fetch token after (never blocks the UI)
+        try{ if(window.SHD_AUTH.token) localStorage.setItem('shd_token', window.SHD_AUTH.token); }catch(e){}   // persist for shd-chat.js + other shd_token readers (removed on shdSignOut)
         if(window.SHDTier&&window.SHDTier.onAuthChange) window.SHDTier.onAuthChange();   // re-resolve guest/free/pro after auth settles
       });
       // If we returned from a Google redirect sign-in, surface any error (e.g. unauthorized-domain) in the gate.
@@ -94,7 +98,7 @@
   }catch(e){ /* offline / blocked → stays local-first */ window.SHD_AUTH.ready=true; }
   // Sign-in: open the email/password gate (Google disabled — cross-domain cookie issue on onrender).
   window.shdSignIn=function(){ try{ if(window.shdGate&&shdGate.show){ shdGate.show(); return; } }catch(e){} };
-  window.shdSignOut=async function(){ try{ await firebase.auth().signOut(); if(typeof notify==='function')notify('Signed out'); localStorage.setItem('shd_signed_in','0'); localStorage.removeItem('shd_mode'); sessionStorage.removeItem('shd_guest'); location.reload(); }catch(e){} };
+  window.shdSignOut=async function(){ try{ await firebase.auth().signOut(); if(typeof notify==='function')notify('Signed out'); localStorage.setItem('shd_signed_in','0'); localStorage.removeItem('shd_mode'); localStorage.removeItem('shd_token'); sessionStorage.removeItem('shd_guest'); location.reload(); }catch(e){} };
 })();
 
 // ── GUEST MODE: no memory persistence ────────────────────────────────────────
@@ -5346,13 +5350,13 @@ window.enter3DWorld=function(){
       }
       function _dashCitySync() {
         try {
-          var sp = parseFloat(localStorage.getItem('shd_sparks')||'0');
+          var sp = (window.shdSparks && typeof window.shdSparks.value === 'function') ? window.shdSparks.value() : null; // ONE ledger: the header's /api/economy balance, never localStorage
           var sig = parseFloat(localStorage.getItem('shaddai.signal')||'100');
           var city = []; try{ city=JSON.parse(localStorage.getItem('shaddai.city')||'[]'); }catch(_){}
           var uid = localStorage.getItem('shd_signed_in');
           var myPlots = city.filter(function(p){return p.owner===uid;});
           var rooms=0; myPlots.forEach(function(p){if(p.rooms)rooms+=p.rooms.length;});
-          var dsp=document.getElementById('dashSparks'); if(dsp) dsp.textContent=sp>=1000?(sp/1000).toFixed(1)+'k':sp.toFixed(0);
+          var dsp=document.getElementById('dashSparks'); if(dsp) dsp.textContent=(sp==null?'—':(sp>=1000?(sp/1000).toFixed(1)+'k':sp.toFixed(0)));
           var dsg=document.getElementById('dashSignal'); if(dsg){dsg.textContent=sig.toFixed(0)+'%'; dsg.style.color=sig>60?'#00e5a0':sig>30?'#ffb020':'#ef4444';}
           var dpl=document.getElementById('dashPlots'); if(dpl) dpl.textContent=myPlots.length+' / 30';
           var drm=document.getElementById('dashRooms'); if(drm) drm.textContent=rooms;
@@ -21026,7 +21030,7 @@ function renderTasks() {
   if (af !== 'all') tasks = tasks.filter(t => t.agent === af);
   if (!tasks.length) { el.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;font-size:11px">No tasks match current filter.</p>'; return; }
   el.innerHTML = tasks.map(t => `
-    <div class="task-row" onclick="toggleTask(${t.id})">
+    <div class="task-row" data-id="${t.id}" onclick="toggleTask(${t.id})">
       <div class="task-check ${t.done ? 'done' : ''}"></div>
       <div class="task-info">
         <div class="task-title" style="${t.done ? 'text-decoration:line-through;opacity:0.5' : ''}">${escH(t.title)}</div>
@@ -28206,10 +28210,14 @@ function notify(msg) {
 
 // ================== FILE SIDEBAR ==================
 const FILE_FOLDERS = [
-  { name: '🎮 Dreamers Games', path: 'C:\\Users\\Brittany\\Desktop\\MASTERY FOLDER\\02_GAME' },
-  { name: '📊 Dashboards', path: 'C:\\Users\\Brittany\\OneDrive\\Desktop\\02 Agents\\SHADDAI' },
-  { name: '️️ Projects', path: 'C:\\Users\\Brittany\\OneDrive\\Desktop\\THE DREAMERS ECOSYSTEM' },
-  { name: '📝 Obsidian', path: 'C:\\Users\\Brittany\\OneDrive\\Desktop\\OBSIDIAN\\SHADDAI OBSIDIAN' }
+  // Server-side folders, relative to the repo root the server starts from
+  // (npm start runs backend/server-production.js from the repo root, and
+  // /api/scan-folders only allows paths under the server's home directory).
+  // The previous hard-coded Windows paths from another machine could never exist there.
+  { name: '📊 Server data', path: 'backend/data' },
+  { name: '🌐 Public site', path: 'public' },
+  { name: '📚 Docs', path: 'docs' },
+  { name: '🤖 Agents', path: 'agents' }
 ];
 
 let fileTreeData = [];
@@ -28226,7 +28234,7 @@ async function initFileSidebar() {
       signal: AbortSignal.timeout(10000)
     });
     const data = await resp.json();
-    fileTreeData = data.folders || [];
+    fileTreeData = (data.folders || []).map((f, i) => ({ name: (FILE_FOLDERS[i] && FILE_FOLDERS[i].name) || f.name, files: f.files || [] }));
     renderFileTree();
   } catch(e) {
     document.getElementById('fileTree').innerHTML = '<div style="padding:12px;font-size:10px;color:var(--danger)">Server offline — start node server.js</div>';
@@ -28235,7 +28243,8 @@ async function initFileSidebar() {
 
 function renderFileTree() {
   const tree = document.getElementById('fileTree');
-  if (!tree || !fileTreeData.length) return;
+  if (!tree) return;
+  if (!fileTreeData.length) { tree.innerHTML = '<div style="padding:12px;font-size:10px;color:var(--text-muted)">No folders found on the server.</div>'; return; }
   let html = '';
   fileTreeData.forEach((folder, idx) => {
     const expanded = localStorage.getItem('file_sidebar_expanded_' + idx) === 'true';
@@ -29860,11 +29869,13 @@ function switchForgeTab(tab) {
 }
 function _whLoadKpis() {
   var uid = localStorage.getItem('shd_signed_in') || '';
-  var sparks = 0;
-  try { var e = JSON.parse(localStorage.getItem('shaddai.econ')||'{}'); sparks = e.sparks||0; } catch(_){}
-  var sel = document.querySelector('#sparksDisplay,[data-sparks]');
-  if (sel) { var n=parseInt(sel.textContent); if(!isNaN(n)) sparks=n; }
-  var ks = document.getElementById('whKpiSparks'); if(ks) ks.textContent = sparks.toLocaleString();
+  // ONE ledger: the header's server balance (shd-sparks.js, /api/economy).
+  // The old code read localStorage['shaddai.econ'].sparks, which the world
+  // never writes, then overrode it from #sparksDisplay's text — two local
+  // numbers that never agreed with the header. Unavailable -> dash, never 0.
+  if (window.shdSparks && typeof window.shdSparks.refresh === 'function') window.shdSparks.refresh();
+  var sparks = (window.shdSparks && typeof window.shdSparks.value === 'function') ? window.shdSparks.value() : null;
+  var ks = document.getElementById('whKpiSparks'); if(ks) ks.textContent = (sparks==null?'—':sparks.toLocaleString());
   var sig = parseInt(localStorage.getItem('shaddai.signal')||'100'); if(isNaN(sig)) sig=100;
   var ksg = document.getElementById('whKpiSignal'); if(ksg) ksg.textContent = sig;
   var rooms = []; try { rooms = JSON.parse(localStorage.getItem('shaddai.rooms.'+uid)||'[]'); } catch(_){}
@@ -29939,10 +29950,10 @@ function _whLoadRooms() {
 }
 function _whLoadEconomy() {
   var econ = {}; try { econ = JSON.parse(localStorage.getItem('shaddai.econ')||'{}'); } catch(_){}
-  var sparks = econ.sparks||0;
-  var sel = document.querySelector('#sparksDisplay,[data-sparks]');
-  if (sel) { var n=parseInt(sel.textContent); if(!isNaN(n)) sparks=n; }
-  var sv = document.getElementById('whSparksVal'); if(sv) sv.textContent = sparks.toLocaleString();
+  // ONE ledger: the header's server balance (shd-sparks.js, /api/economy) —
+  // the old econ.sparks local number never agreed with the header.
+  var sparks = (window.shdSparks && typeof window.shdSparks.value === 'function') ? window.shdSparks.value() : null;
+  var sv = document.getElementById('whSparksVal'); if(sv) sv.textContent = (sparks==null?'—':sparks.toLocaleString());
   var earnings = econ.earnings||{};
   var ep=document.getElementById('whEarnPlots'); if(ep) ep.textContent='+'+( earnings.plots||0);
   var et=document.getElementById('whEarnTasks'); if(et) et.textContent='+'+( earnings.tasks||0);
@@ -30439,10 +30450,10 @@ function renderOfficeGallery(){
 // COMMAND HUB ENGINE — wires HUD strip + city-empire cards
 // ═══════════════════════════════════════════════════════
 function initCommandHub() {
-  // Sparks
-  var sparks = parseFloat(localStorage.getItem('shd_sparks') || '0');
+  // Sparks — ONE ledger: the header's server balance (shd-sparks.js).
+  var sparks = (window.shdSparks && typeof window.shdSparks.value === 'function') ? window.shdSparks.value() : null;
   var el = document.getElementById('officeHudSparks');
-  if (el) el.textContent = sparks >= 1000 ? (sparks/1000).toFixed(1)+'k ⚡' : sparks.toFixed(0)+' ⚡';
+  if (el) el.textContent = (sparks==null?'— ⚡':(sparks >= 1000 ? (sparks/1000).toFixed(1)+'k ⚡' : sparks.toFixed(0)+' ⚡'));
 
   // Signal
   var sig = parseFloat(localStorage.getItem('shaddai.signal') || '100');
@@ -30476,7 +30487,7 @@ function initCommandHub() {
     citySnap.textContent = myPlots.length + ' plot' + (myPlots.length!==1?'s':'') + ' · ' + yld.toFixed(1) + ' Sparks accrued';
   }
   var econSnap = document.getElementById('cmdEconSnap');
-  if (econSnap) econSnap.textContent = sparks.toFixed(0) + ' Sparks · 6 vaults active';
+  if (econSnap) econSnap.textContent = (sparks==null?'—':sparks.toFixed(0)) + ' Sparks · 6 vaults active';
   var roomSnap = document.getElementById('cmdRoomsSnap');
   if (roomSnap) roomSnap.textContent = totalRooms + ' rooms · ' + pendingRent.toFixed(1) + ' Sparks pending';
 
@@ -30501,10 +30512,10 @@ function initCityTab() {
     if (val)  val.textContent = Math.ceil(sig);
   } catch(_) {}
 
-  // Sparks balance
+  // Sparks balance — ONE ledger: the header's server balance (shd-sparks.js).
   try {
-    var sparks = Number(localStorage.getItem('shd_sparks') || localStorage.getItem('shaddai.sparks') || 0);
-    var sv = document.getElementById('ctSparksVal'); if (sv) sv.textContent = sparks.toFixed(0);
+    var sparks = (window.shdSparks && typeof window.shdSparks.value === 'function') ? window.shdSparks.value() : null;
+    var sv = document.getElementById('ctSparksVal'); if (sv) sv.textContent = (sparks==null?'—':sparks.toFixed(0));
   } catch(_) {}
 
   // City plots — Founders Row
@@ -30604,9 +30615,9 @@ function ctDoBoost() {
 function initEconomyTab() {
   var uid = localStorage.getItem('shd_signed_in');
   try {
-    var sparks = Number(localStorage.getItem('shd_sparks') || 0);
+    var sparks = (window.shdSparks && typeof window.shdSparks.value === 'function') ? window.shdSparks.value() : null; // ONE ledger: the header's server balance
     var disp = document.getElementById('ecSparksDisplay');
-    if (disp) { disp.textContent = sparks.toFixed(0); }
+    if (disp) { disp.textContent = (sparks==null?'—':sparks.toFixed(0)); }
   } catch(_) {}
   try {
     var city = JSON.parse(localStorage.getItem('shaddai.city') || '[]');
@@ -33431,17 +33442,22 @@ async function runTaskNow(taskId, row) {
   msgEl.textContent='Working...';
   row.parentElement?.appendChild(msgEl);
   try {
-    const r = await fetch('/api/ollama',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'llama3.2:3b',messages:[{role:'user',content:prompt}],stream:false}),signal:AbortSignal.timeout(60000)});
-    if (r.ok) {
-      const d=await r.json();
+    // Runs through the authenticated bridge (works in the cloud) — the old
+    // direct /api/ollama call only ever worked on a dev machine with Ollama up.
+    const _tok = (()=>{ try { return localStorage.getItem('shd_token') || (window.SHD_AUTH && window.SHD_AUTH.token) || ''; } catch(e){ return ''; } })();
+    const r = await fetch('/api/bridge/ask',{method:'POST',headers:{'Content-Type':'application/json',...(_tok?{Authorization:'Bearer '+_tok}:{})},body:JSON.stringify({agent,question:prompt}),signal:AbortSignal.timeout(120000)});
+    const d = await r.json().catch(()=>({}));
+    if (r.ok && d.ok) {
       msgEl.textContent='';
       const out=document.createElement('div');
       out.style.cssText='font-size:9px;line-height:1.6;color:var(--text-primary);white-space:pre-wrap;max-height:120px;overflow-y:auto';
-      out.textContent=d.message?.content||d.response;
+      out.textContent=d.answer||'(no answer)';
       msgEl.appendChild(out);
       if (typeof log==='function') log(`Task "${task.title}" completed by ${agent}`,'ok',agent);
+    } else {
+      msgEl.textContent = r.status===401 ? 'Sign in to run tasks.' : (d.error || 'That agent could not answer right now.');
     }
-  } catch { msgEl.textContent='Could not connect to AI. Ensure Ollama is running.'; }
+  } catch { msgEl.textContent='Could not reach the server.'; }
 }
 
 // Initialize — wrapped so any render crash can't halt later script blocks (AGENT_REGISTRY, etc.)
