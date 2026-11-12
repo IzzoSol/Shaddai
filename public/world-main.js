@@ -743,6 +743,46 @@ if(!/[?&]skinfix=0/.test(location.search) && !GLTFLoader.prototype.__skinFix){ c
       else window.__skinRepaired = (window.__skinRepaired || 0) + _repairSkins(g.scene); } }catch(e){ console.warn('[skin-repair]', e && e.message); } onLoad && onLoad(g); }, onProgress, onError); };
   GLTFLoader.prototype.__skinFix = true; }
 
+// ── BUG 2 FIX (2026-11-11): a truncated GLB download surfaced as the cryptic in-world toast
+//    "PROMISE: Invalid typed array length: 8". Root cause: a GLB whose BIN chunk arrives short
+//    (truncated fetch / stale partial cache) reaches GLTFLoader.loadAccessor, which builds a
+//    typed-array VIEW over the short buffer — vendored three r180 GLTFLoader.js:3210 (interleaved)
+//    / :3229 (plain). The number is the first overrunning accessor's count*itemSize, not a file
+//    id. All 595 GLBs on disk validate clean (see shaddai-mcp-world-package/bug2-typed-array/),
+//    so the bytes were short in transit, not corrupt on disk. Two guards, installed OUTERMOST
+//    (after skinFix) so the skin/agent fixes still apply on every attempt:
+//      1. parse wrapper: a GLB header declares the total length; if the ArrayBuffer is shorter,
+//         fail with a byte-counted diagnosis instead of parsing into a cryptic accessor error.
+//      2. load wrapper: on a truncation error, evict the poisoned THREE.Cache entry and retry
+//         once with a fresh download — the loadWithRetry shape from shaddai-gamedev-tools
+//         (FLAT-LIBRARY/three-core/threejs-loaders/SKILL.md "Error Handling"); a final failure
+//         names the URL (the AssetLoader.js URL-named-error shape from the same repo). A bad
+//         length now fails soft (skip/log + the caller's fallback) instead of an in-world error.
+//    Deliberately NOT hiding the toast: non-truncation errors pass through untouched and the
+//    global unhandledrejection filter in SHADDAI-WORLD-3D.html is NOT widened.
+//    ?bug2guard=0 disables both guards. ──
+if(!/[?&]bug2guard=0/.test(location.search) && !GLTFLoader.prototype.__bug2Guard){ const _glbParse0 = GLTFLoader.prototype.parse, _glbLoad0 = GLTFLoader.prototype.load;
+  GLTFLoader.prototype.parse = function(data, path, onLoad, onError){ try{
+      if(data && typeof data.byteLength === 'number' && data.byteLength >= 12){
+        var _dv = new DataView(data);
+        if(_dv.getUint32(0, true) === 0x46546C67){   /* 'glTF' magic, little-endian */
+          var _declared = _dv.getUint32(8, true), _jsonLen = _dv.getUint32(12, true);
+          if(data.byteLength < _declared || 20 + _jsonLen > data.byteLength){
+            var _e = new Error('THREE.GLTFLoader: truncated GLB (header declares ' + _declared + ' bytes, got ' + data.byteLength + ') — short download, not a corrupt model');
+            _e.name = 'TruncatedGLBError'; _e.__truncatedGLB = true;
+            if(onError) onError(_e); else if(window.console) console.error(_e);
+            return; } } } }catch(_ge){ /* validation must never break a load — fall through to the real parse */ }
+    return _glbParse0.call(this, data, path, onLoad, onError); };
+  GLTFLoader.prototype.load = function(url, onLoad, onProgress, onError){ var self = this, tries = 0;
+    (function attempt(){ _glbLoad0.call(self, url, onLoad, onProgress, function(err){
+      if(err && err.__truncatedGLB && tries < 1){ tries++;
+        try{ if(typeof THREE !== 'undefined' && THREE.Cache) THREE.Cache.remove('file:' + url); }catch(_ce){}   /* FileLoader caches under 'file:' + url (three r180 FileLoader) — removing the bare url would leave the poisoned bytes in place */
+        console.warn('[bug2-guard] truncated GLB, retrying once with a fresh download: ' + url + ' — ' + (err.message || err));
+        attempt(); return; }
+      if(err && err.__truncatedGLB){ err = new Error('Failed to load GLB ' + url + ': ' + (err.message || err) + ' (after 1 retry)'); err.__truncatedGLB = true; }
+      if(onError) onError(err); else if(window.console) console.error(err); }); })(); };
+  GLTFLoader.prototype.__bug2Guard = true; }
+
 // ── BUILD THE ORGANIZED WORLD: walkable terrain + biome regions/water + real vehicles ──
 let worldTerrain=null, worldBiomes=null, worldVehicles=null, worldMarkets=null, worldBuildings=null, worldNPCs=null, worldOcean=null, worldVolcano=null, worldRealmProps=null, worldTrails=null, worldLandmarks=null;
 window.__worldBuilt = false;
@@ -756,7 +796,7 @@ window.__worldBuilt = false;
       const _ocLoader = new GLTFLoader(__loadMgr);
       _ocLoader.setDRACOLoader(dracoLoader); _ocLoader.setMeshoptDecoder(MeshoptDecoder);
       if(!MAP_V4 && L && window.buildWorldOcean)     worldOcean      = window.buildWorldOcean({ THREE, scene, layout: L, loader: _ocLoader });   // v4: replaced by world-water.js
-      if(L && window.buildWorldVolcano && /[?&]volcano=1/.test(location.search))   worldVolcano    = window.buildWorldVolcano({ THREE, scene, layout: L, loader: _ocLoader, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });
+      if(L && window.buildWorldVolcano && /[?&]volcano=1\b/.test(location.search))  /* MISSING-BUILDINGS fix: raw 0x08 -> \b so ?volcano=1 can match; gate stays opt-in (Emberfall module) */   worldVolcano    = window.buildWorldVolcano({ THREE, scene, layout: L, loader: _ocLoader, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });
       if(L && window.buildWorldRealmProps) worldRealmProps = window.buildWorldRealmProps({ THREE, scene, layout: L, loader: _ocLoader, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });
       if(!MAP_V4 && L && window.buildWorldLandmarks) worldLandmarks  = window.buildWorldLandmarks({ THREE, scene, layout: L, loader: _ocLoader });   // v4: skipped (no heightAt → floats/buries on v4 ground)
       if(window.buildColosseumExterior) window.__colosseumExt = window.buildColosseumExterior(THREE, { scene, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });   // real-size Southern Colosseum on the map (lobby doors → E → arena)
@@ -889,7 +929,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('clusters', function(api){   // MAP v4 DISTRICTS (world-clusters-v4.js ← realm-clusters-v4.json, same file as the Blender scene)
       if(!api) return api;
-      if(!/[?&]realmclusters=1/.test(location.search)) return api;   // 2026-10-11 owner: doorless model districts in the realms are removed (also the biggest triangle bill); ?realmclusters=1 brings them back
+      if(/[?&]realmclusters=0\b/.test(location.search)) return api;   // MISSING-BUILDINGS fix (2026-11-11): realm districts build by default now (?realmclusters=0 opts out). The old ?realmclusters=1 opt-in never worked — raw 0x08 byte instead of \b in the regex.
       return _loadScript('/world-clusters-v4.js?v=20261024a').then(function(){
         const cl = new GLTFLoader(); cl.setDRACOLoader(dracoLoader); cl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldClustersV4({ THREE, scene, loader: cl, heightAt: api.heightAt });
