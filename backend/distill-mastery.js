@@ -50,7 +50,7 @@ function loadProviders() {
   } catch (_) {}
   if (groqKey) {
     out.push({ name: 'Groq', url: 'https://api.groq.com/openai/v1/chat/completions',
-      model: 'llama-3.1-8b-instant', key: groqKey, format: 'openai' });
+      model: process.env.GROQ_MODEL || 'openai/gpt-oss-20b', key: groqKey, format: 'openai' });
   }
   out.push({ name: 'Ollama', url: 'http://localhost:11434/api/generate',
     model: 'phi4-mini', key: '', format: 'generate' });

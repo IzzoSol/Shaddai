@@ -56,7 +56,11 @@
       var isFiller = function (k) { return k === 'grid-block' || k === 'suburb-block' || /^(commons|ne-campus|nw-race)-/.test(k); };
       if (spread) {
         // OWNER DRAWING (city-zones-v1.json): the basic city blocks come back INSIDE the 4 drawn loops only (triangles + colliders clipped to them)
-        var loops = (Z && Z.buildingZones) || [], inPoly = function (x, y, P) { var c = false; for (var i = 0, j = P.length - 1; i < P.length; j = i++) { var xi = P[i][0], yi = P[i][1], xj = P[j][0], yj = P[j][1]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; };
+        // MISSING-BUILDINGS fix (2026-11-11): the shipped city-zones-v1.json has buildingZones: []
+        // so the spread clip below hid the whole dense city (ACADEMY_HALL / CULTURE_LANE /
+        // BLD_Grid_CardinalWedges) with no replacement. The owner's 4 drawn loops ARE in the
+        // same file under buildingZones_drawn — use them when buildingZones is empty.
+        var loops = (Z && Z.buildingZones && Z.buildingZones.length ? Z.buildingZones : (Z && Z.buildingZones_drawn)) || [], inPoly = function (x, y, P) { var c = false; for (var i = 0, j = P.length - 1; i < P.length; j = i++) { var xi = P[i][0], yi = P[i][1], xj = P[j][0], yj = P[j][1]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; };
         var inZone = function (xm, ym) { for (var k = 0; k < loops.length; k++) if (inPoly(xm, ym, loops[k])) return true; return false; };
         root.traverse(function (o) {
           if (!o.isMesh || !/^(ACADEMY_HALL|CULTURE_LANE|BLD_Grid_CardinalWedges)/.test(o.name || '')) return;

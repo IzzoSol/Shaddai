@@ -319,8 +319,10 @@
       else { m.x = Math.round(b.center[0] + (m.fx || 0) * b.radius); m.z = Math.round(b.center[1] + (m.fz || 0) * b.radius); }
       m.w = m.len * PM;                                  // world units along the longest side
       m.url = m.src === 'fal' ? '/assets/models/fal/' + m.id + '.glb' : '/assets/models/' + m.id + '.glb';
-      var _dropped = typeof location !== 'undefined' && !/[?&]realmbuildings=1/.test(location.search || '') && /^(bld-|homes-|hero-)/.test(String(m.id)) && !/^hero-castle/.test(String(m.id)) || (typeof location !== 'undefined' && !/[?&]volcano=1/.test(location.search || '') && m.realm === 'volcano');   // 2026-10-11: those models are no longer built (world-realmprops.js) - no invisible walls either
-      if (m.col > 0 && !_dropped) L.realmColliders.push({ x: m.x, z: m.z, r: Math.round(m.w / 2 * m.col), label: m.id, realm: m.realm });
+      // MISSING-BUILDINGS fix (2026-11-11): the 2026-10-11 collider drop is removed — every
+      // realm model that is built gets its collider again. (The old ?realmbuildings=1 /
+      // ?volcano=1 escape hatches never worked: raw 0x08 byte instead of \b in the regexes.)
+      if (m.col > 0) L.realmColliders.push({ x: m.x, z: m.z, r: Math.round(m.w / 2 * m.col), label: m.id, realm: m.realm });
     });
     L.realmModelsFor = function (realm) { return L.realmModels.filter(function (m) { return m.realm === realm && m.w; }); };
   })(window.WORLD_LAYOUT);

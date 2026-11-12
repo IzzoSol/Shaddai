@@ -42,8 +42,8 @@ function _loadCosts() {
     _costs = _costs || {
       actions: {
         fast_chat: { credits: 1 }, strong_chat: { credits: 10 },
-        image_generate: { credits: 15 }, workflow_run: { credits: 25 },
-        website_build: { credits: 100 }, clip_generate: { credits: 80 },
+        image_generate: { credits: 15 }, image_generate_free: { credits: 0 }, image_generate_fal: { credits: 25 }, workflow_run: { credits: 25 },
+        website_build: { credits: 200 }, clip_generate: { credits: 80 },
         video_commercial: { credits: 400 }, voice_tts: { credits: 10 }
       },
       defaultActionCredits: 1

@@ -28,7 +28,7 @@
       gear: ['Decals, trails, grip tape. Look fast, be fast.', 'Gold grip tape: shiny and legal.', 'Flame trail kit lights up the park.', 'Customise your board. It remembers.', 'A good deck deserves a good story.'],
       mount: ['Bulls for power, hawks for views.', 'Flying costs more. Gravity is free.', 'Lose a mount? Rebuy at a discount.', 'Skiffs are fast. Do mind the ceiling.', 'Pick your ride, pick your pace.'],
       cosm: ['Gold dye, arena capes, halo rings.', 'Show your colours in the stands.', 'Style is the only flex that never expires.', 'Try the halo. Everyone does.', 'Cosmetics: the one thing that is purely for you.'],
-      wager: ['Back your champion. Sparks only, no cash-outs.', 'Upsets pay best. Nerves pay worst.', 'Five percent burns. The rest is yours if you win.', 'Bet small, cheer big.', 'Settles after the bout. No refunds for second guessing.']
+      tip: ['Tip your champion. Sparks only, one-way — no payout.', 'Cheers cost Sparks. The fighters keep the love, not the ledger.', 'Tip small, cheer big. No odds, no refunds.', 'A tip is a cheer you can count. Nothing is owed back.', 'Back your champion with a tip, not a bet.']
     },
     toasts: {
       race_win: ['Photo finish? Not even close. Collect your Sparks.', 'First across the line. The crowd loves you.', 'Flawless. Winner takes the pot.', 'You made it look easy.'],

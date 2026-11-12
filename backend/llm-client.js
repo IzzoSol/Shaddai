@@ -33,9 +33,10 @@ const DEFAULTS = {
   // llama-3.1-8b-instant was decommissioned by Groq (confirmed via their live
   // /v1/models list, 2026-09-13 — every request 404'd with model_not_found,
   // which silently degraded every RAG-brain answer to a raw-document fallback).
-  // groq/compound-mini is direct-answer (no hidden reasoning field to unwrap,
-  // unlike openai/gpt-oss-20b) and verified working against the real API.
-  groq:        { model: process.env.GROQ_MODEL        || 'groq/compound-mini' },
+  // groq/compound-mini replaced it briefly, but was itself shut down
+  // 2026-09-21 (Groq deprecations page). openai/gpt-oss-20b is Groq's named
+  // replacement for llama-3.1-8b-instant (vendor docs checked 2026-11-11).
+  groq:        { model: process.env.GROQ_MODEL        || 'openai/gpt-oss-20b' },
   openrouter:  { model: process.env.OPENROUTER_MODEL  || 'meta-llama/llama-3.1-8b-instruct:free' },
   anthropic:   { model: process.env.ANTHROPIC_MODEL   || 'claude-haiku-4-5-20251001' },
   openai:      { model: process.env.OPENAI_MODEL      || 'gpt-4o-mini' }

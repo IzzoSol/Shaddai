@@ -37,7 +37,7 @@ function buildManifest(agentName, opts = {}) {
     brain: {
       brainId,
       provider: brain.provider || 'groq',
-      model: brain.model || 'llama-3.1-8b-instant',
+      model: brain.model || process.env.GROQ_MODEL || 'openai/gpt-oss-20b',
       tier: brain.tier || 'standard',
       instructions: persona.persona || `You are ${agentName}, a SHADDAI agent.`
     },

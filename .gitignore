@@ -172,8 +172,8 @@ _soccer_goaltest.js
 _soccer_qa.js
 _soccer_verify.js
 _verify-gui.js
-audit.js
-audit_script.js
+/audit.js
+/audit_script.js
 public/_pixeloffice_preview.html
 
 # Telegram bot runtime data + tracked wallets

@@ -50,10 +50,16 @@ async function meterAction(userId, actionId, byok) {
 const BRAINS = {
   'ollama-local':   { provider: 'ollama',     model: process.env.OLLAMA_MODEL     || 'llama3.2:1b',                              tier: 'free',     label: 'Ollama · local (free)' },
   'openrouter-free':{ provider: 'openrouter', model: process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.1-8b-instruct:free',   tier: 'free',     label: 'OpenRouter · free' },
-  'groq-70b':       { provider: 'groq',       model: process.env.GROQ_MODEL       || 'llama-3.1-8b-instant',                    tier: 'standard', label: 'Groq · Llama 70B (fast)' },
+  'groq-70b':       { provider: 'groq',       model: process.env.GROQ_MODEL       || 'openai/gpt-oss-120b',                    tier: 'standard', label: 'Groq · GPT-OSS 120B (fast)' },
   'ollama-cloud':   { provider: 'ollamacloud',model: process.env.OLLAMA_CLOUD_MODEL|| 'gpt-oss:120b',                            tier: 'standard', label: 'Ollama Cloud · gpt-oss 120B' },
   'claude-haiku':   { provider: 'anthropic',  model: process.env.ANTHROPIC_MODEL  || 'claude-haiku-4-5-20251001',               tier: 'standard', label: 'Claude · Haiku 4.5' },
-  'claude-premium': { provider: 'anthropic',  model: process.env.ANTHROPIC_PREMIUM_MODEL || 'claude-haiku-4-5-20251001',        tier: 'premium',  label: 'Claude · premium' }
+  'claude-premium': { provider: 'anthropic',  model: process.env.ANTHROPIC_PREMIUM_MODEL || 'claude-haiku-4-5-20251001',        tier: 'premium',  label: 'Claude · premium' },
+  'groq-fast':      { provider: 'groq',       model: process.env.GROQ_FAST_MODEL || 'openai/gpt-oss-20b',        tier: 'free', label: 'Groq · GPT-OSS 20B (free)' },
+  'gemini-free':    { provider: 'gemini',     model: process.env.GEMINI_MODEL    || 'gemini-2.5-flash',          tier: 'free', label: 'Gemini · 2.5 Flash (free)' },
+  'openrouter-free2':{ provider: 'openrouter',model: process.env.OPENROUTER_FREE_MODEL || 'openrouter/free',     tier: 'free', label: 'OpenRouter · Free Router (free)' },
+  'cloudflare-free':{ provider: 'cloudflare', model: process.env.CLOUDFLARE_MODEL || '@cf/openai/gpt-oss-120b',  tier: 'free', label: 'Cloudflare · GPT-OSS 120B (free)' },
+  'sambanova-free': { provider: 'sambanova',  model: process.env.SAMBANOVA_MODEL  || 'Meta-Llama-3.3-70B-Instruct', tier: 'free', label: 'SambaNova · Llama 70B (free*)' },
+  'grok-bot':       { provider: 'xai',        model: process.env.XAI_MODEL       || 'grok-4.3',                  tier: 'premium', label: 'Grok · connected bot' }
 };
 
 const PROVIDER_ENABLED = {
@@ -62,7 +68,11 @@ const PROVIDER_ENABLED = {
   openrouter: () => pool.envKeys('openrouter').length > 0,
   anthropic:  () => pool.envKeys('anthropic').length > 0,
   openai:     () => pool.envKeys('openai').length > 0,
-  ollamacloud:() => pool.envKeys('ollamacloud').length > 0
+  ollamacloud:() => pool.envKeys('ollamacloud').length > 0,
+  gemini:     () => pool.envKeys('gemini').length > 0,
+  cloudflare: () => !!(process.env.CLOUDFLARE_API_TOKEN && process.env.CLOUDFLARE_ACCOUNT_ID),
+  sambanova:  () => !!process.env.SAMBANOVA_API_KEY,
+  xai:        () => pool.envKeys('xai').length > 0
 };
 function brainAvailable(id) { const b = BRAINS[id]; return !!b && PROVIDER_ENABLED[b.provider] && PROVIDER_ENABLED[b.provider](); }
 
@@ -91,8 +101,8 @@ function getPersona(agent) {
 // 'balanced' = the sensible default (Groq 70B when keyed).
 // 'strong'   = heavy reasoning; reach for the best brain available.
 const STRENGTH_LADDER = {
-  fast:     ['ollama-local', 'openrouter-free', 'groq-70b', 'claude-haiku', 'ollama-cloud', 'claude-premium'],
-  balanced: ['groq-70b', 'ollama-cloud', 'openrouter-free', 'claude-haiku', 'claude-premium', 'ollama-local'],
+  fast:     ['groq-fast', 'gemini-free', 'openrouter-free2', 'cloudflare-free', 'ollama-local', 'openrouter-free', 'groq-70b', 'claude-haiku', 'ollama-cloud', 'claude-premium'],
+  balanced: ['groq-fast', 'gemini-free', 'groq-70b', 'ollama-cloud', 'openrouter-free', 'claude-haiku', 'claude-premium', 'ollama-local'],
   strong:   ['claude-premium', 'ollama-cloud', 'groq-70b', 'claude-haiku', 'openrouter-free', 'ollama-local']
 };
 const FALLBACK_LADDER = ['groq-70b', 'ollama-cloud', 'openrouter-free', 'claude-haiku', 'claude-premium', 'ollama-local'];

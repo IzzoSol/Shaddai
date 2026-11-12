@@ -155,7 +155,8 @@ router.post('/api/skills/market/:id/run', json,
     output = `[stub] skill ${id} produced no output (${e.message})`;
   }
 
-  // 3) Record the revenue split (seller already paid net at charge; grant agent its cut).
+  // 3) Record the revenue split (seller already paid 95% net at charge; no
+  // top-up — settleSale sums to exactly 100%, see bazaar-checkout.js).
   let split = null;
   try {
     split = await checkout.settleSale({
