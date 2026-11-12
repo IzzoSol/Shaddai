@@ -10,7 +10,11 @@
  * API: ShdSparks.get() / .add(n, kind, note) / .spend(n, kind, note) -> bool      (synchronous, optimistic; server confirms or rolls back)
  *      ShdSparks.mode() -> 'server' | 'local'     ShdSparks.sync() -> Promise      ShdSparks.buy(vendorId, itemId) -> Promise<{ok, price, balance, item, name, error}>
  *      window event 'shd-sparks' {detail:{balance, mode}} on every change.
- * Server base URL: window.SHD_MMO_API, else http://localhost:3001 on localhost, else none (local mode).
+ * Server base URL: window.SHD_MMO_API, else http://localhost:3001 on localhost, else
+ * same-origin ('' — the production server mounts /sparks as an adapter over
+ * the single economy-service ledger, backend/sparks-adapter-routes.js).
+ * Balances are Sparks with up to 2 decimals (100 ledger units = 1 Spark);
+ * the cache keeps cents, never rounds to whole Sparks.
  */
 (function () {
   if (window.ShdSparks) return;
@@ -18,10 +22,10 @@
   var API = (typeof window.SHD_MMO_API === 'string') ? window.SHD_MMO_API : (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'http://localhost:3001' : '');
   var srv = { mode: 'local', nextTry: 0, syncing: null, inflight: 0 };
 
-  function num(k) { try { var n = parseInt(localStorage.getItem(k), 10); return isFinite(n) && n > 0 ? n : 0; } catch (e) { return 0; } }
+  function num(k) { try { var n = parseFloat(localStorage.getItem(k)); return isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : 0; } catch (e) { return 0; } }
   function emit() { try { window.dispatchEvent(new CustomEvent('shd-sparks', { detail: { balance: num(KEY), mode: srv.mode } })); } catch (e) {} }
   function set(n) {
-    n = Math.max(0, Math.round(n) || 0);
+    n = Math.max(0, Math.round((n || 0) * 100) / 100);
     try {
       localStorage.setItem(KEY, String(n));
       localStorage.setItem(MIRROR, String(n));
@@ -32,7 +36,7 @@
   function log(kind, amt, note) {
     try {
       var a = JSON.parse(localStorage.getItem(LOG) || '[]');
-      a.push({ t: Date.now(), k: kind || 'sparks', a: Math.round(amt) || 0, n: note || '' });
+      a.push({ t: Date.now(), k: kind || 'sparks', a: Math.round((amt || 0) * 100) / 100, n: note || '' });
       if (a.length > 200) a = a.slice(-200);
       localStorage.setItem(LOG, JSON.stringify(a));
     } catch (e) {}
@@ -54,7 +58,7 @@
 
   function call(method, path, body) {
     var id = uid();
-    if (!API || !id) return Promise.reject(new Error('local'));
+    if (!id) return Promise.reject(new Error('local'));
     var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null, t = ctl ? setTimeout(function () { ctl.abort(); }, 5000) : 0;
     var h = { 'x-user-id': id }; if (body) h['Content-Type'] = 'application/json';
     return fetch(API + path, { method: method, headers: h, body: body ? JSON.stringify(body) : undefined, signal: ctl ? ctl.signal : undefined })
@@ -66,7 +70,7 @@
 
   function sync() {
     if (srv.syncing) return srv.syncing;
-    if (!API || !uid() || Date.now() < srv.nextTry) return Promise.resolve(srv.mode);
+    if (!uid() || Date.now() < srv.nextTry) return Promise.resolve(srv.mode);
     srv.syncing = call('GET', '/sparks/balance').then(function (j) { if (j && j.success) applyServer(j); else goLocal(); return srv.mode; }, function () { goLocal(); return srv.mode; })
       .then(function (m) { srv.syncing = null; return m; });
     return srv.syncing;
@@ -87,13 +91,13 @@
     mode: function () { return srv.mode; },
     sync: sync,
     add: function (n, kind, note) {
-      n = Math.round(n) || 0; if (!n) return num(KEY);
+      n = Math.round((n || 0) * 100) / 100; if (!n) return num(KEY);
       var before = num(KEY), v = set(before + n); log(kind, n, note);
       if (srv.mode === 'server' && n > 0) remote('/sparks/earn', { amount: n, kind: kind || 'misc', note: note || '' }, function () { set(before); }, 'that reward was not accepted');
       return v;
     },
     spend: function (n, kind, note) {
-      n = Math.round(n) || 0; if (n <= 0) return true; var before = num(KEY); if (before < n) return false;
+      n = Math.round((n || 0) * 100) / 100; if (n <= 0) return true; var before = num(KEY); if (before < n) return false;
       set(before - n); log(kind, -n, note);
       if (srv.mode === 'server') remote('/sparks/spend', { amount: n, kind: kind || 'misc', note: note || '' }, function () { set(before); }, 'purchase refused');
       return true;

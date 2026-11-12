@@ -100,7 +100,7 @@ async function runOwnKey(prompt, { provider, model, key }) {
 
   const url = base;
   const body = {
-    model: model || (provider === 'groq' ? 'llama-3.1-8b-instant' : provider === 'xai' ? 'grok-beta' : provider === 'gemini' ? model : 'gpt-4o-mini'),
+    model: model || (provider === 'groq' ? (process.env.GROQ_MODEL || 'openai/gpt-oss-20b') : provider === 'xai' ? 'grok-beta' : provider === 'gemini' ? model : 'gpt-4o-mini'),
     messages: [{ role: 'system', content: 'You are a capable, cautious agent. Answer helpfully and directly. You may spend only under the cap your owner set; do not fabricate transactions.' }, { role: 'user', content: String(prompt).slice(0, 8000) }],
     temperature: 0.4
   };

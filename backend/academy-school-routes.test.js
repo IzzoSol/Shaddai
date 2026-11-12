@@ -125,6 +125,28 @@ runAll('school-routes', {
     assert.ok(academy);
     w.close();
   },
+  async 'progress: 401 signed out; 7 tiers + owned agents signed in; current enrollment shown'() {
+    const w = await boot();
+    assert.strictEqual((await w.call('GET', '/progress')).status, 401);
+    const p = await w.call('GET', '/progress', { uid: 'owner1' });
+    assert.strictEqual(p.status, 200, JSON.stringify(p.json));
+    assert.strictEqual(p.json.ok, true);
+    assert.strictEqual(p.json.tiers.length, 7);
+    assert.strictEqual(p.json.tiers[0].name, 'Artificial Intelligence');
+    assert.strictEqual(p.json.tiers[6].name, 'Agentic AI');
+    assert.strictEqual(p.json.agents.length, 1);
+    assert.strictEqual(p.json.agents[0].agentId, 'op1');
+    assert.deepStrictEqual(p.json.agents[0].passed, []);
+    assert.strictEqual(p.json.agents[0].current, null);
+    // someone else's agent is not listed, and scoping to it is forbidden
+    assert.strictEqual((await w.call('GET', '/progress?agentId=op2', { uid: 'owner1' })).status, 403);
+    // after enrolling, the open enrollment shows as current
+    assert.strictEqual((await w.call('POST', '/enroll', { uid: 'owner1', body: { agentId: 'op1', skillId: 'tool-hygiene' } })).status, 200);
+    const p2 = await w.call('GET', '/progress', { uid: 'owner1' });
+    assert.strictEqual(p2.json.agents[0].current.skillId, 'tool-hygiene');
+    assert.ok(p2.json.agents[0].current.enrollmentId);
+    w.close();
+  },
   async 'bad input never crashes: malformed JSON, secrets, prototype keys, wrong types'() {
     const w = await boot();
     assert.strictEqual((await w.call('POST', '/enroll', { uid: 'owner1', raw: '{not json' })).status, 400);

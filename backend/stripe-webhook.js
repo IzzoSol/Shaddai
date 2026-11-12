@@ -32,7 +32,7 @@ try {
 } catch (e) {
   console.error('[stripe-webhook] lib/tiers unavailable:', e && e.message);
   GRANTS = { founder:{tier:'pro',founder:true,credits:26000}, builder:{tier:'pro'}, pro:{tier:'pro'}, alpha:{tier:'elite'},
-             credits_10:{credits:1000}, credits_25:{credits:2500}, credits_50:{credits:5000}, credits_100:{credits:10000} };
+             credits_10:{credits:1000}, credits_25:{credits:2750}, credits_50:{credits:6000}, credits_100:{credits:13000} };
 }
 
 // Idempotency — Stripe retries webhooks; never grant twice for the same session.

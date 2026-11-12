@@ -1,7 +1,7 @@
 /* world-colosseum-vendors.js — the Colosseum concourse comes alive (2026-09-29): walk the promenade ring (inside the stadium, outside the arena),
  * step up to any of the 24 kiosks, press E to talk / shop / vend. Items cost Sparks (closed-loop), stored locally (dev) until economy-service inventory.
  *   window.COLOSSEUM_KIOSKS (set by world-colosseum.js) = [{x,z,yaw,nx,nz}] in island metres; world = island + local * U.
- * Vendors: Snack Bar, Drinks, Gear (hover decals), Mounts (opens the Mount Store), Cosmetics, Wager Desk (spectate wagers - Sparks only).
+ * Vendors: Snack Bar, Drinks, Gear (hover decals), Mounts (opens the Mount Store), Cosmetics, Tip Your Champion (one-way Sparks tip — no bet, no payout, no odds).
  */
 (function (root) {
   'use strict';
@@ -11,7 +11,7 @@
     { id: 'gear', name: 'Hoverskate Gear', hi: 'Decals and trim for your board.', items: [['Neon Deck Decal', 60, 'Applied to your board'], ['Flame Trail Kit', 120, 'Trail unlocked'], ['Grip Tape: Gold', 45, 'Shiny']] },
     { id: 'mount', name: 'Mount Dealer', hi: 'Bulls, mammoths, gorillas... and hawks that fly.', mountStore: true, items: [] },
     { id: 'cosm', name: 'Cosmetics Boutique', hi: 'Dye, capes, halos. Show your colors.', items: [['Shaddai Gold Dye', 80, 'Dye added to wardrobe'], ['Arena Cape', 150, 'Cape added'], ['Halo Ring', 200, 'Halo added']] },
-    { id: 'wager', name: 'Wager Desk', hi: 'Back your champion. Sparks only, no cash-out.', items: [['Bet 25 on Red corner', 25, 'Bet placed (settles after the bout)'], ['Bet 25 on Blue corner', 25, 'Bet placed (settles after the bout)'], ['Bet 100 on the Upset', 100, 'Bold. Bet placed']] },
+    { id: 'tip', name: 'Tip Your Champion', hi: 'Cheer with Sparks. One-way — no bet, no odds, no payout, no refund.', items: [['Tip 25 to Red corner', 25, 'Tipped 25 Sparks to Red corner (one-way, no payout)'], ['Tip 25 to Blue corner', 25, 'Tipped 25 Sparks to Blue corner (one-way, no payout)'], ['Tip 100 to the Underdog', 100, 'Bold. Tipped 100 Sparks to the underdog (one-way, no payout)']] },
     { id: 'host', name: 'Colosseum Host', hi: 'Welcome to the Colosseum. Races, boat runs and bouts all start here.', host: true, items: [] }
   ];
   var S = (function () { try { return JSON.parse(localStorage.getItem(KEY) || 'null') || { inv: [] }; } catch (e) { return { inv: [] }; } })();

@@ -38,6 +38,13 @@ canvas{display:block}
 @media (hover:none){#joy,.tb{display:flex}#help{display:none}}
 </style></head><body>
 <div id="loading"><h1>SHADDAI</h1><div id="bar"><i></i></div><div id="loadmsg">waking the world…</div></div>
+<div id="gfxerr" style="position:fixed;inset:0;z-index:60;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:rgba(6,8,11,.94);text-align:center;padding:24px">
+<h2 style="margin:0;color:#e8c45c;letter-spacing:.2em;font-size:20px">3D GRAPHICS PAUSED</h2>
+<p id="gfxerr-msg" style="margin:0;max-width:520px;color:#b8c0d0;font-size:14px;line-height:1.6">Your device paused the 3D view to save memory. Your progress is saved.</p>
+<div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+<button onclick="location.reload()" style="background:#e8c45c;color:#06080b;border:0;border-radius:10px;padding:10px 18px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.06em">↻ RELOAD THE WORLD</button>
+<a href="/game.html" style="color:#e8c45c;text-decoration:none;font-size:14px;letter-spacing:.06em;border:1px solid rgba(232,196,92,.5);border-radius:10px;padding:10px 18px">◧ PLAY CLASSIC 2D INSTEAD</a>
+</div></div>
 <div id="fade"></div><div id="toast"></div><div id="prompt"></div>
 <div class="panel" id="top"><b>SHADDAI · WORLD 3D</b><div id="realm">City Hub · Dusk</div><div id="who"></div><div id="sparks"></div></div>
 <a id="classic" href="/game.html" style="position:fixed;left:12px;top:108px;z-index:10;color:#e8c45c;text-decoration:none;font-size:12px;letter-spacing:.1em;background:rgba(8,11,18,.62);border:1px solid rgba(232,196,92,.35);border-radius:10px;padding:6px 12px">◧ CLASSIC 2D WORLD</a>
@@ -49,6 +56,7 @@ canvas{display:block}
 <div id="joy"><i></i></div>
 <div class="tb" id="tbE" style="bottom:120px">E</div><div class="tb" id="tbF" style="bottom:198px">F</div><div class="tb" id="tbR" style="bottom:42px">RUN</div>
 
+<script src="world-grass.js"></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 <script type="module">
 import * as THREE from 'three';
@@ -60,11 +68,13 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const $ = (s) => document.querySelector(s);
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const lerp = (a, b, t) => a + (b - a) * t;
 const damp = (a, b, k, dt) => lerp(a, b, 1 - Math.exp(-k * dt));
+const pace = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))); // F2: yield 2 frames so the render loop gets a turn between streamed files
 const angDiff = (a, b) => { let d = (b - a) % (Math.PI * 2); if (d > Math.PI) d -= Math.PI * 2; if (d < -Math.PI) d += Math.PI * 2; return d; };
 /* ── 2D⇄3D REALM BRIDGE — module-scope API consumed by world3d-bridge.js ── */
 window.__w3 = {
@@ -76,14 +86,33 @@ window.__w3 = {
   realmId() { return state ? state.realm : 'city'; }
 };
 
+/* ── P0-6: plain-English graphics error screen (also used for context loss) ── */
+let gfxLost = false;
+function showGfxError(msg) { const el = $('#gfxerr'); if (el) { const m = $('#gfxerr-msg'); if (m && msg) m.textContent = msg; el.style.display = 'flex'; } }
+function hideGfxError() { const el = $('#gfxerr'); if (el) el.style.display = 'none'; }
+
 /* ───────────────────────── renderer / scene ───────────────────────── */
-const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+/* P0-6: probe WebGL2 first and wrap renderer creation — a failure shows the
+   error screen above instead of a white canvas. P0-5: DPR cap 1.5 (was 2). */
+let renderer;
+try {
+  const probe = document.createElement('canvas').getContext('webgl2');
+  if (!probe) throw new Error('WebGL2 is not available in this browser.');
+  probe.getExtension('WEBGL_lose_context')?.loseContext();
+  renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+} catch (e) {
+  showGfxError('The 3D world could not start: ' + (e && e.message ? e.message : 'your browser or device does not support WebGL2.') + ' Try reloading, or play the Classic 2D world instead.');
+  throw e;
+}
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 document.body.appendChild(renderer.domElement);
+/* P0-6: a graphics reset becomes a recoverable, explained state. */
+renderer.domElement.addEventListener('webglcontextlost', (e) => { e.preventDefault(); gfxLost = true; showGfxError('Graphics paused — your device paused the 3D view to save memory. Your progress is saved. Reload, or play the Classic 2D world instead.'); });
+renderer.domElement.addEventListener('webglcontextrestored', () => { gfxLost = false; hideGfxError(); toast('GRAPHICS RESTORED'); });
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 1400);
@@ -93,12 +122,16 @@ scene.environmentIntensity = 0.35;
 
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
-const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.5, 0.5, 0.95);
+/* P0-5: bloom created at half resolution. (Note: three r160's UnrealBloomPass.setSize
+   halves the resolution again internally — verified against the r160 source — so
+   the pass effectively runs at quarter composer resolution; the DPR cap above
+   is the larger composer-memory win.) */
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth / 2, innerHeight / 2), 0.5, 0.5, 0.95);
 composer.addPass(bloom); composer.addPass(new OutputPass());
 
 /* ── lighting rulebook: one preset per time-of-day/realm mood (color-harmony noted) ── */
 const PRESETS = {
-  dusk:   { label: 'City Hub · Dusk',      harmony: 'complementary (gold/violet)', sky: ['#1a1240', '#f0a45a'], fog: '#2b1d4d', fogN: 70, fogF: 520, hemi: ['#6a5bb0', '#12261f', 0.75], sun: ['#ffb26b', 2.6, [-60, 38, 40]], bloom: 0.72, exp: 0.9, stars: 0.35 },
+  dusk:   { label: 'City Hub · Dusk',      harmony: 'complementary (gold/violet)', sky: ['#1a1240', '#f0a45a'], fog: '#3a2a5e', fogN: 70, fogF: 600, hemi: ['#6a5bb0', '#12261f', 0.95], sun: ['#ffb26b', 2.6, [-60, 38, 40]], bloom: 0.72, exp: 1.0, stars: 0.35 },
   day:    { label: 'City Hub · Day',       harmony: 'analogous (sky/emerald)',     sky: ['#2f7dd6', '#cfe8ff'], fog: '#bcd9f2', fogN: 90, fogF: 640, hemi: ['#cfe6ff', '#3f6b3f', 0.95], sun: ['#fff1d6', 3.2, [70, 90, 40]], bloom: 0.35, exp: 1.0, stars: 0 },
   night:  { label: 'City Hub · Night',     harmony: 'split-complementary (blue/gold)', sky: ['#02030a', '#0c1436'], fog: '#050a1a', fogN: 50, fogF: 420, hemi: ['#28407a', '#050a08', 0.55], sun: ['#7aa2ff', 1.1, [-50, 70, -30]], bloom: 1.05, exp: 1.15, stars: 1 },
   desert: { label: 'Desert Terminal · Dusk', harmony: 'triadic (rust/teal/gold)',  sky: ['#41224a', '#ff9a4a'], fog: '#5c2f2a', fogN: 60, fogF: 480, hemi: ['#ff9d6a', '#4a2418', 0.8], sun: ['#ffae5c', 2.9, [80, 30, -20]], bloom: 0.6, exp: 1.05, stars: 0.2 },
@@ -111,12 +144,13 @@ Object.assign(PRESETS, {
 });
 const skyMat = new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, uniforms: { top: { value: new THREE.Color() }, bot: { value: new THREE.Color() } },
   vertexShader: 'varying vec3 p;void main(){p=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-  fragmentShader: 'varying vec3 p;uniform vec3 top;uniform vec3 bot;void main(){float h=clamp(p.y*1.4+.15,0.,1.);gl_FragColor=vec4(mix(bot,top,pow(h,.7)),1.);}' });
+  fragmentShader: 'varying vec3 p;uniform vec3 top;uniform vec3 bot;void main(){float h=clamp(p.y*1.4+.15,0.,1.);gl_FragColor=vec4(mix(bot,top,pow(h,.45)),1.);}' });
 const sky = new THREE.Mesh(new THREE.SphereGeometry(1000, 32, 16), skyMat); scene.add(sky);
 const starPts = (() => { const g = new THREE.BufferGeometry(), a = []; for (let i = 0; i < 900; i++) { const u = Math.random() * 2 - 1, t = Math.random() * Math.PI * 2, r = Math.sqrt(1 - u * u); a.push(900 * r * Math.cos(t), Math.abs(900 * u) * 0.9 + 40, 900 * r * Math.sin(t)); } g.setAttribute('position', new THREE.Float32BufferAttribute(a, 3)); const m = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xffffff, size: 2.2, sizeAttenuation: false, transparent: true, opacity: 0, depthWrite: false })); scene.add(m); return m; })();
 const hemi = new THREE.HemisphereLight(0xffffff, 0x222222, 0.8); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xffffff, 2); sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048); const sc = sun.shadow.camera; sc.left = -70; sc.right = 70; sc.top = 70; sc.bottom = -70; sc.near = 1; sc.far = 300; sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.6;
+/* P1-3: shadow map defaults to 1024 (2048 only at HIGH tier via applyTier). */
+sun.shadow.mapSize.set(1024, 1024); const sc = sun.shadow.camera; sc.left = -70; sc.right = 70; sc.top = 70; sc.bottom = -70; sc.near = 1; sc.far = 300; sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.6;
 scene.add(sun, sun.target);
 let presetName = 'dusk', presetCur = null, presetK = 1;
 function applyPreset(name, instant) {
@@ -127,11 +161,14 @@ function applyPreset(name, instant) {
 let targetPreset = PRESETS.dusk; const cols = { top: new THREE.Color(), bot: new THREE.Color(), fog: new THREE.Color(), h1: new THREE.Color(), h2: new THREE.Color(), sun: new THREE.Color() };
 const cur = { hemiI: 0.8, sunI: 2, bloom: 0.6, exp: 1, fogN: 70, fogF: 500, stars: 0, sunPos: new THREE.Vector3(-60, 38, 40) };
 scene.fog = new THREE.Fog(0x000000, 70, 500);
+/* P2-5: hoisted temporaries — blendPreset runs every frame and used to
+   allocate a new Color per channel and a new Vector3 per call. */
+const _blendC = new THREE.Color(), _blendV = new THREE.Vector3();
 function blendPreset(k) {
-  const p = targetPreset, t = (a, b) => a.lerp(new THREE.Color(b), k);
+  const p = targetPreset, t = (a, b) => a.lerp(_blendC.set(b), k);
   t(cols.top, p.sky[0]); t(cols.bot, p.sky[1]); t(cols.fog, p.fog); t(cols.h1, p.hemi[0]); t(cols.h2, p.hemi[1]); t(cols.sun, p.sun[0]);
   cur.hemiI = lerp(cur.hemiI, p.hemi[2], k); cur.sunI = lerp(cur.sunI, p.sun[1], k); cur.bloom = lerp(cur.bloom, p.bloom, k); cur.exp = lerp(cur.exp, p.exp, k);
-  cur.fogN = lerp(cur.fogN, p.fogN, k); cur.fogF = lerp(cur.fogF, p.fogF, k); cur.stars = lerp(cur.stars, p.stars, k); cur.sunPos.lerp(new THREE.Vector3(...p.sun[2]), k);
+  cur.fogN = lerp(cur.fogN, p.fogN, k); cur.fogF = lerp(cur.fogF, p.fogF, k); cur.stars = lerp(cur.stars, p.stars, k); cur.sunPos.lerp(_blendV.set(...p.sun[2]), k);
   skyMat.uniforms.top.value.copy(cols.top); skyMat.uniforms.bot.value.copy(cols.bot);
   scene.fog.color.copy(cols.fog); scene.fog.near = cur.fogN; scene.fog.far = cur.fogF;
   hemi.color.copy(cols.h1); hemi.groundColor.copy(cols.h2); hemi.intensity = cur.hemiI; sun.color.copy(cols.sun); sun.intensity = cur.sunI;
@@ -140,12 +177,52 @@ function blendPreset(k) {
 applyPreset('dusk', true);
 
 /* ───────────────────────── loading ───────────────────────── */
+/* P0-3: world3d loads the resized set (models 1024²→512², heroes 2048²→1024²)
+   from assets/models-lite/ — originals stay untouched in assets/models/.
+   The action clip still loads from assets/models/chars/ (no lite copy exists;
+   only gaeli-action.glb exists there at all, and loadG fails silently). */
+const GLB_BASE = 'assets/models-lite';
 const gltf = new GLTFLoader(); gltf.setMeshoptDecoder(MeshoptDecoder);
 const texLoader = new THREE.TextureLoader();
-let loadTotal = 40, loadDone = 0;
+/* P0-4: loadTotal is the real tick count — 1 terrain + 3 start-hero clips +
+   67 placements + 24 background hero clips + 1 action clip = 96. Saved plots
+   add extra ticks; the bar clamps at 100%. */
+let loadTotal = 96, loadDone = 0;
 const tick = (msg) => { loadDone++; $('#bar i').style.width = Math.min(100, (loadDone / loadTotal) * 100) + '%'; if (msg) $('#loadmsg').textContent = msg; };
-const loadG = async (url, msg) => { try { const g = await gltf.loadAsync(url); tick(msg); return g; } catch (e) { console.warn('load fail', url, e); tick(); return null; } };
-const tex = (name, rep, srgb = true) => { const t = texLoader.load(`assets/terrain/${/\.(webp|png)$/i.test(name) ? name : name + '.webp'}`); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep, rep); t.anisotropy = 8; if (srgb) t.colorSpace = THREE.SRGBColorSpace; return t; };
+/* P0-2 — GLB parse cache: one parse per file, clones share geometry/material.
+   The PRISTINE parsed scene is cached and never mutated; every caller gets a
+   fresh clone (SkeletonUtils.clone for skinned content, plain clone otherwise),
+   so place() scaling/rotation can never corrupt the cached copy. A clone's
+   Box3 is measured before place() scales it, so repeat placements size
+   correctly. */
+const glbCache = new Map();
+const cloneGLBScene = (scene) => { let skinned = false; scene.traverse((n) => { if (n.isSkinnedMesh) skinned = true; }); return skinned ? SkeletonUtils.clone(scene) : scene.clone(); };
+const loadG = async (url, msg) => {
+  const hit = glbCache.get(url);
+  if (hit) { tick(msg); return { scene: cloneGLBScene(hit.scene), animations: hit.animations }; }
+  try { const g = await gltf.loadAsync(url); glbCache.set(url, g); tick(msg); return { scene: cloneGLBScene(g.scene), animations: g.animations }; }
+  catch (e) { console.warn('load fail', url, e); tick(); return null; }
+};
+/* P1-2 — terrain texture memo: one GPU texture per (file, repeat). Keyed by
+   repeat as well as name because repeat is per-texture state in three.js:
+   collapsing different repeats into one object would retile the ground
+   (lava 26 -> 8, obsidian 16/18/22 -> 40). Same (file, repeat) still
+   uploads once: lava map+emissiveMap, obsidian repeats, and the 5
+   mountain-rock calls (repeats 4/5/6/7) share. (P2-5 anisotropy 4 kept.) */
+const texCache = new Map();
+const tex = (name, rep, srgb = true) => {
+  const file = /\.(webp|png)$/i.test(name) ? name : name + '.webp';
+  const key = file + '|' + rep + '|' + (srgb ? 1 : 0);
+  let t = texCache.get(key);
+  if (!t) { t = texLoader.load(`assets/terrain/${file}`); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep, rep); t.anisotropy = 4; if (srgb) t.colorSpace = THREE.SRGBColorSpace; texCache.set(key, t); }
+  return t;
+};
+/* F6: boot timing marks — logged to console and exposed on window.__w.marks
+   so the next live run can attribute the post-100% stall (one synchronous
+   block vs many slow frames). bootT0 is module load; boot() starts at once. */
+const bootT0 = performance.now();
+const bootMarks = {};
+const mark = (k) => { bootMarks[k] = Math.round(performance.now() - bootT0); console.log('[boot]', k, bootMarks[k] + 'ms'); };
 
 /* ───────────────────────── terrain ───────────────────────── */
 const world = new THREE.Group(); scene.add(world);
@@ -153,19 +230,34 @@ const colliders = [];
 function buildTerrain() {
   const grass = new THREE.Mesh(new THREE.PlaneGeometry(1400, 1400), new THREE.MeshStandardMaterial({ map: tex('emerald-grass', 90), roughness: 0.95, metalness: 0 }));
   grass.rotation.x = -Math.PI / 2; grass.receiveShadow = true; world.add(grass);
-  // second, larger-scale translucent layer breaks the visible repeat grid of the tile
-  const g2t = tex('emerald-grass', 37); g2t.rotation = 0.7; g2t.center.set(0.5, 0.5);
-  const grass2 = new THREE.Mesh(new THREE.PlaneGeometry(1400, 1400), new THREE.MeshBasicMaterial({ map: g2t, transparent: true, opacity: 0.5, depthWrite: false, color: 0x9fd0a0, fog: true }));
-  grass2.rotation.x = -Math.PI / 2; grass2.position.y = 0.015; world.add(grass2);
+  /* P2-5: the second transparent grass overlay (grass2) is deleted — it was a
+     full-screen transparent overdraw layer every frame. If the base tile's
+     repeat grid becomes visible, bake the variation into emerald-grass
+     instead of re-adding an overlay. (Visual check still needed — no GPU
+     browser in this environment.) */
   const plaza = new THREE.Mesh(new THREE.CircleGeometry(36, 96), new THREE.MeshStandardMaterial({ map: tex('obsidian-plaza', 40), roughness: 0.4, metalness: 0.25, envMapIntensity: 0.6 }));
   plaza.rotation.x = -Math.PI / 2; plaza.position.y = 0.02; plaza.receiveShadow = true; world.add(plaza);
   const ringM = new THREE.MeshBasicMaterial({ color: 0xe8c45c }); [36.2, 24, 12].forEach((r, i) => { const m = new THREE.Mesh(new THREE.RingGeometry(r - 0.18, r, 128), ringM); m.rotation.x = -Math.PI / 2; m.position.y = 0.05; world.add(m); });
   const cobT = tex('neon-road.png', 4);
+  /* P1-2: all 4 roads used to clone the road texture per road (4 GPU uploads
+     of the same image) and re-set the same repeat (2, 30) on each clone. One
+     shared texture with that repeat set once: cobM.clone() shares the map
+     and the emissiveMap. Same for the 8 sidewalks below (was 8 clones). */
+  cobT.repeat.set(2, 30);
   const cobM = new THREE.MeshStandardMaterial({ map: cobT, roughness: 0.55, metalness: 0.2, emissive: 0x3a2400, emissiveMap: cobT, emissiveIntensity: 0.9 });
+  const sidT = tex('sidewalk-tiles.png', 2); sidT.repeat.set(1, 30);
   for (let i = 0; i < 4; i++) {
-    const road = new THREE.Mesh(new THREE.PlaneGeometry(10, 150), cobM.clone()); road.material.map = cobT.clone(); road.material.map.needsUpdate = true; road.material.map.repeat.set(2, 30); road.material.emissiveMap = road.material.map; road.rotation.x = -Math.PI / 2; road.rotation.z = i * Math.PI / 2; road.position.set(Math.sin(i * Math.PI / 2) * 111, 0.03, Math.cos(i * Math.PI / 2) * 111); road.receiveShadow = true; world.add(road);
-    const sidT = tex('sidewalk-tiles.png', 2);
-    [-1, 1].forEach((s) => { const sw = new THREE.Mesh(new THREE.PlaneGeometry(3, 150), new THREE.MeshStandardMaterial({ map: sidT.clone(), roughness: 0.85 })); sw.material.map.repeat.set(1, 30); sw.rotation.x = -Math.PI / 2; sw.rotation.z = i * Math.PI / 2; sw.position.set(Math.sin(i * Math.PI / 2) * 111 + Math.cos(i * Math.PI / 2) * s * 6.7, 0.032, Math.cos(i * Math.PI / 2) * 111 - Math.sin(i * Math.PI / 2) * s * 6.7); sw.receiveShadow = true; world.add(sw); });
+    const road = new THREE.Mesh(new THREE.PlaneGeometry(10, 150), cobM.clone()); road.rotation.x = -Math.PI / 2; road.rotation.z = i * Math.PI / 2; road.position.set(Math.sin(i * Math.PI / 2) * 111, 0.03, Math.cos(i * Math.PI / 2) * 111); road.receiveShadow = true; world.add(road);
+    [-1, 1].forEach((s) => { const sw = new THREE.Mesh(new THREE.PlaneGeometry(3, 150), new THREE.MeshStandardMaterial({ map: sidT, roughness: 0.85 })); sw.rotation.x = -Math.PI / 2; sw.rotation.z = i * Math.PI / 2; sw.position.set(Math.sin(i * Math.PI / 2) * 111 + Math.cos(i * Math.PI / 2) * s * 6.7, 0.032, Math.cos(i * Math.PI / 2) * 111 - Math.sin(i * Math.PI / 2) * s * 6.7); sw.receiveShadow = true; world.add(sw); });
+  }
+  /* W2: spur paths plaza (r=36) → ring road (r=88) along the diagonals, plus
+     short gate paths to the 3 gates at z=44 — one merged mesh reusing the
+     shared cobM (cached cobble texture: 0 new download, 0 new GPU, 1 call). */
+  {
+    const spurGeos = [];
+    for (let k = 0; k < 4; k++) { const a = Math.PI / 4 + k * Math.PI / 2; const g = new THREE.PlaneGeometry(6, 52); g.rotateX(-Math.PI / 2); g.rotateY(a); g.translate(Math.sin(a) * 62, 0.035, Math.cos(a) * 62); spurGeos.push(g); }
+    [-30, 0, 30].forEach((x) => { const g = new THREE.PlaneGeometry(6, 12); g.rotateX(-Math.PI / 2); g.translate(x, 0.035, 40); spurGeos.push(g); });
+    const spurs = new THREE.Mesh(mergeGeometries(spurGeos), cobM); spurs.receiveShadow = true; world.add(spurs);
   }
   const water = new THREE.Mesh(new THREE.CircleGeometry(20, 64), new THREE.MeshStandardMaterial({ map: tex('teal-water', 5), roughness: 0.1, metalness: 0.6, emissive: 0x0a3a44, emissiveIntensity: 0.8 }));
   water.rotation.x = -Math.PI / 2; water.position.set(120, 0.04, -20); world.add(water); waterMesh = water;
@@ -256,7 +348,7 @@ function buildOcean() {
   const shore = new THREE.Mesh(new THREE.PlaneGeometry(1500, 210), new THREE.MeshStandardMaterial({ map: sandT, roughness: 1, color: 0xb59a76 }));
   shore.rotation.x = -Math.PI / 2; shore.position.set(0, 0.012, 795); shore.receiveShadow = true; world.add(shore);
   const dockM = new THREE.MeshStandardMaterial({ color: 0xdfe6ee, roughness: 0.45, metalness: 0.5 }), gold = new THREE.MeshStandardMaterial({ color: 0xe8c45c, roughness: 0.3, metalness: 0.9, emissive: 0xe8c45c, emissiveIntensity: 0.25 });
-  const dock = new THREE.Mesh(new THREE.CylinderGeometry(24, 24.6, 1.6, 64), dockM); dock.position.set(0, -0.5, 932); dock.receiveShadow = true; dock.castShadow = true; world.add(dock);
+  const dock = new THREE.Mesh(new THREE.CylinderGeometry(24, 24.6, 1.6, 64), dockM); dock.position.set(0, -0.5, 932); dock.receiveShadow = true; dock.castShadow = false; world.add(dock);
   const rim = new THREE.Mesh(new THREE.TorusGeometry(24, 0.35, 8, 96), gold); rim.rotation.x = Math.PI / 2; rim.position.set(0, 0.32, 932); world.add(rim);
   const walk = new THREE.Mesh(new THREE.BoxGeometry(7, 0.5, 34), dockM); walk.position.set(0, -0.05, 905); walk.receiveShadow = true; world.add(walk);
   [-3.5, 3.5].forEach((x) => { for (let z = 890; z <= 916; z += 4) { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 1.1, 10), gold); b.position.set(x, 0.55, z); world.add(b); } });
@@ -306,15 +398,29 @@ function toggleMap(on) { const m = $('#map'); const show = on === undefined ? m.
 $('#mapc').addEventListener('click', (e) => { const r = e.target.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width, fz = (e.clientY - r.top) / r.height, wx = MB.x0 + fx * (MB.x1 - MB.x0), wz = MB.z0 + fz * (MB.z1 - MB.z0); let best = null, bd = 1e9; for (const [id, rr] of Object.entries(REALMS)) { const d = Math.hypot(rr.x - wx, rr.z - wz); if (d < bd) { bd = d; best = id; } } if (best && bd < 260) { toggleMap(false); travelTo(best); } });
 
 /* ───────────────────────── static models ───────────────────────── */
+/* P0-2: clones share materials with the cached parse, so per-instance
+   material tuning must happen once per material, not once per instance —
+   without this guard the emissiveIntensity *= 0.6 step would compound
+   (0.6^n) across the 8 farm platforms, 6 gates, etc. */
+const tunedMaterials = new Set();
 async function place(name, o) {
-  const g = await loadG(`assets/models/${name}.glb`, name); if (!g) return null;
+  const g = await loadG(`${GLB_BASE}/${name}.glb`, name); if (!g) return null;
   const m = g.scene; if (o.align) { const b0 = new THREE.Box3().setFromObject(m).getSize(new THREE.Vector3()); if (b0.x > b0.z * 1.12) m.rotation.y = (o.flip ? -1 : 1) * Math.PI / 2; else if (o.flip) m.rotation.y = Math.PI; m.updateMatrixWorld(true); }
   const box = new THREE.Box3().setFromObject(m), sz = box.getSize(new THREE.Vector3());
   const s = o.h ? o.h / sz.y : o.w / Math.max(sz.x, sz.z); m.scale.setScalar(s); m.updateMatrixWorld(true);
   const b2 = new THREE.Box3().setFromObject(m), c = b2.getCenter(new THREE.Vector3());
   m.position.set(-c.x, -b2.min.y + (o.y || 0), -c.z);
   const grp = new THREE.Group(); grp.add(m); grp.position.set(o.x, 0, o.z); grp.rotation.y = o.ry || 0; world.add(grp);
-  m.traverse((n) => { if (n.isMesh) { n.castShadow = true; n.receiveShadow = true; if (n.material) { n.material.envMapIntensity = 0.45; if (n.material.emissiveIntensity > 0.01) n.material.emissiveIntensity *= 0.6; if (n.material.map) n.material.map.anisotropy = 8; } } });
+  /* P1-3 shadow budget: castShadow only where it matters (heroes, mounts,
+     near-city buildings). Pass { noCast: true } for far-realm props, farm
+     platforms and the ocean set. receiveShadow stays on ground/plaza only
+     (buildTerrain sets it there); placed meshes no longer receive. P2-5:
+     anisotropy 8 → 4. P0-2: material tuning is guarded by tunedMaterials —
+     clones share materials with the cached parse, so without the guard the
+     emissiveIntensity *= 0.6 step would compound (0.6^n) across repeats.
+     NOTE: shadowMap.autoUpdate stays true — the sun follows the player, so
+     the map must update every frame. */
+  m.traverse((n) => { if (n.isMesh) { n.castShadow = !o.noCast; n.receiveShadow = false; if (n.material && !tunedMaterials.has(n.material)) { tunedMaterials.add(n.material); n.material.envMapIntensity = 0.45; if (n.material.emissiveIntensity > 0.01) n.material.emissiveIntensity *= 0.6; if (n.material.map) n.material.map.anisotropy = 4; } } });
   if (o.r) colliders.push({ x: o.x, z: o.z, r: o.r });
   grp.userData = { size: sz.clone().multiplyScalar(s), cull: true };
   return grp;
@@ -345,7 +451,12 @@ function makeActor(id) {
   const wp = (n) => { const o = model.getObjectByName(n); return o ? new THREE.Vector3().setFromMatrixPosition(o.matrixWorld).y : null; };
   const hy = wp('Head'), fy = Math.min(wp('LeftToeBase') ?? 0, wp('RightToeBase') ?? 0);
   const k = 1.8 / ((hy - fy) * 1.12 || 1); model.scale.setScalar(k); model.position.y = -fy * k;   // every hero = 1.8 m, feet on the ground
-  model.traverse((n) => { if (n.isMesh) { n.castShadow = true; n.frustumCulled = false; if (n.material) n.material.envMapIntensity = 0.7; } });
+  /* P2-5: no more frustumCulled = false on heroes. Compute a proper bounding
+     sphere once, after scaling — then inflate it ×1.6: the bind-pose sphere
+     does not cover animated limbs, and a too-tight sphere would pop heroes
+     out at the screen edge. (Verified by code reasoning only — no live render
+     exists in this environment to watch for pop-out; re-check on a GPU.) */
+  model.traverse((n) => { if (n.isMesh) { n.castShadow = true; if (n.material) n.material.envMapIntensity = 0.7; if (n.geometry) { if (!n.geometry.boundingSphere) n.geometry.computeBoundingSphere(); if (n.geometry.boundingSphere) n.geometry.boundingSphere.radius *= 1.6; } } });
   model.updateMatrixWorld(true);
   // capture the rest (T-pose) skeleton in actor space: used by the seated-pose solver
   const bones = {}, rest = {}, restDir = {}; BONES.forEach((n) => { bones[n] = model.getObjectByName(n); });
@@ -529,13 +640,26 @@ function spawnPlayer(id, at) {
   if (mountedOn) dismount(true);
   rebuildNpcs();
 }
-function rebuildNpcs() {
+/* F5: staggered NPC spawns — one makeActor() per frame instead of a
+   6-actor synchronous burst late in the post-100% window. Fire-and-forget
+   from spawnPlayer(); the try/catch keeps a single bad hero from rejecting
+   the whole rebuild (previously an exception here would fail the boot). */
+let npcGen = 0;
+async function rebuildNpcs() {
+  const gen = ++npcGen; // superseded rebuilds bail out instead of duplicating NPCs
   npcs.forEach((n) => scene.remove(n.root)); npcs = [];
   const homes = { city: [[-14, 10], [16, 8], [0, -18], [24, -14], [-26, -10], [10, 26]], desert: [] };
-  HEROES.filter((h) => h.id !== state.hero).forEach((h, i) => {
-    const n = makeActor(h.id); if (!n) return; const [x, z] = homes.city[i % homes.city.length]; n.root.position.set(x, 0, z); n.home = new THREE.Vector3(x, 0, z); n.target = n.home.clone(); n.wait = Math.random() * 3; n.speedNow = 0;
-    const l = makeLabel(h.name, h.accent, 0.8); l.position.y = 2.4; n.root.add(l); scene.add(n.root); npcs.push(n);
-  });
+  const list = HEROES.filter((h) => h.id !== state.hero);
+  for (let i = 0; i < list.length; i++) {
+    if (gen !== npcGen) return;
+    const h = list[i];
+    try {
+      const n = makeActor(h.id);
+      if (n) { const [x, z] = homes.city[i % homes.city.length]; n.root.position.set(x, 0, z); n.home = new THREE.Vector3(x, 0, z); n.target = n.home.clone(); n.wait = Math.random() * 3; n.speedNow = 0;
+        const l = makeLabel(h.name, h.accent, 0.8); l.position.y = 2.4; n.root.add(l); scene.add(n.root); npcs.push(n); }
+    } catch (e) { console.warn('npc spawn fail', h.id, e); }
+    if (i < list.length - 1) await pace();
+  }
 }
 function updateNpc(n, dt) {
   n.mixer.update(dt); n.busy = Math.max(0, n.busy - dt);
@@ -623,18 +747,35 @@ function travelTo(id) {
 
 
 /* ───────────────────────── performance governor ───────────────────────── */
-const perf = { acc: 0, n: 0, tier: 2, cool: 4, cullT: 0 };
+/* F3: time-based governor — the old 90-frame window needed 360 frames
+   before the first step-down (12 min at 0.5 fps). Now every 2 s of wall
+   clock: step down after 2 consecutive slow windows (even with 0 frames
+   rendered), step up only after 7 consecutive fast windows. cool is a
+   post-change cooldown counted in windows. */
+let grass = null; // W1: instanced grass ring (created in boot); applyTier sheds its quality on LOW
+const perf = { acc: 0, n: 0, tier: 1, cool: 0, cullT: 0, fast: 0, slow: 0, winStart: performance.now() };
 function applyTier(t) {
-  perf.tier = t;
-  const pr = t >= 2 ? Math.min(devicePixelRatio, 2) : t === 1 ? 1 : 0.75;
+  perf.tier = t; perf.fast = 0; perf.slow = 0;
+  const pr = t >= 2 ? Math.min(devicePixelRatio, 1.5) : t === 1 ? 1 : 0.75;
   renderer.setPixelRatio(pr); composer.setSize(innerWidth, innerHeight); renderer.setSize(innerWidth, innerHeight);
   bloom.enabled = t >= 1; renderer.shadowMap.autoUpdate = t >= 1;
   sun.shadow.mapSize.set(t >= 2 ? 2048 : 1024, t >= 2 ? 2048 : 1024); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
+  if (grass) grass.setQuality(t >= 2 ? 'HIGH' : t === 1 ? 'MEDIUM' : 'LOW');
   toast(['LOW', 'MEDIUM', 'HIGH'][t] + ' GRAPHICS');
 }
 function perfFrame(dt) {
   perf.acc += dt; perf.n++;
-  if (perf.n >= 90) { const ms = (perf.acc / perf.n) * 1000; perf.acc = 0; perf.n = 0; perf.cool--; if (perf.cool <= 0 && !state.fading) { if (ms > 26 && perf.tier > 0) { applyTier(perf.tier - 1); perf.cool = 4; } else if (ms < 13 && perf.tier < 2 && perf.cool < -6) { applyTier(perf.tier + 1); perf.cool = 4; } } window.__fps = Math.round(1000 / ms); }
+  const now = performance.now();
+  if (now - perf.winStart >= 2000) {
+    const ms = perf.n > 0 ? (perf.acc / perf.n) * 1000 : Infinity; // 0 frames in 2 s = a slow window, not a skipped one
+    perf.acc = 0; perf.n = 0; perf.winStart = now;
+    window.__fps = ms === Infinity ? 0 : Math.round(1000 / ms);
+    if (perf.cool > 0) { perf.cool--; perf.fast = 0; perf.slow = 0; return; }
+    if (state.fading) return;
+    if (ms > 26) { perf.slow++; perf.fast = 0; if (perf.slow >= 2 && perf.tier > 0) { applyTier(perf.tier - 1); perf.cool = 2; } }
+    else if (ms < 13) { perf.fast++; perf.slow = 0; if (perf.fast >= 7 && perf.tier < 2) { applyTier(perf.tier + 1); perf.cool = 2; } }
+    else { perf.fast = 0; perf.slow = 0; }
+  }
 }
 // distance-cull placed models and every non-local light: each active light costs every pixel on every material
 function cullPass(dt) {
@@ -696,7 +837,7 @@ function step(dt) {
   farmPlats.forEach((f) => { f.position.y = Math.sin(T * 0.8 + f.userData.bob) * 0.18; f.rotation.z = Math.sin(T * 0.6 + f.userData.bob) * 0.012; });
   shopItems.forEach((s) => { s.spr.position.y = s.base + Math.sin(T * 1.6 + s.i) * 0.22; s.disc.material.opacity = 0.4 + 0.2 * Math.sin(T * 2 + s.i); });
   if (waterMesh) waterMesh.material.map.offset.set(T * 0.01, T * 0.006);
-  updateVfx(dt); motes.rotation.y += dt * 0.01; motes.position.copy(camTarget).setY(0);
+  updateVfx(dt); if (grass) grass.update(dt); motes.rotation.y += dt * 0.01; motes.position.copy(camTarget).setY(0);
   sky.position.copy(camera.position); starPts.position.copy(camera.position);
   oceanMat.uniforms.t.value = T; oceanMat.uniforms.skyTop.value.copy(skyMat.uniforms.top.value); oceanMat.uniforms.skyBot.value.copy(skyMat.uniforms.bot.value); oceanMat.uniforms.sunDir.value.copy(cur.sunPos).normalize(); oceanMat.uniforms.sunCol.value.copy(cols.sun);
   lavaMat.uniforms.t.value = T;
@@ -715,7 +856,7 @@ function step(dt) {
   // prompt
   const n = nearest(), pr = $('#prompt'); if (n) { pr.style.display = 'block'; pr.textContent = n.label; } else pr.style.display = 'none';
 }
-function loop() { requestAnimationFrame(loop); const dt = Math.min(clock.getDelta(), 0.05); perfFrame(dt); try { step(dt); cullPass(dt); } catch (e) { if (!loop.err) { console.error(e); loop.err = 1; } } composer.render(); }
+function loop() { requestAnimationFrame(loop); const dt = Math.min(clock.getDelta(), 0.05); perfFrame(dt); try { step(dt); cullPass(dt); } catch (e) { if (!loop.err) { console.error(e); loop.err = 1; } } if (!gfxLost) composer.render(); }
 
 /* ───────────────────────── portal shader ───────────────────────── */
 function makePortal(pos, ry, col) {
@@ -726,23 +867,78 @@ function makePortal(pos, ry, col) {
   mesh.position.copy(pos); mesh.rotation.y = ry; world.add(mesh); return mesh;
 }
 
+/* ───────────────────────── W3: merged primitive city props ───────────────────────── */
+/* Planters / crates / bollards / low walls from Box/CylinderGeometry only,
+   2 shared materials, merged into 2 meshes (+2 draw calls, ~1k tris,
+   0 download, 0 GPU). All inside the 36–90 m annulus, clear of roads,
+   gates and the mounts corral. No colliders (low/flanking props). */
+function buildCityProps() {
+  const dark = new THREE.MeshStandardMaterial({ color: 0x14121c, metalness: 0.8, roughness: 0.3 });
+  const gold = new THREE.MeshBasicMaterial({ color: 0xe8c45c });
+  const darkGeos = [], goldGeos = [];
+  const box = (arr, w, h, d, x, y, z, ry = 0) => { const g = new THREE.BoxGeometry(w, h, d); if (ry) g.rotateY(ry); g.translate(x, y, z); arr.push(g); };
+  const cyl = (arr, rt, rb, h, seg, x, y, z) => { const g = new THREE.CylinderGeometry(rt, rb, h, seg); g.translate(x, y, z); arr.push(g); };
+  // 8 planters at r=48, between the diagonals and the axial roads
+  for (let k = 0; k < 8; k++) { const a = Math.PI / 8 + k * Math.PI / 4, x = Math.sin(a) * 48, z = Math.cos(a) * 48; box(darkGeos, 1.6, 0.7, 1.6, x, 0.35, z, a); box(goldGeos, 1.4, 0.12, 1.4, x, 0.76, z, a); }
+  // 6 crates: two stacked pairs + two singles, r=70
+  [[22.5, true], [202.5, true], [112.5, false], [292.5, false]].forEach(([deg, stacked]) => { const a = deg * Math.PI / 180, x = Math.sin(a) * 70, z = Math.cos(a) * 70; box(darkGeos, 0.9, 0.9, 0.9, x, 0.45, z, a); if (stacked) box(darkGeos, 0.9, 0.9, 0.9, x + 0.15, 1.35, z - 0.1, a + 0.4); });
+  // 10 bollards flanking the spur paths: r=44 on all 4 diagonals + r=80 on the NE spur
+  const bollard = (a, r) => { const px = Math.cos(a), pz = -Math.sin(a); [-1, 1].forEach((s) => { const x = Math.sin(a) * r + px * 4 * s, z = Math.cos(a) * r + pz * 4 * s; cyl(darkGeos, 0.18, 0.2, 1.0, 8, x, 0.5, z); cyl(goldGeos, 0.19, 0.19, 0.08, 8, x, 1.02, z); }); };
+  [45, 135, 225, 315].forEach((deg) => bollard(deg * Math.PI / 180, 44));
+  bollard(Math.PI / 4, 80);
+  // 4 low walls framing the E/W plaza exits (flanking the axial roads)
+  [[40, 7], [40, -7], [-40, 7], [-40, -7]].forEach(([x, z]) => { box(darkGeos, 0.4, 0.8, 4, x, 0.4, z); box(goldGeos, 0.46, 0.06, 4.1, x, 0.83, z); });
+  const darkMesh = new THREE.Mesh(mergeGeometries(darkGeos), dark); darkMesh.userData = { cull: true }; world.add(darkMesh);
+  const goldMesh = new THREE.Mesh(mergeGeometries(goldGeos), gold); goldMesh.userData = { cull: true }; world.add(goldMesh);
+}
+
 /* ───────────────────────── boot ───────────────────────── */
 (async function boot() {
   try {
-  buildTerrain(); buildOcean(); buildVolcano(); buildInterior(); interior.visible = false; tick('terrain'); loadSave();
+  mark('boot-start');
+  buildTerrain(); buildOcean(); buildVolcano(); buildInterior(); interior.visible = false; tick('terrain'); loadSave(); mark('terrain-built');
   // characters + shared clips
-  const loadHero = async (h) => { if (charSrc[h.id]) return; const [g, r, w] = await Promise.all([loadG(`assets/models/chars/${h.id}.glb`, `hero ${h.name}`), loadG(`assets/models/chars/${h.id}-run.glb`), loadG(`assets/models/chars/${h.id}-walk.glb`)]); if (g) charSrc[h.id] = { scene: g.scene, walk: (w && w.animations[0]) || g.animations[0], run: r && r.animations[0] }; };
+  const loadHero = async (h) => { if (charSrc[h.id]) return; const [g, r, w] = await Promise.all([loadG(`${GLB_BASE}/chars/${h.id}.glb`, `hero ${h.name}`), loadG(`${GLB_BASE}/chars/${h.id}-run.glb`), loadG(`${GLB_BASE}/chars/${h.id}-walk.glb`)]); if (g) charSrc[h.id] = { scene: g.scene, walk: (w && w.animations[0]) || g.animations[0], run: r && r.animations[0] }; };
   const addBtn = (h) => { if (!charSrc[h.id] || document.querySelector(`#chars button[data-id="${h.id}"]`)) return; const b = document.createElement('button'); b.dataset.id = h.id; b.textContent = h.name; b.onclick = () => spawnPlayer(h.id, player.root.position.clone()); $('#chars').appendChild(b); };
   const startId = HEROES.some((h) => h.id === save.hero) ? save.hero : 'zerox';
   await loadHero(HEROES.find((h) => h.id === startId));
   const startHero = charSrc[startId] ? startId : Object.keys(charSrc)[0]; citySky = save.sky || 'dusk';
-  spawnPlayer(startHero, new THREE.Vector3(save.x || 0, 0, save.z || 14)); syncRealm(true);
+  spawnPlayer(startHero, new THREE.Vector3(save.x || 0, 0, save.z || 14)); syncRealm(true); mark('hero-spawned');
   for (const rec of save.plots) placePlot(rec);
-  $('#loadmsg').textContent = 'ready'; $('#bar i').style.width = '100%'; hud();
-  $('#loading').hidden = true; toast('WELCOME TO SHADDAI'); const st = document.createElement('div'); st.id = 'stream'; st.style.cssText = 'position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:12;font-size:12px;color:#e8c45c;letter-spacing:.1em;background:rgba(8,11,18,.6);padding:4px 12px;border-radius:12px'; st.textContent = 'streaming world…'; document.body.appendChild(st);
-  window.__w = { travelTo, syncRealm, waveH, REALMS, THREE, scene, camera, state, spawnPlayer, get player() { return player; }, get mounts() { return mounts; }, mount, dismount, enterInterior, leaveInterior, applyPreset, strike, step };
-  loop();
-  (async () => { for (const h of HEROES) { await loadHero(h); addBtn(h); } rebuildNpcs(); })();
+  /* W1: instanced grass ring (public/world-grass.js + clumps-atlas.webp, both
+     already on disk). U:1 — world3d units are already metres; the file's
+     default U0≈3.89 would make a 132 m ring of 2.1 m blades. scene: world
+     (not scene) so it hides with world.visible=false inside the shop.
+     First rebuild is lazy: grass.update() in step() rebuilds once the loop
+     runs, so boot pays nothing here. Dressing only — never fatal. */
+  try {
+    if (window.buildWorldGrass) {
+      grass = window.buildWorldGrass({
+        THREE, scene: world, U: 1, heightAt: () => 0,
+        getPlayer: () => player ? { pos: player.root.position } : null,
+        allow: (x, z) => {
+          const r = Math.hypot(x, z);
+          if (r > 260 || r < 38) return false;                 // city only, keep the obsidian plaza clear
+          if (r > 86 && r < 102) return false;                 // ring road band
+          if (Math.hypot(x - 120, z + 20) < 22) return false;  // teal water circle
+          if (Math.abs(Math.abs(x) - 111) < 78 && Math.abs(z) < 6) return false;  // E/W roads (centred ±111, 0)
+          if (Math.abs(Math.abs(z) - 111) < 78 && Math.abs(x) < 6) return false;  // N/S roads (centred 0, ±111)
+          return true;
+        },
+        waterAt: null, quality: 'MEDIUM', clumpAtlas: 'assets/grass/clumps-atlas.webp',
+      });
+      console.log('[grass]', grass.stats());
+    } else console.warn('[grass] world-grass.js not loaded');
+  } catch (e) { console.warn('[grass] build failed (dressing only)', e); grass = null; }
+  /* P0-5: boot at MEDIUM, never HIGH. F3: boot LOW on weak devices
+     (<=4 GB RAM, coarse pointer / small screen) and let the governor step
+     up — the reverse of start-MEDIUM-then-step-down. */
+  const weakDevice = (navigator.deviceMemory && navigator.deviceMemory <= 4) || matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 500;
+  applyTier(weakDevice ? 0 : 1);
+  /* P0-4: the loading overlay stays up and loop() does NOT start here — the
+     world is not ready yet. Overlay hides + loop starts only once the city
+     (near field) is built and warmed up; ocean/volcano stream afterwards. */
+  $('#loadmsg').textContent = 'building the city…'; hud();
 
   // ── city plan: ring road (r=95), four avenues, lamp posts, plaza spokes ──
   { const roadM = new THREE.MeshStandardMaterial({ map: tex('tech-cobble-street', 6), roughness: 0.5, metalness: 0.2, emissive: 0x2a1a00, emissiveIntensity: 0.6 });
@@ -751,26 +947,29 @@ function makePortal(pos, ry, col) {
     const lampM = new THREE.MeshStandardMaterial({ color: 0x14121c, metalness: 0.8, roughness: 0.3 }), glowM = new THREE.MeshBasicMaterial({ color: 0xffe0a0 });
     for (let i = 0; i < 24; i++) { const a = (i / 24) * Math.PI * 2, x = Math.sin(a) * 104, z = -Math.cos(a) * 104; const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 5.5, 8), lampM); pole.position.set(x, 2.75, z); const head = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12, 8), glowM); head.position.set(x, 5.7, z); world.add(pole, head); } }
   // city layout (landmarks around the plaza; futuristic only)
-  // download every model in parallel first (browser cache), then place them in order -- much faster than serial loads
-  { const names = ['bld-neon-observatory','bld-sky-dome-v2','bld-sea-terrace-spire','bld-inverted-cube-hab','bld-bio-pod-tower-v2','bld-holo-market-v2','tower-crescent2','castle-siege','transit-cliff-elevator','vehicle-mining-powerarmor','transit-hyperloop-gate','transit-hyperloop-capsule','transit-skyrail-pod','mount-forge-bull','mount-glacier-mammoth','mount-canopy-gorilla','mount-sky-hawk','veh-hover-pod-green','veh-hover-pod-blue','veh-monowheel-mech','ocean-harbor-hub','ocean-catamaran','ocean-superyacht','ocean-submarine','ocean-skiff','ocean-farm-platform','volcano-fortress','volcano-ritual-circle','volcano-forge-tower','volcano-bridge','volcano-gate','volcano-dragon'];
-    $('#loadmsg').textContent = 'downloading world…'; await Promise.all(names.map((n) => fetch(`assets/models/${n}.glb`).then((r) => r.arrayBuffer()).catch(() => 0))); }
+  // P0-1: the 32-GLB discard-prefetch that used to sit here is deleted.
+  // It fetched 25 MB of ArrayBuffers and threw them away after loop()
+  // started (a 25 MB transient heap spike during active rendering, and a
+  // possible double download — raw fetch() never touches THREE.Cache, and
+  // .glb gets no Cache-Control header). GLTFLoader in place() fetches each
+  // file once, and P0-2 caches the parse.
   const L = [
     ['bld-neon-observatory', { x: -90, z: -76, h: 30, r: 5.5, ry: 2.27 }], ['bld-sky-dome-v2', { x: 90, z: -76, w: 26, r: 11, ry: 4.01 }],
     ['bld-sea-terrace-spire', { x: -134, z: 24, h: 46, r: 12, ry: 1.4 }], ['bld-inverted-cube-hab', { x: 130, z: 23, h: 36, r: 6, ry: 4.89 }],
     ['bld-bio-pod-tower-v2', { x: -76, z: 90, h: 28, r: 8, ry: 0.7 }], ['bld-holo-market-v2', { x: 76, z: 90, w: 26, r: 11, ry: 5.59 }],
-    ['tower-crescent2', { x: 0, z: -190, h: 70, r: 12 }], ['castle-siege', { x: -190, z: -160, h: 50, r: 20, ry: 0.6 }],
-    ['transit-cliff-elevator', { x: 130, z: -70, h: 38, r: 3 }], ['vehicle-mining-powerarmor', { x: 420, z: -30, h: 6, r: 3 }],
+    ['tower-crescent2', { x: 0, z: -190, h: 70, r: 12, noCast: true }], ['castle-siege', { x: -190, z: -160, h: 50, r: 20, ry: 0.6, noCast: true }],
+    ['transit-cliff-elevator', { x: 130, z: -70, h: 38, r: 3 }], ['vehicle-mining-powerarmor', { x: 420, z: -30, h: 6, r: 3, noCast: true }],
   ];
   for (const [f, o] of L) { await place(f, o); }
   // gates: city <-> desert/volcano/ocean, each with a return gate
-  const gate = async (x, z, ry, to, col) => { const g = await place('transit-hyperloop-gate', { x, z, h: 7, ry }); if (g) makePortal(new THREE.Vector3(x, 3.6, z), ry, col); const l = makeLabel(REALMS[to].name, '#' + col.toString(16).padStart(6, '0'), 1.1); l.position.set(x, 9.5, z); world.add(l); GATES.push({ x, z, to }); };
+  const gate = async (x, z, ry, to, col, far) => { const g = await place('transit-hyperloop-gate', { x, z, h: 7, ry, noCast: !!far }); if (g) makePortal(new THREE.Vector3(x, 3.6, z), ry, col); const l = makeLabel(REALMS[to].name, '#' + col.toString(16).padStart(6, '0'), 1.1); l.position.set(x, 9.5, z); world.add(l); GATES.push({ x, z, to }); };
   await gate(0, 44, 0, 'desert', 0xff9a4a); await gate(-30, 44, 0, 'volcano', 0xff4a1a); await gate(30, 44, 0, 'ocean', 0x4fc3ff);
-  await gate(420, 14, Math.PI, 'city', 0x5fe0ff); await gate(V0.x, V0.z + 150, 0, 'city', 0x5fe0ff); await gate(0, 846, 0, 'city', 0x5fe0ff);
+  await gate(420, 14, Math.PI, 'city', 0x5fe0ff, true); await gate(V0.x, V0.z + 150, 0, 'city', 0x5fe0ff, true); await gate(0, 846, 0, 'city', 0x5fe0ff, true);
   // street props: benches on the ring road, obsidian rocks in the tundra/volcano gap, mushroom pods + pod blocks in the suburbs
   [0.45, 1.55, 2.6, 3.7, 4.8, 5.9].forEach((a) => { const x = Math.sin(a) * 103, z = -Math.cos(a) * 103; place('prop-bench', { x, z, h: 1.1, ry: -a }); });
-  [[250, -520, 22], [-450, -620, 26], [-120, -740, 20], [60, -700, 18], [-260, -560, 24], [390, -520, 20]].forEach(([x, z, w]) => place('prop-obsidian-rocks', { x, z, w, ry: Math.random() * 6 } ));
-  [[60, -130, 16], [110, -150, 16], [-72, -152, 16], [30, -195, 16], [150, -70, 16], [-150, -120, 16]].forEach(([x, z, w]) => place('homes-mushroom-pods', { x, z, w, ry: Math.random() * 6 }));
-  [[186, -82, 30], [-186, 64, 28], [-176, -124, 30], [182, 150, 26]].forEach(([x, z, h]) => place('bld-apartment-pod-block', { x, z, h, ry: Math.random() * 6 }));
+  [[250, -520, 22], [-450, -620, 26], [-120, -740, 20], [60, -700, 18], [-260, -560, 24], [390, -520, 20]].forEach(([x, z, w]) => place('prop-obsidian-rocks', { x, z, w, ry: Math.random() * 6, noCast: true } ));
+  [[60, -130, 16], [110, -150, 16], [-72, -152, 16], [30, -195, 16], [150, -70, 16], [-150, -120, 16]].forEach(([x, z, w]) => place('homes-mushroom-pods', { x, z, w, ry: Math.random() * 6, noCast: true }));
+  [[186, -82, 30], [-186, 64, 28], [-176, -124, 30], [182, 150, 26]].forEach(([x, z, h]) => place('bld-apartment-pod-block', { x, z, h, ry: Math.random() * 6, noCast: true }));
   // rail + shuttling capsule + sky-rail pod
   const rail = new THREE.Mesh(new THREE.BoxGeometry(170, 0.5, 2.2), new THREE.MeshStandardMaterial({ color: 0x16151e, metalness: 0.8, roughness: 0.3, emissive: 0xe8c45c, emissiveIntensity: 0.35 })); rail.position.set(0, 0.25, 100); world.add(rail);
   const rl = new THREE.Mesh(new THREE.BoxGeometry(170, 0.05, 0.25), new THREE.MeshBasicMaterial({ color: 0x00ff9c })); rl.position.set(0, 0.52, 100); world.add(rl);
@@ -783,28 +982,52 @@ await addMount('mount-canopy-gorilla', 'CANOPY GORILLA', { x: 20, z: 34, h: 4.4,
 await addMount('mount-sky-hawk', 'SKY HAWK', { x: 34, z: 46, h: 3.6, ry: -0.2, speed: 16, hover: true, hoverY: 3.4, seatY: 0.95, seatK: 0.85 });
 await addMount('veh-hover-pod-green', 'HOVER POD', { x: -8, z: 56, w: 5.2, ry: 0.3, speed: 22, hover: true, hoverY: 1.1, seatY: 0.55, seatK: 0.55 });
 await addMount('veh-hover-pod-blue', 'HOVER POD II', { x: 8, z: 56, w: 5.2, ry: -0.3, speed: 24, hover: true, hoverY: 1.1, seatY: 0.55, seatK: 0.55 });
-  await addMount('veh-monowheel-mech', 'DUNE WHEEL', { x: 412, z: -24, h: 5.4, ry: 0.5, speed: 15, seatK: 0.95 });
+  await addMount('veh-monowheel-mech', 'DUNE WHEEL', { x: 412, z: -24, h: 5.4, ry: 0.5, speed: 15, seatK: 0.95, noCast: true });
   // doors
   doors.push(new Door({ x: 45, z: -16, ry: 0, w: 6, h: 5.6, type: 'slide' }), new Door({ x: 64, z: 60, ry: 0, w: 4.2, h: 4.6, type: 'hinge', color: 0x00ff9c }), new Door({ x: -42, z: -25, ry: 0.4, w: 4, h: 5, type: 'slide', color: 0xa06bff }));
-  // ── OCEAN realm ──
-  await place('ocean-harbor-hub', { x: 0, z: 932, w: 30, y: 0.3, r: 0 });
-  await addMount('ocean-catamaran', 'CATAMARAN', { x: -34, z: 962, w: 15, ry: 0.6, speed: 15, seatK: 0.55, boat: true });
-  await addMount('ocean-superyacht', 'SUPER-YACHT', { x: 44, z: 1000, w: 46, ry: 0.4, speed: 10, seatK: 0.5, boat: true });
-  await addMount('ocean-submarine', 'RESEARCH SUB  (C to dive)', { x: 0, z: 985, w: 15, ry: 0, speed: 9, seatK: 0.5, boat: true, sub: true });
-  await addMount('ocean-skiff', 'HOVER SKIFF', { x: 30, z: 962, w: 7, ry: -0.5, speed: 26, seatK: 0.55, boat: true });
+  buildCityProps(); // W3: merged primitive props, pre-loop city block (never the post-loop stream)
+  mark('city-built');
+  /* F1: warm up the renderer UNDER the overlay — compile every shader program
+     and render one real frame (texture uploads + first shadow map) before the
+     loading screen hides, so the compile/upload storm reads as "warming up…"
+     instead of a frozen world. step(1/60) first so the camera sits on the
+     spawn view for that frame. */
+  $('#loadmsg').textContent = 'warming up the renderer…';
+  step(1 / 60);
+  try { await renderer.compileAsync(scene, camera); } catch (e) { try { renderer.compile(scene, camera); } catch (e2) { console.warn('warm-up compile failed', e2); } }
+  mark('compile-done');
+  composer.render();
+  mark('first-frame');
+  console.log('[warm-up] renderer.info', JSON.stringify(renderer.info.render), 'programs:', renderer.info.programs.length);
+  // ── P0-4: the city (near field) is built — only NOW is it honest to show
+  // the world. The overlay hides, the first frame renders, and the far
+  // realms below stream in the background while the city is playable.
+  $('#loadmsg').textContent = 'ready'; $('#bar i').style.width = '100%'; hud();
+  $('#loading').hidden = true; toast('WELCOME TO SHADDAI'); const st = document.createElement('div'); st.id = 'stream'; st.style.cssText = 'position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:12;font-size:12px;color:#e8c45c;letter-spacing:.1em;background:rgba(8,11,18,.6);padding:4px 12px;border-radius:12px'; st.textContent = 'streaming far realms…'; document.body.appendChild(st);
+  window.__w = { travelTo, syncRealm, waveH, REALMS, THREE, scene, camera, state, spawnPlayer, get player() { return player; }, get mounts() { return mounts; }, mount, dismount, enterInterior, leaveInterior, applyPreset, strike, step, marks: bootMarks };
+  loop();
+  (async () => { for (const h of HEROES) { await loadHero(h); addBtn(h); await pace(); } rebuildNpcs(); })();
+  // ── OCEAN realm ── (F2: pace() after each file so the loop gets frames)
+  await place('ocean-harbor-hub', { x: 0, z: 932, w: 30, y: 0.3, r: 0, noCast: true }); await pace();
+  await addMount('ocean-catamaran', 'CATAMARAN', { x: -34, z: 962, w: 15, ry: 0.6, speed: 15, seatK: 0.55, boat: true, noCast: true }); await pace();
+  await addMount('ocean-superyacht', 'SUPER-YACHT', { x: 44, z: 1000, w: 46, ry: 0.4, speed: 10, seatK: 0.5, boat: true, noCast: true }); await pace();
+  await addMount('ocean-submarine', 'RESEARCH SUB  (C to dive)', { x: 0, z: 985, w: 15, ry: 0, speed: 9, seatK: 0.5, boat: true, sub: true, noCast: true }); await pace();
+  await addMount('ocean-skiff', 'HOVER SKIFF', { x: 30, z: 962, w: 7, ry: -0.5, speed: 26, seatK: 0.55, boat: true, noCast: true }); await pace();
   const farm = [[-90, 1060, 0.2], [-140, 1120, 0.9], [-60, 1160, 2.0], [110, 1090, 0.4], [150, 1150, 1.2], [70, 1200, 2.6], [-20, 1250, 0.7], [220, 1220, 1.8]];
-  for (const [x, z, ry] of farm) { const f = await place('ocean-farm-platform', { x, z, w: 34, ry, y: -0.9 }); if (f) { f.userData.bob = Math.random() * 6; farmPlats.push(f); } }
-  // ── VOLCANO realm ──
-  await place('volcano-fortress', { x: V0.x, z: V0.z, h: 78, r: 24 });
-  await place('volcano-ritual-circle', { x: V0.x + 70, z: V0.z + 64, w: 40, y: 0.05 });
-  await place('volcano-forge-tower', { x: V0.x - 84, z: V0.z + 34, h: 38, r: 9, ry: 0.6 });
-  await place('volcano-bridge', { x: V0.x + 46, z: V0.z + 120, w: 44, y: 0.1, ry: 0.4 }); await place('volcano-bridge', { x: V0.x - 46, z: V0.z + 120, w: 44, y: 0.1, ry: -0.4 });
-  await place('volcano-gate', { x: V0.x, z: V0.z + 108, h: 16, y: 0.05 });
-  dragon = await place('volcano-dragon', { x: V0.x, z: V0.z - 62, h: 26 }); if (dragon) { const lab = makeLabel('DRAGON', '#ff7a3a', 1.4); lab.position.set(0, 24, 0); dragon.add(lab); }
+  for (const [x, z, ry] of farm) { const f = await place('ocean-farm-platform', { x, z, w: 34, ry, y: -0.9, noCast: true }); if (f) { f.userData.bob = Math.random() * 6; farmPlats.push(f); } await pace(); }
+  mark('ocean-done');
+  // ── VOLCANO realm ── (F2: paced as above)
+  await place('volcano-fortress', { x: V0.x, z: V0.z, h: 78, r: 24, noCast: true }); await pace();
+  await place('volcano-ritual-circle', { x: V0.x + 70, z: V0.z + 64, w: 40, y: 0.05, noCast: true }); await pace();
+  await place('volcano-forge-tower', { x: V0.x - 84, z: V0.z + 34, h: 38, r: 9, ry: 0.6, noCast: true }); await pace();
+  await place('volcano-bridge', { x: V0.x + 46, z: V0.z + 120, w: 44, y: 0.1, ry: 0.4, noCast: true }); await pace(); await place('volcano-bridge', { x: V0.x - 46, z: V0.z + 120, w: 44, y: 0.1, ry: -0.4, noCast: true }); await pace();
+  await place('volcano-gate', { x: V0.x, z: V0.z + 108, h: 16, y: 0.05, noCast: true }); await pace();
+  dragon = await place('volcano-dragon', { x: V0.x, z: V0.z - 62, h: 26, noCast: true }); await pace(); if (dragon) { const lab = makeLabel('DRAGON', '#ff7a3a', 1.4); lab.position.set(0, 24, 0); dragon.add(lab); }
+  mark('volcano-done');
   // ── SIEGE CASTLE label ──
   loadSave(); hud();
-  { const st = document.getElementById('stream'); if (st) st.remove(); toast('WORLD READY'); }
-  } catch (e) { console.error('BOOT FAIL', e); $('#loadmsg').textContent = 'boot error: ' + e.message; $('#loadmsg').style.color = '#ff6a6a'; }
+  { const st = document.getElementById('stream'); if (st) st.remove(); toast('WORLD READY'); mark('world-ready'); console.log('[boot] marks', JSON.stringify(bootMarks)); }
+  } catch (e) { console.error('BOOT FAIL', e); $('#loadmsg').textContent = 'boot error: ' + e.message; $('#loadmsg').style.color = '#ff6a6a'; showGfxError('The 3D world failed to start' + (e && e.message ? ': ' + e.message : '') + '. Try reloading, or play the Classic 2D world instead.'); }
 })();
 </script>
 <script src="world3d-bridge.js" defer onerror="this.remove()"></script>

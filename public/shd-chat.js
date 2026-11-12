@@ -32,7 +32,7 @@
     return e;
   }
   function uid() { try { return localStorage.getItem('shd_userid') || ''; } catch (e) { return ''; } }
-  function hdr(json) { var o = {}; if (json) o['Content-Type'] = 'application/json'; try { var t = localStorage.getItem('shd_token'); if (t) o.Authorization = 'Bearer ' + t; } catch (e) { /* ignore */ } return o; }
+  function hdr(json) { var o = {}; if (json) o['Content-Type'] = 'application/json'; try { var t = localStorage.getItem('shd_token') || (window.SHD_AUTH && window.SHD_AUTH.token) || ''; if (t) o.Authorization = 'Bearer ' + t; } catch (e) { /* ignore */ } return o; }
   function api(method, path, body) {
     return fetch(path, { method: method, headers: hdr(!!body), credentials: 'same-origin', body: body ? JSON.stringify(body) : undefined })
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { d._s = r.status; return d; }); });
