@@ -1264,8 +1264,11 @@ window.__worldBuilt = false;
   try{
     _ldBegin('buildings');
     console.info('[buildings] L=' + !!L + ' buildWorldBuildings=' + !!window.buildWorldBuildings);
+    // Tag all meshes added during building with noCull so the perf guard never hides them
+    var _origAdd = scene.add.bind(scene);
+    scene.add = function(){ for(var i=0;i<arguments.length;i++){ var o=arguments[i]; if(o && o.traverse) o.traverse(function(m){ if(m.isMesh) m.userData.noCull = true; }); else if(o && o.isMesh) o.userData.noCull = true; } return _origAdd.apply(scene, arguments); };
     if(L && window.buildWorldBuildings){
-      worldBuildings = window.buildWorldBuildings(THREE, scene, L, worldTerrain && worldTerrain.heightAt, agentBodyLoader, __onWorldBuildingsDone);
+      worldBuildings = window.buildWorldBuildings(THREE, scene, L, worldTerrain && worldTerrain.heightAt, agentBodyLoader, function(){ scene.add = _origAdd; if(__onWorldBuildingsDone) __onWorldBuildingsDone(); console.info('[buildings] build complete, scene.add restored'); });
       console.info('[buildings] build started');
     } else {
       console.warn('[buildings] SKIPPED — L=' + !!L + ' buildWorldBuildings=' + !!window.buildWorldBuildings);
