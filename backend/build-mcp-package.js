@@ -56,7 +56,7 @@ function walkRequireGraph(startFile) {
 const REQUIRED_DATA_FILES = [
   'data/mcp-servers.json',
   'data/skills-catalog.json',
-  'data/byok-keys.json',
+  // 'data/byok-keys.json' deliberately NOT shipped — it is the owner's key vault.
   'data/agent-memory.json',
   'data/inbox.json',
   'data/credit-costs.json',

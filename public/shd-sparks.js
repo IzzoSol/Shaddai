@@ -11,7 +11,7 @@
     if (busy) { again = true; return Promise.resolve(bal); } busy = true;      // a refresh asked for while one is running (e.g. right after a purchase) runs again afterwards
     return fetch('/api/economy/balance?userId=' + encodeURIComponent(u), { credentials: 'same-origin', headers: hdr() })
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { return { ok: r.ok, d: d }; }); })
-      .then(function (x) { if (x.ok && x.d && x.d.sparks_balance != null && isFinite(Number(x.d.sparks_balance))) { bal = Number(x.d.sparks_balance); at = Date.now(); last = 'ok'; } else { bal = null; last = 'unavailable'; } })
+      .then(function (x) { if (x.ok && x.d && isFinite(Number(x.d.balance_sparks != null ? x.d.balance_sparks : x.d.sparks_balance))) { /* balance_sparks is the display number (units / 100); sparks_balance is raw ledger units — never show the raw integer as Sparks. */ bal = Number(x.d.balance_sparks != null ? x.d.balance_sparks : x.d.sparks_balance); at = Date.now(); last = 'ok'; } else { bal = null; last = 'unavailable'; } })
       .catch(function () { bal = null; last = 'offline'; })
       .then(function () { busy = false; paint(); if (again) { again = false; return refresh(); } return bal; });
   }

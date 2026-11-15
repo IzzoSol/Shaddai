@@ -148,10 +148,10 @@ const ANTHROPIC_PREMIUM_MODEL  = process.env.ANTHROPIC_PREMIUM_MODEL  || 'claude
 const OPENAI_PREMIUM_MODEL     = process.env.OPENAI_PREMIUM_MODEL     || 'gpt-4o';
 const OPENROUTER_PREMIUM_MODEL = process.env.OPENROUTER_PREMIUM_MODEL || 'anthropic/claude-3.5-sonnet';
 const GEMINI_KEY     = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
-const GEMINI_MODEL   = process.env.GEMINI_MODEL || 'gemini-2.0-flash-lite';
+const GEMINI_MODEL   = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 const XAI_KEY        = process.env.XAI_API_KEY || '';
-const XAI_MODEL      = process.env.XAI_MODEL || 'grok-beta';
-const XAI_PREMIUM_MODEL = process.env.XAI_PREMIUM_MODEL || 'grok-3';
+const XAI_MODEL      = process.env.XAI_MODEL || 'grok-4.3';
+const XAI_PREMIUM_MODEL = process.env.XAI_PREMIUM_MODEL || 'grok-4.5';
 
 // BYOK helper — reads backend/data/byok-keys.json and returns the stored key for a
 // given provider (any tier, highest-permission first). Returns '' when nothing stored.
@@ -161,7 +161,7 @@ function getBYOKKey(provider) {
   try {
     const raw = fs.readFileSync(_BYOK_FILE, 'utf8');
     const store = JSON.parse(raw);
-    for (const tier of ['alpha', 'pro', 'builder']) {
+    for (const tier of ['alpha', 'pro', 'builder', 'free']) {
       const entry = store[`${tier}:${provider}`];
       if (entry && typeof entry.key === 'string' && entry.key.length > 8) return entry.key;
     }
@@ -3087,6 +3087,28 @@ async function callLLM(messages, agentName, options = {}) {
   const t0 = Date.now();
   const user = options.user || 'guest';
 
+  // FREE-FIRST ROUTER (free-keys integration, Loop 3) — free lanes first,
+  // per-model charging on the result. Behind SHADDAI_FREE_ROUTER=1 so the
+  // legacy dispatch below remains the default until it is switched on;
+  // any failure falls through and is never worse than the legacy path.
+  if (process.env.SHADDAI_FREE_ROUTER === '1') {
+    try {
+      const freeStack = require('./lib/free-stack');
+      if (freeStack.ok) {
+        const routed = await freeStack.router.chat({ messages, lanes: ['free', 'local', 'grok', 'paid'], byok: options.byok || null, maxTokens: options.maxTokens });
+        if (routed.ok) {
+          const ref = `${routed.provider}/${routed.model}`;
+          const settled = freeStack.charging.settle(user, ref, routed.usage, { byok: routed.byok });
+          if (settled.credits > 0 && user !== 'guest') {
+            try { require('./billing-service').debit(user, settled.credits, 'chat:' + ref); } catch (_) {}
+          }
+          freeStack.topups.checkBalanceAndMaybeRequest(user).catch(() => {});
+          return { response: routed.content, provider: routed.provider, model: routed.model, lane: routed.lane, usage: routed.usage, charged: settled };
+        }
+      }
+    } catch (_) { /* fall through to legacy dispatch */ }
+  }
+
   // Build tool instruction block — this agent's tools, OR an explicit custom loadout.
   // Forged/custom agents pass their equipped skills via options.tools so the skills the
   // owner picked in the Forge are EXACTLY the tools the agent is offered + allowed to call.
@@ -4050,4 +4072,4 @@ try {
   console.log(`[tool-cache] wrapped ${wrapped} tools with TTL result cache`);
 } catch (e) { console.warn('[tool-cache] not loaded:', e.message); }
 
-module.exports = { TOOLS, AGENTS, routeTask, resolveAgent, createTask, runAgentLoop, runWorkflow, tryRecipeFastPath, runAutonomousCommander, runSkill, getTask, getAllTasks, selfTest, skillIndex, callLLM, modelChat, setInboxOwner };
+module.exports = { TOOLS, AGENTS, routeTask, resolveAgent, createTask, runAgentLoop, runWorkflow, tryRecipeFastPath, runAutonomousCommander, runSkill, getTask, getAllTasks, selfTest, skillIndex, callLLM, modelChat, setInboxOwner, getBYOKKey };

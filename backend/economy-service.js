@@ -21,11 +21,35 @@
  * Both stores expose the SAME async interface (see StoreInterface below), so
  * the public API is identical regardless of backend.
  *
- * All amounts are integer Sparks (BIGINT). No floats. Ever.
+ * All amounts are integer ledger UNITS (BIGINT). No floats. Ever.
+ * One unit = 0.01 Sparks: UNITS_PER_SPARK = 100, exactly the convention
+ * arena-routes.js and platform-bridge.js already use (a 50-cent ticket =
+ * 50 units = 0.50 Sparks; the Manual's 0.1 Sparks/action = 10 units).
+ * The stored integer is therefore a unit, NOT a whole Spark: grant() /
+ * spend() take integer units (their historical behaviour — the shop,
+ * hall and work sessions all already transact in these units), while
+ * grantSparks() / spendSparks() accept decimal Sparks and convert with
+ * sparksToUnits(). Display code must divide by UNITS_PER_SPARK — never
+ * show the raw integer as Sparks (that was the header-vs-City
+ * disagreement: the header showed raw units as if they were Sparks).
  */
 
 const fs = require('fs');
 const path = require('path');
+
+// ---------------------------------------------------------------------------
+// Units: 100 ledger units = 1 Spark (arena-routes / platform-bridge pattern).
+// Storage is integer units only; decimal Sparks convert through here.
+// ---------------------------------------------------------------------------
+const UNITS_PER_SPARK = 100;
+function sparksToUnits(sparks) {
+  const n = Number(sparks);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.round(n * UNITS_PER_SPARK);
+}
+function unitsToSparks(units) {
+  return Math.round(Number(units) * 100 / UNITS_PER_SPARK) / 100;
+}
 
 // ---------------------------------------------------------------------------
 // Errors
@@ -207,6 +231,35 @@ class DevFileStore {
     });
   }
 
+  // Read-only: a user's ledger entries, newest first (for /sparks/ledger).
+  async getTransactions(userId, limit) {
+    return this._withLock(async (db) => {
+      const n = Number.isInteger(limit) && limit > 0 ? limit : 50;
+      return db.spark_transactions
+        .filter((t) => t.user_id === userId)
+        .slice(-n)
+        .reverse()
+        .map((t) => ({ ...t }));
+    });
+  }
+
+  // Read-only: minted / burned totals across all users (governance view).
+  async getSummary() {
+    return this._withLock(async (db) => {
+      const out = { entries: 0, minted: 0, burned: 0, net: 0, byKind: {} };
+      for (const t of db.spark_transactions) {
+        out.entries++;
+        const amt = Number(t.amount) || 0;
+        if (amt > 0) out.minted += amt; else out.burned += -amt;
+        const k = out.byKind[t.reason] || (out.byKind[t.reason] = { count: 0, delta: 0, minted: 0, burned: 0 });
+        k.count++; k.delta += amt;
+        if (amt > 0) k.minted += amt; else k.burned += -amt;
+      }
+      out.net = out.minted - out.burned;
+      return out;
+    });
+  }
+
   // applyTransaction handles grant (amount>0) and spend (amount<0).
   // Idempotent on idempotency_key. Enforces non-negative balance for spends.
   async applyTransaction({ userId, amount, reason, refId, idempotencyKey }) {
@@ -336,6 +389,47 @@ class PostgresStore {
       placed_where: row.placed_where,
       acquired_at: row.acquired_at
     }));
+  }
+
+  // Read-only: a user's ledger entries, newest first (for /sparks/ledger).
+  async getTransactions(userId, limit) {
+    const n = Number.isInteger(limit) && limit > 0 ? limit : 50;
+    const r = await this.pool.query(
+      'SELECT id, user_id, amount, reason, ref_id, idempotency_key, created_at FROM spark_transactions WHERE user_id = $1 ORDER BY id DESC LIMIT $2',
+      [userId, n]
+    );
+    return r.rows.map((row) => ({
+      id: Number(row.id),
+      user_id: row.user_id,
+      amount: Number(row.amount),
+      reason: row.reason,
+      ref_id: row.ref_id,
+      idempotency_key: row.idempotency_key,
+      created_at: row.created_at
+    }));
+  }
+
+  // Read-only: minted / burned totals across all users (governance view).
+  async getSummary() {
+    const r = await this.pool.query(
+      `SELECT reason, COUNT(*) AS count, COALESCE(SUM(amount), 0) AS delta,
+              COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END), 0) AS minted,
+              COALESCE(SUM(CASE WHEN amount < 0 THEN -amount ELSE 0 END), 0) AS burned
+         FROM spark_transactions GROUP BY reason`
+    );
+    const out = { entries: 0, minted: 0, burned: 0, net: 0, byKind: {} };
+    for (const row of r.rows) {
+      const k = {
+        count: Number(row.count),
+        delta: Number(row.delta),
+        minted: Number(row.minted),
+        burned: Number(row.burned)
+      };
+      out.byKind[row.reason] = k;
+      out.entries += k.count; out.minted += k.minted; out.burned += k.burned;
+    }
+    out.net = out.minted - out.burned;
+    return out;
   }
 
   async applyTransaction({ userId, amount, reason, refId, idempotencyKey }) {
@@ -522,7 +616,9 @@ class EconomyService {
     } else if (process.env.DATABASE_URL) {
       this.store = new PostgresStore(process.env.DATABASE_URL);
     } else {
-      this.store = new DevFileStore(opts.filePath);
+      // ECONOMY_FILE lets tests / a local server run against a throwaway
+      // store instead of backend/data/economy.json. Never set it in prod.
+      this.store = new DevFileStore(opts.filePath || process.env.ECONOMY_FILE);
     }
   }
 
@@ -566,6 +662,37 @@ class EconomyService {
   async getBalance(userId) {
     assertUserId(userId);
     return this.store.getBalance(userId);
+  }
+
+  /**
+   * grantSparks / spendSparks — the decimal-Sparks entry points.
+   * `sparks` is a decimal number of Sparks (e.g. the Manual's 0.1 Sparks
+   * per completed action = 10 units); it converts to integer units via
+   * sparksToUnits() so storage never holds a float. Amounts that convert
+   * to 0 units (e.g. 0.001 Sparks) are rejected, exactly like a 0-unit
+   * grant/spend. Idempotency and insufficient-funds behaviour match
+   * grant() / spend().
+   */
+  async grantSparks(userId, sparks, reason, idempotencyKey, opts = {}) {
+    const units = sparksToUnits(sparks);
+    if (units < 1) throw new ValidationError('sparks must convert to at least 1 unit (0.01 Sparks)');
+    return this.grant(userId, units, reason, idempotencyKey, opts);
+  }
+  async spendSparks(userId, sparks, reason, idempotencyKey, opts = {}) {
+    const units = sparksToUnits(sparks);
+    if (units < 1) throw new ValidationError('sparks must convert to at least 1 unit (0.01 Sparks)');
+    return this.spend(userId, units, reason, idempotencyKey, opts);
+  }
+
+  // Read-only history / governance views (backed by the same store).
+  async getTransactions(userId, limit) {
+    assertUserId(userId);
+    if (typeof this.store.getTransactions !== 'function') return [];
+    return this.store.getTransactions(userId, limit);
+  }
+  async getSummary() {
+    if (typeof this.store.getSummary !== 'function') return { entries: 0, minted: 0, burned: 0, net: 0, byKind: {} };
+    return this.store.getSummary();
   }
 
   async getInventory(userId) {
@@ -634,5 +761,8 @@ module.exports = {
   EconomyError,
   InsufficientFundsError,
   ValidationError,
+  UNITS_PER_SPARK,
+  sparksToUnits,
+  unitsToSparks,
   getDefault
 };

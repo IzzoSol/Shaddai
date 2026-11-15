@@ -164,7 +164,8 @@
       { code: 'FORTRESS',  name: 'Emberfall Keep', pos: _fo ? [_fo.x, _fo.z] : [1477, -642], color: 0xff5a10 },
       { code: 'CASTLE',    name: 'Darkrealm Keep', pos: _ca ? [_ca.x, _ca.z] : [-1970, -635], color: 0x9b59f5 },
     ];
-    var _noVolcano = typeof location !== 'undefined' && !/[?&]volcano=1/.test(location.search || '');   // Emberfall removed for now (owner 2026-10-11)
+    // MISSING-BUILDINGS fix: raw 0x08 byte -> \b in the regex below, so ?volcano=1 can actually match.
+    var _noVolcano = typeof location !== 'undefined' && !/[?&]volcano=1\b/.test(location.search || '');   // Emberfall removed for now (owner 2026-10-11)
     for (var _ri = 0; _ri < REALM_SECTORS.length; _ri++) { if (_noVolcano && REALM_SECTORS[_ri].code === 'FORTRESS') continue; allSectors.push(REALM_SECTORS[_ri]); }
 
     /* ── state ── */

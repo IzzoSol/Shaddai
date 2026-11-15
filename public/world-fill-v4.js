@@ -294,7 +294,9 @@
     });
     var planMs = Math.round((root.performance || Date).now() - t0);
     // 2026-10-11 (owner: "random buildings in random realms with no doors, just models - remove them"): waystation huts and floating islands have no entry. ?fillextras=1 restores.
-    if (!(typeof location !== 'undefined' && /[?&]fillextras=1/.test(location.search || ''))) { P.waystations = []; P.islands = []; }
+    // MISSING-BUILDINGS fix (2026-11-11): waystation huts + floating islands build by default now
+    // (?fillextras=0 opts out). The old ?fillextras=1 opt-in never worked — raw 0x08 instead of \b.
+    if (typeof location !== 'undefined' && /[?&]fillextras=0\b/.test(location.search || '')) { P.waystations = []; P.islands = []; }
 
     // ── cells: role → grid. near/small on the fine grid, far/big on the coarse grid ──
     var ROLE_GRID = { near: K.cellNear, small: K.cellNear, far: K.cellFar, big: K.cellFar };

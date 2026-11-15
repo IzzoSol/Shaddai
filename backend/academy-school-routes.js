@@ -69,6 +69,65 @@ function createSchoolRouter({ academy, operatives, uidOf, agentAuth, runner }) {
 
   // ── catalog (public) ──────────────────────────────────────────────────────
   router.get('/faculty', (req, res) => ok(res, { faculty: FACULTY }));
+
+  // ── Atheneum progress (C3 dashboard↔world leg; fix/world-gaps 2026-11-11) ──
+  // GET /api/school/progress → { ok, success, uid, tiers:[{n,name}]×7, agents:[{agentId,name,passed[],current}] }
+  // The world link (public/world-dashboard-link.js) reads p.ok + p.agents and
+  // falls back to its own 7-tier list when no tiers arrive; this endpoint
+  // returns both, plus success:true for this router's own convention.
+  // `passed` is receipt-verified: a skill counts only once its exam receipt
+  // says passed (installed skills are included — install requires a passed
+  // receipt). `current` is the agent's open paid enrollment, if any.
+  // RecordEvent wiring for these events already exists and is NOT duplicated
+  // here: academy-core finishExam calls hooks.passed / hooks.taught /
+  // hooks.homeworkImproved / hooks.classCompleted exactly once per exam
+  // attempt (guarded by done.conferred), and createAcademy defaults those
+  // hooks to createHooks({ achievements, reputation }) — see
+  // backend/lib/academy/academy-core.js and hooks.js. No per-tier pass
+  // counts are invented: the academy tracks skills by track
+  // (trading/image/…), not by these 7 curriculum tiers, so tiers carry
+  // names only until a skill→tier map exists.
+  const ATHENEUM_TIERS = ['Artificial Intelligence', 'Machine Learning', 'Deep Learning', 'Neural Networks', 'Generative AI', 'AI Agents', 'Agentic AI']
+    .map((name, i) => ({ n: i + 1, name }));
+  router.get('/progress', authed((req, res, u) => {
+    const only = isStr(req.query.agentId) ? req.query.agentId : null;
+    if (only) {
+      const one = operatives.get ? operatives.get(only) : null;
+      if (one && one.owner !== u) return fail(res, 403, 'not your agent');
+    }
+    let owned = [];
+    try {
+      if (typeof operatives.listByOwner === 'function') owned = operatives.listByOwner(u) || [];
+      else if (typeof operatives.all === 'function') owned = (operatives.all() || []).filter((o) => o && o.owner === u);
+    } catch (_) { owned = []; }
+    if (only) owned = owned.filter((o) => o && o.id === only);
+    const agents = owned.map((op) => {
+      let passed = [];
+      try {
+        const receipts = (academy.receipts && academy.receipts.forAgent(op.id)) || [];
+        passed = [...new Set(receipts.filter((r) => r && r.passed).map((r) => r.skillId).filter(Boolean))];
+        const installed = Array.isArray(op.skills) ? op.skills.map((s) => s && s.skillId).filter(Boolean) : [];
+        passed = [...new Set(passed.concat(installed))];
+      } catch (_) {}
+      let current = null;
+      try {
+        const skills = (academy.registry && academy.registry.list({})) || [];
+        let best = null;
+        for (const s of skills) {
+          const enrs = (academy.tuition && academy.tuition.forAgent(op.id, s.id)) || [];
+          for (const e of enrs) {
+            if (!e || e.status !== 'paid') continue;
+            const kinds = (academy.exams && academy.exams.enrollmentKinds(e.id)) || [];
+            if (kinds.indexOf('exam') !== -1) continue;
+            if (!best || (e.at || 0) > (best.at || 0)) best = e;
+          }
+        }
+        if (best) current = { skillId: best.skillId, enrollmentId: best.id };
+      } catch (_) {}
+      return { agentId: op.id, name: op.name || op.codename || op.id, passed, current };
+    });
+    return res.json({ ok: true, success: true, uid: u, tiers: ATHENEUM_TIERS, agents });
+  }));
   router.get('/skills', wrap(async (req, res) => {
     ok(res, { skills: academy.registry.list({ track: req.query.track, tier: req.query.tier }).map(publicSkill) });
   }));

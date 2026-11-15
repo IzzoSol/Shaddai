@@ -103,12 +103,18 @@ fetch('/api/operatives').then(r=>r.ok?r.json():null).then(d=>{
 const world = { ready:false, placeAgents:()=>{} };
 
 // ── Three.js scene ──
-if(window.__noWebGL) throw new Error('[world] WebGL2 unavailable - showing the no-WebGL screen instead of loading');   // see WEBGL GATE in the page head
+if(window.__noWebGL){ try{ window.__showGfxPaused && window.__showGfxPaused('The 3D world could not start: WebGL2 is not available in this browser. Try reloading, or play the Classic 2D world instead.'); }catch(_){} throw new Error('[world] WebGL2 unavailable - showing the no-WebGL screen instead of loading'); }   // see WEBGL GATE in the page head; __showGfxPaused = the visible paused screen (2026-11-14 realm-polish — the throw alone left the loader frozen at 0%)
 const canvas = document.getElementById('c3d');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias:false, powerPreference:'high-performance' });  // AA off: the bloom composer already softens edges, and MSAA under a render-target composer is wasted GPU
-renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));  // cap for smoothness on high-DPI screens
+// MOBILE LITE (2026-11-14, realm-polish): iPhone Safari killed the tab during load ("A problem repeatedly occurred" = Jetsam memory kill; desktop loads fine). Every mobile fix in this file is gated on this one flag; ?mobilelite=0 disables all of them. Desktop: always false, original behaviour byte-for-byte. See MOBILE_CRASH_AUDIT.md.
+const _MOBILE_LITE = !!(window.__isMobile && !/[?&]mobilelite=0/.test(location.search));
+window.__mobileLite = _MOBILE_LITE;
+let renderer;
+try{ renderer = new THREE.WebGLRenderer({ canvas, antialias:false, powerPreference:'high-performance' }); }  // AA off: the bloom composer already softens edges, and MSAA under a render-target composer is wasted GPU
+catch(e){ try{ window.__showGfxPaused && window.__showGfxPaused('The 3D world could not start: ' + (e && e.message ? e.message : 'your browser or device does not support WebGL2.') + ' Try reloading, or play the Classic 2D world instead.'); }catch(_){} throw e; }   // 2026-11-14 realm-polish: creation failure (three r180 "Error creating WebGL context.") was an uncaught throw — loader froze at 0% with the error buried under it. Same pattern as world3d.html P0-6.
+renderer.setPixelRatio(_MOBILE_LITE ? Math.min(devicePixelRatio, 0.55) : Math.min(devicePixelRatio,1.5));  // cap for smoothness on high-DPI screens // MOBILE LITE (FIX-C): POTATO ratio from the very first allocation — the EffectComposer + bloom chain built at L2290 capture the renderer's ratio at construction, ~3,100 lines before _applyQualityTier first runs, so mobile otherwise peaks at 1.5x targets pre-entry
 // CONTEXT LOSS (2026-11-08, spec §1.2): phones / iframes drop the GL context under memory pressure. Was a silent freeze; now a clear reload card.
 canvas.addEventListener('webglcontextlost', function(e){ e.preventDefault(); console.warn('[world] WebGL context lost');
+  if(_MOBILE_LITE && window.__showGfxPaused){ try{ window.__showGfxPaused('The 3D view was paused to save memory on your phone. Your progress is saved. Reload, or play the Classic 2D world instead.'); }catch(_){} return; }   // MOBILE LITE (FIX-D): phones get the paused screen with the 2D exit; desktop keeps the #glLost card below. (A full Jetsam kill runs no JS at all — the defence for that is the lower peak memory from FIX-A/B/C.)
   if(document.getElementById('glLost')) return; const d = document.createElement('div'); d.id = 'glLost';
   d.style.cssText = 'position:fixed;inset:0;z-index:2147483646;display:flex;align-items:center;justify-content:center;background:rgba(5,9,20,.92);color:#e6edf3;font:15px system-ui,sans-serif;text-align:center';
   d.innerHTML = '<div><div style="color:#e8c45c;font:700 18px system-ui;letter-spacing:.1em">GRAPHICS RESET</div><p style="opacity:.8">The device paused the 3D view to save memory.</p><a href="" style="display:inline-block;margin-top:8px;padding:10px 18px;background:#e8c45c;color:#050914;border-radius:8px;text-decoration:none;font-weight:700">RELOAD</a> <a href="/" style="display:inline-block;margin-top:8px;padding:10px 18px;border:1px solid #27e0ff;color:#27e0ff;border-radius:8px;text-decoration:none">SIMPLE MODE</a></div>';
@@ -743,6 +749,46 @@ if(!/[?&]skinfix=0/.test(location.search) && !GLTFLoader.prototype.__skinFix){ c
       else window.__skinRepaired = (window.__skinRepaired || 0) + _repairSkins(g.scene); } }catch(e){ console.warn('[skin-repair]', e && e.message); } onLoad && onLoad(g); }, onProgress, onError); };
   GLTFLoader.prototype.__skinFix = true; }
 
+// ── BUG 2 FIX (2026-11-11): a truncated GLB download surfaced as the cryptic in-world toast
+//    "PROMISE: Invalid typed array length: 8". Root cause: a GLB whose BIN chunk arrives short
+//    (truncated fetch / stale partial cache) reaches GLTFLoader.loadAccessor, which builds a
+//    typed-array VIEW over the short buffer — vendored three r180 GLTFLoader.js:3210 (interleaved)
+//    / :3229 (plain). The number is the first overrunning accessor's count*itemSize, not a file
+//    id. All 595 GLBs on disk validate clean (see shaddai-mcp-world-package/bug2-typed-array/),
+//    so the bytes were short in transit, not corrupt on disk. Two guards, installed OUTERMOST
+//    (after skinFix) so the skin/agent fixes still apply on every attempt:
+//      1. parse wrapper: a GLB header declares the total length; if the ArrayBuffer is shorter,
+//         fail with a byte-counted diagnosis instead of parsing into a cryptic accessor error.
+//      2. load wrapper: on a truncation error, evict the poisoned THREE.Cache entry and retry
+//         once with a fresh download — the loadWithRetry shape from shaddai-gamedev-tools
+//         (FLAT-LIBRARY/three-core/threejs-loaders/SKILL.md "Error Handling"); a final failure
+//         names the URL (the AssetLoader.js URL-named-error shape from the same repo). A bad
+//         length now fails soft (skip/log + the caller's fallback) instead of an in-world error.
+//    Deliberately NOT hiding the toast: non-truncation errors pass through untouched and the
+//    global unhandledrejection filter in SHADDAI-WORLD-3D.html is NOT widened.
+//    ?bug2guard=0 disables both guards. ──
+if(!/[?&]bug2guard=0/.test(location.search) && !GLTFLoader.prototype.__bug2Guard){ const _glbParse0 = GLTFLoader.prototype.parse, _glbLoad0 = GLTFLoader.prototype.load;
+  GLTFLoader.prototype.parse = function(data, path, onLoad, onError){ try{
+      if(data && typeof data.byteLength === 'number' && data.byteLength >= 12){
+        var _dv = new DataView(data);
+        if(_dv.getUint32(0, true) === 0x46546C67){   /* 'glTF' magic, little-endian */
+          var _declared = _dv.getUint32(8, true), _jsonLen = _dv.getUint32(12, true);
+          if(data.byteLength < _declared || 20 + _jsonLen > data.byteLength){
+            var _e = new Error('THREE.GLTFLoader: truncated GLB (header declares ' + _declared + ' bytes, got ' + data.byteLength + ') — short download, not a corrupt model');
+            _e.name = 'TruncatedGLBError'; _e.__truncatedGLB = true;
+            if(onError) onError(_e); else if(window.console) console.error(_e);
+            return; } } } }catch(_ge){ /* validation must never break a load — fall through to the real parse */ }
+    return _glbParse0.call(this, data, path, onLoad, onError); };
+  GLTFLoader.prototype.load = function(url, onLoad, onProgress, onError){ var self = this, tries = 0;
+    (function attempt(){ _glbLoad0.call(self, url, onLoad, onProgress, function(err){
+      if(err && err.__truncatedGLB && tries < 1){ tries++;
+        try{ if(typeof THREE !== 'undefined' && THREE.Cache) THREE.Cache.remove('file:' + url); }catch(_ce){}   /* FileLoader caches under 'file:' + url (three r180 FileLoader) — removing the bare url would leave the poisoned bytes in place */
+        console.warn('[bug2-guard] truncated GLB, retrying once with a fresh download: ' + url + ' — ' + (err.message || err));
+        attempt(); return; }
+      if(err && err.__truncatedGLB){ err = new Error('Failed to load GLB ' + url + ': ' + (err.message || err) + ' (after 1 retry)'); err.__truncatedGLB = true; }
+      if(onError) onError(err); else if(window.console) console.error(err); }); })(); };
+  GLTFLoader.prototype.__bug2Guard = true; }
+
 // ── BUILD THE ORGANIZED WORLD: walkable terrain + biome regions/water + real vehicles ──
 let worldTerrain=null, worldBiomes=null, worldVehicles=null, worldMarkets=null, worldBuildings=null, worldNPCs=null, worldOcean=null, worldVolcano=null, worldRealmProps=null, worldTrails=null, worldLandmarks=null;
 window.__worldBuilt = false;
@@ -756,7 +802,7 @@ window.__worldBuilt = false;
       const _ocLoader = new GLTFLoader(__loadMgr);
       _ocLoader.setDRACOLoader(dracoLoader); _ocLoader.setMeshoptDecoder(MeshoptDecoder);
       if(!MAP_V4 && L && window.buildWorldOcean)     worldOcean      = window.buildWorldOcean({ THREE, scene, layout: L, loader: _ocLoader });   // v4: replaced by world-water.js
-      if(L && window.buildWorldVolcano && /[?&]volcano=1/.test(location.search))   worldVolcano    = window.buildWorldVolcano({ THREE, scene, layout: L, loader: _ocLoader, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });
+      if(L && window.buildWorldVolcano && /[?&]volcano=1\b/.test(location.search))  /* MISSING-BUILDINGS fix: raw 0x08 -> \b so ?volcano=1 can match; gate stays opt-in (Emberfall module) */   worldVolcano    = window.buildWorldVolcano({ THREE, scene, layout: L, loader: _ocLoader, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });
       if(L && window.buildWorldRealmProps) worldRealmProps = window.buildWorldRealmProps({ THREE, scene, layout: L, loader: _ocLoader, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });
       if(!MAP_V4 && L && window.buildWorldLandmarks) worldLandmarks  = window.buildWorldLandmarks({ THREE, scene, layout: L, loader: _ocLoader });   // v4: skipped (no heightAt → floats/buries on v4 ground)
       if(window.buildColosseumExterior) window.__colosseumExt = window.buildColosseumExterior(THREE, { scene, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });   // real-size Southern Colosseum on the map (lobby doors → E → arena)
@@ -889,7 +935,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('clusters', function(api){   // MAP v4 DISTRICTS (world-clusters-v4.js ← realm-clusters-v4.json, same file as the Blender scene)
       if(!api) return api;
-      if(!/[?&]realmclusters=1/.test(location.search)) return api;   // 2026-10-11 owner: doorless model districts in the realms are removed (also the biggest triangle bill); ?realmclusters=1 brings them back
+      if(/[?&]realmclusters=0\b/.test(location.search)) return api;   // MISSING-BUILDINGS fix (2026-11-11): realm districts build by default now (?realmclusters=0 opts out). The old ?realmclusters=1 opt-in never worked — raw 0x08 byte instead of \b in the regex.
       return _loadScript('/world-clusters-v4.js?v=20261024a').then(function(){
         const cl = new GLTFLoader(); cl.setDRACOLoader(dracoLoader); cl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldClustersV4({ THREE, scene, loader: cl, heightAt: api.heightAt });
@@ -2315,6 +2361,7 @@ function _nextAgentBody(){
   // thread for 100-400ms and causes the ENTER-press and portal-descent freezes.
   if(worldSpawn && worldSpawn.isAnimating()){ setTimeout(_nextAgentBody, 600); return; }
   if(MAP_V4 && !_v4T && !window.__mapV4Failed){ setTimeout(_nextAgentBody, 600); return; }   // v4: bodies seat on heightAt at load → wait for the heightmap
+  if(_MOBILE_LITE && !document.body.classList.contains('in-world')){ setTimeout(_nextAgentBody, 800); return; }   // MOBILE LITE (FIX-B): the 7 council GLBs (25.2 MB on disk, ZEROX alone 13 MB) otherwise download+parse DURING the loader, on top of terrain/city — the biggest deferrable pre-entry spike. On phones they wait until the player is in the world (the ENTER flow adds .in-world); the portrait sprites/rings already stand in, exactly like the GLB-error fallback. Desktop unchanged.
   const entry = _bodyQueue.shift();
   if(!entry){ _bodyBusy = false; return; }
   _bodyBusy = true;
@@ -5160,6 +5207,7 @@ try{ const _gl = renderer.getContext(), _dbg = _gl.getExtension('WEBGL_debug_ren
 function _applyQualityTier(idx){
   if(idx < 0) idx = 0;
   if(idx >= _Q.tiers.length) idx = _Q.tiers.length - 1;
+  if(_MOBILE_LITE && idx > 1) idx = 1;   // MOBILE LITE (FIX-A): hard cap at LOW on phones — the governor's step-up, the perf HUD and Navi all funnel through here, so a phone can never climb to MEDIUM/HIGH/ULTRA (bloom + pr 1.0-1.5 + cull 9999 = the post-entry memory/fill cliff). Desktop uncapped.
   const t = _Q.tiers[idx];
   const pr = Math.min(devicePixelRatio, t.pr);
   renderer.setPixelRatio(pr);
@@ -5345,10 +5393,12 @@ function _updateGovernor(dt){
 }
 
 // Apply initial tier now (sets pixelRatio + composer size correctly from the start)
+if(_MOBILE_LITE) _Q.tier = 0;   // MOBILE LITE (FIX-A): phones start at POTATO (pr 0.55, bloom off, cull 170) — the smallest possible load footprint; the governor may still settle at LOW (the cap) if the phone is fast
 _applyQualityTier(_Q.tier);
 // Public handles: the Navi caps quality while open, the ?perf=1 HUD forces tiers (keys 1-5, 0 = auto). cooldownS holds the governor off so it can't fight the request.
 window.__setQualityTier = function(i, cooldownS){ _applyQualityTier(i); _Q.cooldown = cooldownS == null ? 8 : cooldownS; _Q.below45 = 0; _Q.above58 = 0; };
-if(window.__isMobile) try{ window.__setQualityTier(1, 20); }catch(_){}   /* 2026-11-08: phones start LOW (owner: 'doesn't work on mobile'); the governor steps up after 20 s if fps allows */   // MOBILE: start at MEDIUM (owner: keep quality); the governor adjusts from there - the crash fix is skipping the merge, not low quality
+if(_MOBILE_LITE) try{ window.__setQualityTier(0, 20); }catch(_){}   /* MOBILE LITE (FIX-A): hold POTATO for the first 20 s on phones (the load + dive window) */
+else if(window.__isMobile) try{ window.__setQualityTier(1, 20); }catch(_){}   /* 2026-11-08: phones start LOW (owner: 'doesn't work on mobile'); the governor steps up after 20 s if fps allows */   // MOBILE: start at MEDIUM (owner: keep quality); the governor adjusts from there - the crash fix is skipping the merge, not low quality
 window.__getQualityTier = function(){ return _Q.tier; };
 // ── MAGLEV SHORTCUT: press U to go to the nearest maglev station (walk onto the glowing lift pad, press E, pick a destination / ride the ring) ──
 addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) return; const tg = e.target && e.target.tagName; if(tg === 'INPUT' || tg === 'TEXTAREA') return;

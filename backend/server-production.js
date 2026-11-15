@@ -447,6 +447,11 @@ const requestTracker = new RequestTracker();
 // compression whenever the response is (or declares itself) an event stream.
 app.use(compression({
   filter: (req, res) => {
+    // P2-4: never buffer already-compressed GLB/WebP responses. A .glb is
+    // already meshopt/WebP-compressed; the default `compressible` check
+    // already skips model/gltf-binary, but make it explicit so a large
+    // (multi-MB) model response can never sit in the compressor's buffer.
+    if (/\.glb$/i.test(req.path) || /\.webp$/i.test(req.path)) return false;
     const ct = String(res.getHeader('Content-Type') || '');
     if (ct.includes('text/event-stream')) return false;
     if (String(res.getHeader('X-Accel-Buffering') || '') === 'no') return false;
@@ -515,6 +520,12 @@ app.use(express.static(path.join(__dirname, '../public'), {
     } else if (/[\\/]dist[\\/]boot-\d+\.[0-9a-f]+\.js$/.test(filePath)) {
       // world boot bundles carry a content hash in the name (tools/build-dist.cjs), so they never go stale
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    } else if (/[\\/]assets[\\/].*\.(glb|webp|png|jpg|jpeg|avif)$/i.test(filePath)) {
+      // P2-4: asset filenames are NOT content-hashed (bld-*.glb, *.webp, …),
+      // so `immutable` would serve stale models after a re-export. 1-day
+      // cache + ETag revalidation instead (Express sends a weak ETag by
+      // default; no app.set('etag') override exists in this file).
+      res.setHeader('Cache-Control', 'public, max-age=86400');
     }
   }
 }));
@@ -2168,9 +2179,34 @@ app.use('/api/mp', require('./multiplayer'));                         // multipl
 app.use('/api/navi', softAuth, require('./navi-routes').makeRouter());
 app.use('/api/home-deeds', softAuth, require('./home-deed-routes').makeRouter());   // buy a realm-town home with Sparks (server-side deed; no NFT, no cash)   // Navi backend: tiered ZEROX signals, server-side name / event signup / class enrolment (2026-10-16)
 app.use('/api/economy', softAuth, require('./economy-routes')());     // Sparks ledger (append-only, idempotent; Postgres or atomic dev store) — economy-routes exports a factory; must be CALLED; softAuth sets req.userId so resolveUserId() stops trusting caller-supplied body/query userId once authenticated
+// /sparks is the SAME ledger (economy-service) behind the MMO routes' API shape, so the game client reads the same balance as the dashboard header and City panel. NOT a mount of server/sparksRoutes.js — that file is the standalone MMO server's route, pinned by server/tests/* to characters.json + sparksCore; mounting it here would create a second live balance store. See backend/sparks-adapter-routes.js.
+try { app.use('/sparks', require('./sparks-adapter-routes')()); console.log('[prod] sparks adapter mounted (/sparks -> economy-service)'); }
+catch (e) { console.warn('[prod] sparks adapter NOT mounted:', e && e.message); }
 // Seed the shop catalog once (idempotent; only if empty) so /api/economy/catalog has items.
 try { require('./catalog-seed').seedCatalog(require('./economy-service').getDefault(), { onlyIfEmpty: true }).catch(e => console.error('[catalog-seed]', e.message)); } catch (e) { console.error('[catalog-seed]', e.message); }
 app.use('/api/sub-billing', require('./sub-billing-routes'));         // Stripe subscriptions + per-deliverable unlock paywall
+
+// ── Free-keys stack (Loop 3): top-up endpoints, free-router status, Grok connect.
+// Owner-gated: softAuth attaches the verified req.userId; _ownerOnly rejects
+// anonymous/'local' callers and adapts to the req.user.id shape topup expects.
+try {
+  const _freeStack = require('./lib/free-stack');
+  if (_freeStack.ok) {
+    const _ownerOnly = (req, res, next) => {
+      if (!req.userId || req.userId === 'local') return res.status(401).json({ ok: false, error: 'sign in required' });
+      req.user = { id: req.userId };
+      next();
+    };
+    require('./lib/topup').mountTopupRoutes(app, _freeStack.topups, [softAuth, _ownerOnly]);
+    app.get('/api/free-router/status', softAuth, _ownerOnly, (req, res) => res.json(_freeStack.router.status()));
+    app.post('/api/agents/connect-grok', softAuth, _ownerOnly, (req, res) => {
+      const out = require('./lib/grok-connect').connectGrok({ paste: (req.body || {}).paste, name: (req.body || {}).name, model: (req.body || {}).model });
+      if (!out.ok) return res.status(400).json(out);
+      res.json(out); // out.manifest is the exact POST /api/agent-forge/import body for the caller to submit
+    });
+    console.log('[prod] free-keys stack mounted (topup, free-router status, connect-grok)');
+  }
+} catch (e) { console.warn('[prod] free-keys stack NOT mounted:', e && e.message); }
 app.use('/api/work', softAuth, require('./work-sessions'));           // agent work loop: real work -> Sparks payout + while-away summary + live feed; softAuth so userId comes from the verified session, not a caller-supplied body field
 // AURA — cost layer: /chat cache-check (called before any paid provider), /record, /stats, /route
 app.use('/api/aura', require('./aura-routes'));
@@ -3309,6 +3345,12 @@ try {
 } catch (e) { console.warn('[prod] SAP showcase mount failed:', e.message); }
 try { app.use(require('./agent-room-routes')); console.log('[prod] canonical agent-rooms mounted'); }
 catch (e) { console.warn('[prod] agent-rooms failed:', e.message); }
+// Race track (fix/world-gaps 2026-11-11): race-service + race-routes existed in
+// code but were never mounted, so no /api/race endpoint was live. Heat control
+// stays service-gated (x-admin-token) inside race-routes; entry/result are
+// player-facing. No cash-out endpoint exists by design.
+try { app.use('/api/race', require('./race-routes')()); console.log('[prod] race routes mounted (/api/race)'); }
+catch (e) { console.warn('[prod] race routes failed:', e.message); }
 try { app.use(require('./markets-routes')); console.log('[prod] markets mounted'); }
 catch (e) { console.warn('[prod] markets failed:', e.message); }
 try { app.use(require('./admin-routes')); console.log('[prod] admin privileges mounted'); }

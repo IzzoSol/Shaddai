@@ -2253,17 +2253,53 @@ function saveRooms(a){ try{ localStorage.setItem(roomsKey(), JSON.stringify(a));
 // ── CLOUD SAVE SYNC (cross-device) ──────────────────────────────────────────
 // The account's save follows it anywhere: every save hook schedules a debounced
 // PUT /api/world/saves, and boot pulls GET /api/world/saves and reloads if the
-// cloud copy differs. Guests + local dev stay device-scoped — a guest save is
-// NEVER pushed up, so it can't clobber an account's cloud save.
+// cloud copy differs.
+// AUTH (fix 2026-11-11 — PUT /api/world/saves failed 100%, 1,845/1,845 in
+// /api/status): these fetches used to send NO credential. In production
+// softAuth ignores the spoofable x-user-id header and only trusts a verified
+// bearer token (Firebase ID token or our signed JWT); with no bearer the
+// caller arrives as anonymous 'local', and the server rightly 401s 'local'
+// so a guest can never overwrite an account's cloud save. So EVERY autosave
+// — even a signed-in player's — came back 401. Both calls below now send
+// Authorization: Bearer <token>. Signed-in players use the shd_token the
+// dashboard login already stored. Players with only a Player Code (no
+// shd_token) mint one signed guest token (POST /api/auth/guest, 30d JWT) and
+// reuse it: the server keys that save to the guest:<uuid> identity, never to
+// the Player Code, so it still cannot clobber an account save. A 401 on a
+// guest token means it expired: drop it and mint once more.
+let _cloudTokP=null;
+function cloudTokenSync(){ try{ return String(localStorage.getItem('shd_token')||'').trim(); }catch(e){ return ''; } }
+function ensureCloudToken(){
+  const t=cloudTokenSync(); if(t) return Promise.resolve(t);
+  if(_cloudTokP) return _cloudTokP;
+  _cloudTokP=(async function(){
+    try{ const old=String(localStorage.getItem('shd_guest_token')||'').trim(); if(old) return old; }catch(e){}
+    const r=await fetch('/api/auth/guest',{method:'POST'});
+    const d=await r.json().catch(function(){ return null; });
+    const tok=d&&(d.token||d.accessToken);
+    if(!tok) throw new Error('guest token unavailable');
+    try{ localStorage.setItem('shd_guest_token',tok); }catch(e){}
+    return tok;
+  })();
+  _cloudTokP.catch(function(){ _cloudTokP=null; });
+  return _cloudTokP;
+}
+function cloudDropGuestToken(){ try{ localStorage.removeItem('shd_guest_token'); }catch(e){} _cloudTokP=null; }
 function cloudUid(){ try{ const u=String(localStorage.getItem('shd_userid')||'').trim(); return (u&&u.indexOf('guest')!==0&&u!=='local')?u:''; }catch(e){ return ''; } }
 function cloudKeys(){ return ['shaddai.econ','shaddai.city','shaddai.decor','shaddai.level', roomsKey()]; }
 function cloudGather(){ const o={}; try{ for(const k of cloudKeys()){ const v=localStorage.getItem(k); if(v!==null) o[k]=v; } }catch(e){} return o; }
 let cloudPushT=null;
 function scheduleCloudPush(){ if(!cloudUid()) return; if(cloudPushT) return; cloudPushT=setTimeout(doCloudPush,2500); }
-async function doCloudPush(){ cloudPushT=null; const uid=cloudUid(); if(!uid) return; const save=cloudGather(); if(!Object.keys(save).length) return;
-  try{ await fetch('/api/world/saves',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({save})}); }catch(e){} }
-async function pullCloudSave(){ const uid=cloudUid(); if(!uid) return;
-  try{ const r=await fetch('/api/world/saves'); if(!r.ok) return; const d=await r.json();
+async function doCloudPush(retry){ cloudPushT=null; const uid=cloudUid(); if(!uid) return; const save=cloudGather(); if(!Object.keys(save).length) return;
+  let tok=''; try{ tok=await ensureCloudToken(); }catch(e){ return; }
+  try{ const r=await fetch('/api/world/saves',{method:'PUT',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify({save})});
+    if(r.status===401 && !retry && !cloudTokenSync()){ cloudDropGuestToken(); return doCloudPush(true); }
+  }catch(e){} }
+async function pullCloudSave(retry){ const uid=cloudUid(); if(!uid) return;
+  let tok=''; try{ tok=await ensureCloudToken(); }catch(e){ return; }
+  try{ const r=await fetch('/api/world/saves',{headers:{Authorization:'Bearer '+tok}});
+    if(r.status===401 && !retry && !cloudTokenSync()){ cloudDropGuestToken(); return pullCloudSave(true); }
+    if(!r.ok) return; const d=await r.json();
     const save=(d&&d.save)||{}; if(!Object.keys(save).length) return;
     let changed=false;
     for(const k of Object.keys(save)){ if(cloudKeys().indexOf(k)<0) continue; try{ const pre=localStorage.getItem(k); if(save[k]===pre) continue; localStorage.setItem(k,save[k]); changed=true; }catch(e){} }

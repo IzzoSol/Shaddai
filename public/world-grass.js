@@ -1,7 +1,7 @@
 /* world-grass.js — REAL GRASS (owner 2026-10-01: "real grass and movement"): ONE InstancedMesh of 3-blade tufts around the player, swaying in the wind and bending away from you as you walk through it.
  *   Placement is CELL-HASHED (a cell always grows the same tuft), so nothing pops or reshuffles as you move; tufts shrink to nothing at the edge of the ring. Rebuilt only when you move > 6 m.
  *   Grows only where allow(x, z) says so (host: meadow biomes), on land (not water), on gentle slopes. Lit by the scene lights (Lambert), so day/night/fires colour it for free.
- *   Cost: 1 draw call, ~3 triangles per tuft; quality tier sets the count (HIGH 7000 / MEDIUM 4200 / LOW 2200 / POTATO 0).
+ *   Cost: 1 draw call, ~3 triangles per tuft; quality tier sets the count (HIGH 9000 / MEDIUM 5600 / LOW 2800 / POTATO 0).
  *
  *   var grass = buildWorldGrass({ THREE, scene, heightAt, getPlayer, allow?, waterAt?, U?, quality? })
  *   grass.update(dt)  ·  grass.setQuality('HIGH'|'MEDIUM'|'LOW'|'POTATO')  ·  grass.stats() -> { tufts, quality }  ·  grass.dispose()

@@ -30,7 +30,22 @@
     var loader = new o.GLTFLoader();
     loader.load('/assets/kits/shaddai_hover_park_v01.glb?v=20261024a', function (gl) {
       var s = gl.scene; s.scale.setScalar(U); s.position.set(A.x, g0, A.z); s.rotation.y = th; s.name = 'hover-park-k40';
-      s.traverse(function (m) { if (m.isMesh) { m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); } }); o.scene.add(s); S.built = true;
+      s.traverse(function (m) { if (m.isMesh) { m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); } });
+      // BUG 1 (2026-11-11, video df): the kit's pk_wall is a near-black metal
+      // (base #212835, metalness 0.6, no emissive) and pk_floor is darker still
+      // (#070c15). Vertical wall faces catch almost no light, so the 32 m
+      // perimeter wall (r 150-174 m, 70% vertical faces, 374k m^2) rendered as
+      // one giant black slab filling the view from the park / west approach.
+      // Retint in place (code only, no binary GLB edit): lighter slate so the
+      // wall reads as dark steel, low metalness so diffuse light shapes it,
+      // and a faint blue emissive so it can never read void-black again.
+      // Accent materials (pk_cyan/orange/violet/gold/white/glass) are untouched.
+      s.traverse(function (m) {
+        if (!m.isMesh || !m.material || !m.material.name) return;
+        if (m.material.name === 'pk_wall') { m.material.color.set(0x7d8aa8); m.material.metalness = 0.15; m.material.roughness = 0.6; m.material.emissive.set(0x0e1830); m.material.emissiveIntensity = 0.9; }
+        else if (m.material.name === 'pk_floor') { m.material.color.set(0x2e3642); m.material.metalness = 0.2; m.material.roughness = 0.85; }
+      });
+      o.scene.add(s); S.built = true;
     }, undefined, function (e) { console.warn('[park-k40]', e && e.message); });
     // wall-ride: the inner face of the 150 m wall as 48 segments, 0-20 m
     if (o.hover && o.hover.wallride) { var W = []; for (var i = 0; i < 48; i++) { var a0 = 2 * Math.PI * i / 48, a1 = 2 * Math.PI * (i + 1) / 48, p0 = world(Math.cos(a0) * 149.6, Math.sin(a0) * 149.6), p1 = world(Math.cos(a1) * 149.6, Math.sin(a1) * 149.6);

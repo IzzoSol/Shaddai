@@ -1,0 +1,493 @@
+{
+  "version": 1,
+  "checked": "2026-11-11",
+  "note": "Machine-readable lane catalog for Shaddai. Prices are PROVIDER COST per 1M tokens in USD (what it costs us), verified on vendor pages 2026-11-11; free tier = 0. Retail charging is computed by charging.js from these numbers + the config below; retail values are PROPOSAL until Israel settles pricing. Keys come from ENV ONLY (envVar). Trial-only / prototyping-only providers are under trialOnly and are NOT router lanes; dead ends are under excluded with the reason.",
+  "charging": {
+    "markup": 2.0,
+    "minChargeCredits": 1,
+    "maxCreditsPerRun": 100,
+    "chargePaidChat": true,
+    "freeLaneDailyCapPerUser": 200,
+    "creditsPerUsd": 100,
+    "note": "PROPOSAL defaults. 1 Spark = $1 = 100 credits (backend/lib/tiers.js, canonical)."
+  },
+  "providers": [
+    {
+      "id": "gemini",
+      "name": "Google Gemini (AI Studio)",
+      "api": "openai",
+      "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "envVar": "GEMINI_API_KEY",
+      "envVarAlt": "GOOGLE_API_KEY",
+      "keyPrefix": null,
+      "openAiCompatible": true,
+      "signupUrl": "https://aistudio.google.com/apikey",
+      "signupNote": "Google account + AI Studio. Free-tier qualification per Google: 'Active project or free trial; some projects need verification.' Card requirement for the free tier: not stated on vendor pages checked.",
+      "freeTier": {
+        "real": true,
+        "limits": "NOT PUBLISHED by Google — per-model RPM/TPM/RPD are shown only inside AI Studio, per project; RPD resets midnight Pacific. Anyone quoting a public Flash RPD table is using stale/third-party numbers.",
+        "commercialUse": "Positioned for developers/small projects; material condition: on the free tier your content IS used to improve Google's products (on paid it is not)."
+      },
+      "models": [
+        {
+          "id": "gemini-3.8-flash",
+          "displayName": "Gemini 3.8 Flash",
+          "lane": "free",
+          "costInPer1M": 0,
+          "costOutPer1M": 0,
+          "context": 0,
+          "note": "Free of charge on the free tier per the pricing page"
+        },
+        {
+          "id": "gemini-2.5-flash",
+          "displayName": "Gemini 2.5 Flash",
+          "lane": "free",
+          "costInPer1M": 0,
+          "costOutPer1M": 0,
+          "context": 1048576,
+          "note": "Free tier. DEPRECATED per Google: from 2026-12-01 requests auto-route to gemini-3.5-flash-lite"
+        },
+        {
+          "id": "gemini-3.5-flash-lite",
+          "displayName": "Gemini 3.5 Flash-Lite",
+          "lane": "free",
+          "costInPer1M": 0,
+          "costOutPer1M": 0,
+          "context": 0,
+          "note": "Free of charge on the free tier per the pricing page"
+        }
+      ],
+      "sources": [
+        "https://ai.google.dev/gemini-api/docs/pricing",
+        "https://ai.google.dev/gemini-api/docs/rate-limits",
+        "https://ai.google.dev/gemini-api/docs/openai"
+      ]
+    },
+    {
+      "id": "groq",
+      "name": "Groq",
+      "api": "openai",
+      "baseUrl": "https://api.groq.com/openai/v1",
+      "envVar": "GROQ_API_KEY",
+      "keyPrefix": null,
+      "openAiCompatible": true,
+      "signupUrl": "https://console.groq.com/keys",
+      "signupNote": "Groq account. Card/phone requirements: not stated on the vendor pages checked.",
+      "freeTier": {
+        "real": true,
+        "limits": "Per model, free plan (Groq rate-limits page): gpt-oss-120b and gpt-oss-20b and qwen3.8-27b each 30 RPM / 1,000 RPD / 8K TPM / 200K TPD, per organization. Exceeding returns 429 with retry-after headers.",
+        "commercialUse": "Production models are 'intended for use in your production environments' (vendor models page); preview models are evaluation-only."
+      },
+      "deadModels": [
+        {
+          "id": "llama-3.1-8b-instant",
+          "status": "DECOMMISSIONED 2026-08-16 for free/developer tiers (Enterprise-only now); replacement openai/gpt-oss-20b. This was Shaddai's hardcoded default — the reason chat 404'd."
+        },
+        {
+          "id": "llama-3.3-70b-versatile",
+          "status": "DECOMMISSIONED 2026-08-16 for free/developer tiers; replacement openai/gpt-oss-120b or qwen/qwen3.8-27b"
+        },
+        {
+          "id": "groq/compound-mini",
+          "status": "Shut down 2026-09-21 per Groq deprecations page — note llm-client.js currently defaults to this; also dead."
+        }
+      ],
+      "models": [
+        {
+          "id": "openai/gpt-oss-120b",
+          "displayName": "GPT-OSS 120B (Groq)",
+          "lane": "free",
+          "costInPer1M": 0,
+          "costOutPer1M": 0,
+          "context": 131072
+        },
+        {
+          "id": "openai/gpt-oss-20b",
+          "displayName": "GPT-OSS 20B (Groq)",
+          "lane": "free",
+          "costInPer1M": 0,
+          "costOutPer1M": 0,
+          "context": 131072,
+          "note": "Groq's recommended replacement for llama-3.1-8b-instant"
+        },
+        {
+          "id": "qwen/qwen3.8-27b",
+          "displayName": "Qwen 3.8 27B (Groq)",
+          "lane": "free",
+          "costInPer1M": 0,
+          "costOutPer1M": 0,
+          "context": 131072
+        }
+      ],
+      "sources": [
+        "https://console.groq.com/docs/rate-limits",
+        "https://console.groq.com/docs/models",
+        "https://console.groq.com/docs/deprecations",
+        "https://console.groq.com/docs/openai"
+      ]
+    },
+    {
+      "id": "openrouter",
+      "name": "OpenRouter",
+      "api": "openai",
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "envVar": "OPENROUTER_API_KEY",
+      "keyPrefix": null,
+      "openAiCompatible": true,
+      "signupUrl": "https://openrouter.ai/keys",
+      "signupNote": "OpenRouter account. Card for the free tier: not stated on vendor pages checked (credits can be bought by card, AliPay, or USDC).",
+      "freeTier": {
+        "real": true,
+        "limits": ":free model variants — 20 RPM and 50 requests/day, rising to 1,000/day once the account has bought at least $10 of credits (lifetime). Failed attempts count toward the daily cap.",
+        "commercialUse": "No ban stated; vendor FAQ cautions free models 'are usually not suitable for production use'. OpenRouter does not train on your data."
+      },
+      "models": [
+        {
+          "id": "openrouter/free",
+          "displayName": "OpenRouter Free Router",
+          "lane": "free",
+          "costInPer1M": 0,
+          "costOutPer1M": 0,
+          "context": 0,
+          "note": "Auto-selects a free model per request. Specific :free model ids also work (e.g. append :free to a model id) — the roster lives in OpenRouter's models browser, not its docs pages."
+        }
+      ],
+      "sources": [
+        "https://openrouter.ai/pricing",
+        "https://openrouter.ai/docs/faq",
+        "https://openrouter.ai/docs/api-reference/limits"
+      ]
+    },
+    {
+      "id": "cloudflare",
+      "name": "Cloudflare Workers AI",
+      "api": "openai",
+      "baseUrl": "https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1",
+      "envVar": "CLOUDFLARE_API_TOKEN",
+      "keyPrefix": null,
+      "openAiCompatible": true,
+      "signupUrl": "https://dash.cloudflare.com/profile/api-tokens",
+      "signupNote": "Cloudflare account (Workers Free plan). You need TWO values: an API token AND your account id (CLOUDFLARE_ACCOUNT_ID). Card: not stated on the pages checked.",
+      "freeTier": {
+        "real": true,
+        "limits": "10,000 Neurons/day free allocation (resets 00:00 UTC), shared across models; text generation 300 RPM default. Some catalog models require the Workers Paid plan — startup validation + per-model pages govern.",
+        "commercialUse": "not stated on the pages checked"
+      },
+      "models": [
+        {
+          "id": "@cf/openai/gpt-oss-120b",
+          "displayName": "GPT-OSS 120B (Cloudflare)",
+          "lane": "free",
+          "costInPer1M": 0,
+          "costOutPer1M": 0,
+          "context": 0,
+          "note": "Model id as listed in Cloudflare's catalog — validateModels() confirms it against the live list at first boot and prunes if renamed"
+        },
+        {
+          "id": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+          "displayName": "Llama 3.3 70B (Cloudflare)",
+          "lane": "free",
+          "costInPer1M": 0,
+          "costOutPer1M": 0,
+          "context": 0,
+          "note": "Same confirm-at-boot note as above"
+        }
+      ],
+      "sources": [
+        "https://developers.cloudflare.com/workers-ai/platform/pricing/",
+        "https://developers.cloudflare.com/workers-ai/platform/limits/",
+        "https://developers.cloudflare.com/workers-ai/configuration/open-ai-compatibility/"
+      ]
+    },
+    {
+      "id": "sambanova",
+      "name": "SambaNova Cloud",
+      "api": "openai",
+      "baseUrl": "https://api.sambanova.ai/v1",
+      "envVar": "SAMBANOVA_API_KEY",
+      "keyPrefix": null,
+      "openAiCompatible": true,
+      "signupUrl": "https://cloud.sambanova.ai",
+      "signupNote": "SambaCloud account. WARNING — SambaNova's own pages conflict: the rate-limits docs describe a standing free tier when no payment method is linked; the Plans page says to add a payment method and buy credits. Verify inside a fresh account before relying on this lane.",
+      "freeTier": {
+        "real": "conflicted — see signupNote",
+        "limits": "Per the rate-limits docs (updated 2026-11-04): free tier 20 RPM / 20 RPD / 200,000 tokens/day per model",
+        "commercialUse": "Production models 'intended for use in production environments'; preview models evaluation-only"
+      },
+      "models": [
+        {
+          "id": "Meta-Llama-3.3-70B-Instruct",
+          "displayName": "Llama 3.3 70B (SambaNova)",
+          "lane": "free",
+          "costInPer1M": 0,
+          "costOutPer1M": 0,
+          "context": 131072
+        },
+        {
+          "id": "DeepSeek-V3.1",
+          "displayName": "DeepSeek V3.1 (SambaNova)",
+          "lane": "free",
+          "costInPer1M": 0,
+          "costOutPer1M": 0,
+          "context": 131072
+        }
+      ],
+      "sources": [
+        "https://docs.sambanova.ai/docs/en/models/rate-limits",
+        "https://cloud.sambanova.ai/plans"
+      ]
+    },
+    {
+      "id": "ollama",
+      "name": "Ollama (local)",
+      "api": "ollama-native",
+      "baseUrl": "http://localhost:11434",
+      "modelsUrl": "http://localhost:11434/api/tags",
+      "envVar": null,
+      "local": true,
+      "openAiCompatible": true,
+      "signupUrl": "https://ollama.com",
+      "signupNote": "No account, no key, $0 — runs on your own machine. Pull a model first (ollama pull llama3.2). Ollama Cloud is a separate paid product — not this lane.",
+      "freeTier": {
+        "real": true,
+        "limits": "not stated — bounded by your hardware",
+        "commercialUse": "per-model licence"
+      },
+      "models": [
+        {
+          "id": "llama3.2:1b",
+          "displayName": "Llama 3.2 1B (local)",
+          "lane": "local",
+          "costInPer1M": 0,
+          "costOutPer1M": 0,
+          "context": 131072,
+          "note": "Shaddai's existing local default"
+        },
+        {
+          "id": "llama3.2:3b",
+          "displayName": "Llama 3.2 3B (local)",
+          "lane": "local",
+          "costInPer1M": 0,
+          "costOutPer1M": 0,
+          "context": 131072
+        }
+      ],
+      "sources": [
+        "https://docs.ollama.com/api/openai-compatibility",
+        "https://ollama.com/download/linux"
+      ]
+    },
+    {
+      "id": "lmstudio",
+      "name": "LM Studio (local)",
+      "api": "openai",
+      "baseUrl": "http://localhost:1234/v1",
+      "envVar": null,
+      "local": true,
+      "openAiCompatible": true,
+      "signupUrl": "https://lmstudio.ai",
+      "signupNote": "No account, no key for the OpenAI-compatible server. Free for use at work (vendor announcement, Jul 2025). Load a model in the app and start the server (port 1234).",
+      "freeTier": {
+        "real": true,
+        "limits": "not stated — bounded by your hardware",
+        "commercialUse": "yes — free for use at work"
+      },
+      "models": [
+        {
+          "id": "local-model",
+          "displayName": "LM Studio loaded model",
+          "lane": "local",
+          "costInPer1M": 0,
+          "costOutPer1M": 0,
+          "context": 0,
+          "note": "Placeholder id — startup validation replaces this with whatever /v1/models actually reports as loaded"
+        }
+      ],
+      "sources": [
+        "https://lmstudio.ai/docs/developer/openai-compat",
+        "https://lmstudio.ai/docs/developer/core/server"
+      ]
+    },
+    {
+      "id": "xai",
+      "name": "xAI Grok",
+      "api": "openai",
+      "baseUrl": "https://api.x.ai/v1",
+      "envVar": "XAI_API_KEY",
+      "keyPrefix": "xai-",
+      "openAiCompatible": true,
+      "signupUrl": "https://console.x.ai",
+      "signupNote": "Paid only — prepaid credits required before first call. There is NO free xAI API tier (verified on docs.x.ai, 2026-11-11; past $25/$150 credit programs no longer appear in vendor docs).",
+      "freeTier": {
+        "real": false
+      },
+      "models": [
+        {
+          "id": "grok-4.3",
+          "displayName": "Grok 4.3",
+          "lane": "grok",
+          "costInPer1M": 1.25,
+          "costOutPer1M": 2.5,
+          "context": 1000000
+        },
+        {
+          "id": "grok-build-0.1",
+          "displayName": "Grok Build 0.1",
+          "lane": "grok",
+          "costInPer1M": 1.0,
+          "costOutPer1M": 2.0,
+          "context": 256000,
+          "note": "Cheapest xAI text model on the current price list"
+        }
+      ],
+      "sources": [
+        "https://docs.x.ai/developers/pricing",
+        "https://docs.x.ai/console/billing",
+        "https://docs.x.ai/developers/rate-limits"
+      ]
+    },
+    {
+      "id": "deepseek",
+      "name": "DeepSeek",
+      "api": "openai",
+      "baseUrl": "https://api.deepseek.com",
+      "envVar": "DEEPSEEK_API_KEY",
+      "keyPrefix": null,
+      "openAiCompatible": true,
+      "signupUrl": "https://platform.deepseek.com/api_keys",
+      "signupNote": "Paid only — no free tier; requires a topped-up balance. Off-peak prices used here (most hours); peak 01:00-04:00 & 06:00-10:00 UTC Mon-Fri is 2x; cache hits are far cheaper.",
+      "freeTier": {
+        "real": false
+      },
+      "models": [
+        {
+          "id": "deepseek-flash",
+          "displayName": "DeepSeek Flash",
+          "lane": "paid",
+          "costInPer1M": 0.15,
+          "costOutPer1M": 0.6,
+          "context": 1000000,
+          "note": "Off-peak cache-miss price"
+        },
+        {
+          "id": "deepseek-v4-pro",
+          "displayName": "DeepSeek V4 Pro",
+          "lane": "paid",
+          "costInPer1M": 0.66,
+          "costOutPer1M": 1.98,
+          "context": 1000000,
+          "note": "Off-peak cache-miss price"
+        }
+      ],
+      "sources": [
+        "https://api-docs.deepseek.com/quick_start/pricing",
+        "https://api-docs.deepseek.com/quick_start/rate_limit"
+      ]
+    },
+    {
+      "id": "anthropic",
+      "name": "Anthropic Claude",
+      "api": "anthropic",
+      "baseUrl": "https://api.anthropic.com/v1",
+      "envVar": "ANTHROPIC_API_KEY",
+      "keyPrefix": null,
+      "openAiCompatible": false,
+      "signupUrl": "https://console.anthropic.com",
+      "signupNote": "Paid. Already wired in Shaddai today (brains: claude-haiku / claude-premium). No free tier was in scope for this catalog pass; the lane exists so the router covers Shaddai's current premium path. WARNING: today BOTH brains resolve to claude-haiku-4-5-20251001 — 'premium' currently buys the standard model (see SHADDAI_PATCH.md contradiction #4).",
+      "freeTier": {
+        "real": false
+      },
+      "models": [
+        {
+          "id": "claude-haiku-4-5-20251001",
+          "displayName": "Claude Haiku 4.5",
+          "lane": "paid",
+          "costInPer1M": 1.0,
+          "costOutPer1M": 5.0,
+          "context": 200000,
+          "note": "Cost figures are the existing Shaddai assumption — NOT re-verified in this pass; charging config treats them as PROPOSAL until checked on anthropic.com/pricing"
+        }
+      ],
+      "sources": []
+    }
+  ],
+  "trialOnly": [
+    {
+      "id": "cohere",
+      "name": "Cohere",
+      "verdict": "TRIAL-ONLY — free trial key, NOT a production lane",
+      "details": "Trial key: 1,000 API calls/month shared, Chat 20 req/min per model, all models available for testing. Trial keys are NOT permitted for production/commercial use (vendor FAQ/pricing). Base URL https://api.cohere.com/v2 (OpenAI-compatible surface: https://api.cohere.ai/compatibility/v1). Env var if ever trialled: COHERE_API_KEY.",
+      "sources": [
+        "https://docs.cohere.com/docs/rate-limits",
+        "https://docs.cohere.com/docs/cohere-faqs",
+        "https://docs.cohere.com/docs/compatibility-api"
+      ],
+      "checked": "2026-11-11"
+    },
+    {
+      "id": "cerebras",
+      "name": "Cerebras",
+      "verdict": "TRIAL-ONLY — one-time $5 credit, NOT a recurring free tier",
+      "details": "Pricing page footnote: add a valid payment method to receive a one-time $5 promotional credit, expires 30 days after activation; API access PAUSES when it is exhausted. Trial limits: gpt-oss-120b / qwen-3.8-27b at 5 RPM / 1M tokens/day. After the credit: pay-as-you-go only.",
+      "sources": [
+        "https://www.cerebras.ai/pricing",
+        "https://inference-docs.cerebras.ai/support/rate-limits"
+      ],
+      "checked": "2026-11-11"
+    },
+    {
+      "id": "nvidia",
+      "name": "NVIDIA NIM / build.nvidia.com",
+      "verdict": "PROTOTYPING-ONLY — free for development/testing, NOT for production or end users",
+      "details": "Developer Program members get free access to NIM API endpoints 'for prototyping, research, development and testing purposes only'; production use requires an NVIDIA AI Enterprise license. Current vendor pages state NO credit amount (the old '1,000 free credits' figure no longer appears) and NO numeric rate limits. Base URL https://integrate.api.nvidia.com/v1, key prefix nvapi- (verified). Fine for dev/testing Shaddai locally; never a user-facing lane.",
+      "sources": [
+        "https://docs.api.nvidia.com/nim/docs/product",
+        "https://docs.api.nvidia.com/nim/reference/llm-apis"
+      ],
+      "checked": "2026-11-11"
+    }
+  ],
+  "excluded": [
+    {
+      "id": "github-models",
+      "name": "GitHub Models",
+      "verdict": "RETIRED — do not wire",
+      "details": "Vendor page: 'GitHub Models has been retired. As of July 30, 2026, GitHub Models has been fully retired.' Playground, catalog, inference API and BYOK all discontinued. Historical rate-limit tables must not be treated as current.",
+      "sources": [
+        "https://docs.github.com/en/github-models"
+      ],
+      "checked": "2026-11-11"
+    },
+    {
+      "id": "huggingface",
+      "name": "Hugging Face Inference Providers",
+      "verdict": "NO free credits for free accounts — pay-as-you-go only",
+      "details": "Current vendor pricing page: Free Users monthly credits = None (purchase required); PRO gets $2.00/month included. The old $0.10/month free credit still quoted on forums is stale. Router endpoint exists (https://router.huggingface.co/v1, HF_TOKEN) if Israel ever wants it as a paid lane.",
+      "sources": [
+        "https://huggingface.co/docs/inference-providers/pricing"
+      ],
+      "checked": "2026-11-11"
+    },
+    {
+      "id": "together",
+      "name": "Together AI",
+      "verdict": "NO free tier, NO trial",
+      "details": "Vendor billing docs (updated 2026-11-05): 'Together AI does not currently offer free trials.' Platform access requires a minimum $15 credit purchase; fully prepaid. Historical signup-credit offers are gone.",
+      "sources": [
+        "https://docs.together.ai/docs/billing-credits"
+      ],
+      "checked": "2026-11-11"
+    },
+    {
+      "id": "mistral",
+      "name": "Mistral (La Plateforme)",
+      "verdict": "UNVERIFIED — free API tier could not be confirmed on current vendor pages",
+      "details": "The old 'Experiment' free tier (1 req/sec, phone verification, data-training condition) does NOT appear on Mistral's current pricing/quickstart pages; the current Studio quickstart points to adding a payment method for API access, and numeric API limits are login-only. Treat all Experiment-era numbers as stale. Re-check Mistral's billing/usage docs before wiring this lane — do not ship it on old numbers.",
+      "sources": [
+        "https://mistral.ai/pricing/",
+        "https://docs.mistral.ai/getting-started/quickstarts/studio/activate-and-generate-api-key"
+      ],
+      "checked": "2026-11-11"
+    }
+  ]
+}

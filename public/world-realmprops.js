@@ -40,7 +40,7 @@ window.buildWorldRealmProps = function (opts) {
 
   // ── per-realm model manifests (dx/dz = fraction of biome radius; w = fraction too) ──
   // MAP v2: realm models come from the master list in world-layout.js (real sizes); literal below = v1 fallback
-  var _mv2 = layout.realmModelsFor ? ['darkforest', 'suburb', 'meadow', 'forest', 'arctic', 'desert', 'void', 'ocean'].map(function (r) {
+  var _mv2 = layout.realmModelsFor ? ['darkforest', 'suburb', 'meadow', 'forest', 'arctic', 'desert', 'void', 'ocean', 'volcano']  /* MISSING-BUILDINGS fix: 'volcano' was missing, so the 6 volcano realm models were never even listed */.map(function (r) {
     return { biome: r, models: layout.realmModelsFor(r).map(function (m) { return { id: m.id, abs: true, x: m.x, z: m.z, w: m.w, y: m.y || 0, ry: m.ry || 0, office: m.office, url: m.url }; }) };
   }).filter(function (mf) { return mf.models.length; }) : [];
   var MANIFESTS = _mv2.length ? _mv2 : [
@@ -74,9 +74,12 @@ window.buildWorldRealmProps = function (opts) {
     return g;
   }
 
-  // 2026-10-11 (owner: "buildings that aren't needed in the realms that have no entry need to be removed"): the filler bld-* / homes-* blocks have no door,
-  // no interior and no collider purpose - they only cost draws. Hero landmarks, rocks and crystals stay. ?realmbuildings=1 puts them back.
-  if (typeof location === 'undefined' || !/[?&]realmbuildings=1/.test(location.search || '')) {
+  // MISSING-BUILDINGS fix (2026-11-11): the 2026-10-11 removal is reversed — realm buildings
+  // (bld-*/homes-*/hero-* + volcano) build by DEFAULT now. The old ?realmbuildings=1 opt-in
+  // never worked anyway: its regex held a raw backspace byte (0x08) instead of \b, so it
+  // could never match a URL. ?realmbuildings=0 opts back out. Distance-hide in update()
+  // stays the perf control (tier-scaled, fog-covered).
+  if (typeof location !== 'undefined' && /[?&]realmbuildings=0\b/.test(location.search || '')) {
     MANIFESTS.forEach(function (mf) { mf.models = mf.models.filter(function (c) { return !/^(bld-|homes-|hero-)/.test(String(c.id)) || /^hero-castle/.test(String(c.id)); }); });
   }
   MANIFESTS.forEach(function (mf) {

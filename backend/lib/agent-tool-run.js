@@ -67,7 +67,7 @@ function getVaultKey(provider) {
   try {
     const fs = require('fs'), path = require('path');
     const store = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'byok-keys.json'), 'utf8'));
-    for (const tier of ['alpha', 'pro', 'builder']) {
+    for (const tier of ['alpha', 'pro', 'builder', 'free']) {
       const entry = store[`${tier}:${provider}`];
       if (entry && typeof entry.key === 'string' && entry.key.length > 8) return entry.key;
     }
@@ -291,4 +291,4 @@ async function handler(req, res) {
   }
 }
 
-module.exports = { runAgentWithTools, handler };
+module.exports = { runAgentWithTools, handler, getVaultKey };

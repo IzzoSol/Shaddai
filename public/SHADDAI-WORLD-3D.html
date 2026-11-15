@@ -3,12 +3,22 @@
 <head>
 <script>window.__isMobile = (function(){ try{ return /[?&]mobile=1/.test(location.search) || (matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) < 900); }catch(e){ return false; } })();</script>
 <script>/* WEBGL GATE (2026-11-08, spec §1.2): no WebGL2 = no 3D download, a plain message instead of a white canvas (in-app browsers like Muse, old phones). */
+/* GRAPHICS-PAUSED OVERLAY (2026-11-14, realm-polish): the lightweight realm's (world3d.html) paused screen, shared by every WebGL failure path — gate, renderer creation, WORLD ERROR handler. Defined BEFORE the gate's early return so it always exists; z-index is the max so the loading screen (z 99999) can never paint over it — that buried-banner bug was the "LOADING THE GROUND — 0%" freeze. */
+window.__showGfxPaused = function(msg){ var build=function(){ var d=document.getElementById('gfxPaused'); if(!d){ d=document.createElement('div'); d.id='gfxPaused';
+    d.style.cssText='position:fixed;inset:0;z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:rgba(6,8,11,.97);color:#e6edf3;font:15px/1.5 system-ui,sans-serif;text-align:center;padding:24px';
+    d.innerHTML='<h2 style="margin:0;color:#e8c45c;letter-spacing:.2em;font-size:20px;font-weight:700">3D GRAPHICS PAUSED</h2>'+
+      '<p id="gfxPausedMsg" style="margin:0;max-width:520px;color:#b8c0d0;font-size:14px;line-height:1.6">Your device paused the 3D view to save memory. Your progress is saved.</p>'+
+      '<div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><a href="" style="background:#e8c45c;color:#06080b;border-radius:10px;padding:10px 18px;font-size:14px;font-weight:700;letter-spacing:.06em;text-decoration:none">↻ RELOAD THE WORLD</a>'+
+      '<a href="/game.html" style="color:#e8c45c;text-decoration:none;font-size:14px;letter-spacing:.06em;border:1px solid rgba(232,196,92,.5);border-radius:10px;padding:10px 18px">◧ PLAY CLASSIC 2D INSTEAD</a></div>';
+    document.body.appendChild(d); }
+    var m=document.getElementById('gfxPausedMsg'); if(m && msg) m.textContent=msg; d.style.display='flex'; };
+  if(document.body) build(); else document.addEventListener('DOMContentLoaded', build); };
 (function(){ var ok=false; try{ var c=document.createElement('canvas'); ok=!!(window.WebGL2RenderingContext && c.getContext('webgl2')); }catch(e){}
   if(ok || /[?&]nogate=1/.test(location.search)) return; window.__noWebGL = true;
   document.addEventListener('DOMContentLoaded', function(){ var d=document.createElement('div'); d.id='noWebGL';
     d.style.cssText='position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;background:#050914;color:#e6edf3;font:15px/1.5 system-ui,sans-serif;text-align:center;padding:24px';
     d.innerHTML='<div style="max-width:420px"><div style="color:#e8c45c;font:700 22px system-ui;letter-spacing:.12em;margin-bottom:10px">SHADDAI WORLD</div>'+
-      '<p>This browser can't draw the 3D world (it needs WebGL2).</p><p style="opacity:.75;font-size:13px">In-app browsers often block it. Open this page in Chrome, Safari or Firefox, or use Simple Mode.</p>'+
+      '<p>This browser can\'t draw the 3D world (it needs WebGL2).</p><p style="opacity:.75;font-size:13px">In-app browsers often block it. Open this page in Chrome, Safari or Firefox, or use Simple Mode.</p>'+
       '<div style="margin-top:18px;display:flex;gap:10px;justify-content:center"><a href="" style="padding:10px 18px;border:1px solid #27e0ff;color:#27e0ff;border-radius:8px;text-decoration:none">RETRY</a>'+
       '<a href="/" style="padding:10px 18px;background:#e8c45c;color:#050914;border-radius:8px;text-decoration:none;font-weight:700">SIMPLE MODE</a></div></div>';
     document.body.appendChild(d); }); })();</script>
@@ -200,7 +210,9 @@ window.__INTRO_CINEMATIC = /[?&]intro=cinematic(?:&|$|#)/.test(location.search);
 <canvas id="c3d"></canvas>
 <div id="errBox" style="position:fixed;top:0;left:0;right:0;z-index:99999;background:rgba(120,0,0,.95);color:#fff;font:12px/1.5 monospace;padding:10px 14px;display:none;white-space:pre-wrap;max-height:50vh;overflow:auto">⚠ <b>WORLD ERROR</b> — tell this to Claude:<br><span id="errMsg"></span></div>
 <script>
-(function(){var show=function(t){var b=document.getElementById('errBox'),m=document.getElementById('errMsg');if(b&&m){b.style.display='block';m.textContent+=(t+'\n');}};
+(function(){var show=function(t){/* GRAPHICS-PAUSED PROMOTION (2026-11-14, realm-polish): a WebGL/context failure written only into this banner is invisible — #errBox shares z-index 99999 with the loading screen, which paints over it, so the world sat at 0% forever. Promote it to the full-screen paused overlay (defined in the head gate script); the banner still records it below. */
+if(/webgl|error creating webgl context|context (lost|creation)/i.test(t||'') && window.__showGfxPaused){ try{ window.__showGfxPaused('The 3D world could not start: your browser or device does not support WebGL2, or its graphics context failed. Try reloading, or play the Classic 2D world instead.'); }catch(_){}}
+var b=document.getElementById('errBox'),m=document.getElementById('errMsg');if(b&&m){b.style.display='block';m.textContent+=(t+'\n');}};
 window.__reportErr=show;   // let other code surface caught (swallowed) errors to the on-screen box
 window.addEventListener('error',function(e){show('JS: '+(e.message||(e.error&&e.error.message)||e)+'  @'+(e.filename||'').split('/').pop()+':'+(e.lineno||'?'));});
 window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.reason.message)||e.reason||'?')+'';if(/pointer ?lock/i.test(msg)){e.preventDefault();return;}if(/metamask|ethereum|web3|wallet|injected|extension|chrome-extension/i.test(msg)){e.preventDefault();return;}/* browser wallet extension noise — not a world bug */
@@ -442,13 +454,13 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 </template>
 <script>/* BOOT BUNDLES (2026-10-24, docs/SPEED-BRIEF-20261024.md): the scripts in #boot-scripts above are minified + concatenated in this order into
    public/dist by `node tools/build-dist.cjs` (rerun after editing any of them). ?bundle=0 = load the original files one by one. */
-window.__BOOT_BUNDLES = ["/dist/boot-1.2d297e07e3.js","/dist/boot-2.5ed3c54d7e.js","/dist/boot-3.18ab80db0e.js"];
+window.__BOOT_BUNDLES = ["/dist/boot-1.e73e7a60ec.js","/dist/boot-2.9d105bf0de.js","/dist/boot-3.771766db59.js"];
 (function(){ var useB = window.__BOOT_BUNDLES.length && !/[?&]bundle=0/.test(location.search), h = "";
   if (useB) window.__BOOT_BUNDLES.forEach(function(s){ h += '<script src="' + s + '"><\/script>'; });
   else h = document.getElementById("boot-scripts").innerHTML;
   document.write(h); })();
 </script>
-<script type="module" src="/world-main.js?v=1b9df5091f"></script>
+<script type="module" src="/world-main.js?v=20261115a"></script>
 <!-- ════════ AGENT DISTRICTS ════════ -->
 <div id="district" class="dist"><div class="dist-card">
   <button class="dist-x" onclick="closeDistrict()">✕ EXIT</button>

@@ -23,7 +23,9 @@ const express = require('express');
 const {
   getDefault,
   InsufficientFundsError,
-  ValidationError
+  ValidationError,
+  UNITS_PER_SPARK,
+  unitsToSparks
 } = require('./economy-service');
 const { rateLimit, timingSafeTokenMatch } = require('./auth-guard');
 
@@ -92,7 +94,12 @@ function createRouter(serviceOverride) {
       const userId = resolveScopedUserId(req, req.query.userId);
       if (!userId) return res.status(401).json({ ok: false, error: 'authentication required', code: 'UNAUTHORIZED' });
       const balance = await svc.getBalance(userId);
-      return res.json({ ok: true, userId, sparks_balance: balance });
+      // Balance unit convention (see economy-service.js): the stored
+      // integer is ledger UNITS, 100 units = 1 Spark. `sparks_balance`
+      // keeps its historical raw-units meaning for existing consumers;
+      // `balance_sparks` is the display number (units / 100) the header
+      // and City panel show — never display the raw integer as Sparks.
+      return res.json({ ok: true, userId, sparks_balance: balance, balance_units: balance, balance_sparks: unitsToSparks(balance), units_per_spark: UNITS_PER_SPARK });
     } catch (err) {
       return sendError(res, err);
     }

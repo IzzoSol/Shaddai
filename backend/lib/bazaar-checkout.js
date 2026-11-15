@@ -7,10 +7,15 @@
 //   bazaarCheckout({ userId, itemId, amountCredits, payTo, reason }) → { txId, newBalance, fee }
 //   settleSale({ grossCredits, sellerId, agentId })                  → revenue split breakdown
 //
-// Revenue split: platform 10% / seller 80% / agent 10%.
-//   x402 /charge already routes net (95%) → payee (the seller) and 5% fee → treasury.
-//   settleSale tops the model up to the documented split: it grants the agent its 10%
-//   cut and records that the seller already received the net from the charge.
+// Revenue split: 5% platform fee, 95% seller — nothing else.
+//   The x402 /charge already pays the seller the net (gross − 5% fee) and the
+//   treasury the 5% fee (paybox-settle FEE_RATE = 0.05, the finalize plan's
+//   stated settlement: 5% fee, no cash-out). settleSale MUST NOT grant
+//   anything on top: the old code granted the agent a further 10% via
+//   /api/x402/grant, so a sale paid out 95% + 10% = 105% — minted money.
+//   The selling agent's pay IS the seller's 95% net (the seller is usually
+//   the agent). If an agent commission is ever wanted, it comes OUT of the
+//   seller's 95% (or the platform's 5%) — never on top. Parts sum to 100%.
 
 const BASE = process.env.RENDER_EXTERNAL_URL || ('http://localhost:' + (process.env.PORT || 8099));
 
@@ -42,31 +47,24 @@ async function bazaarCheckout({ userId, itemId, amountCredits, payTo, reason }) 
   return { txId: body.tx && body.tx.id, newBalance: body.balance, fee: body.fee };
 }
 
-// Revenue split for a completed sale. Platform 10% / seller 80% / agent 10%.
-//   The x402 /charge already paid the seller the net (gross − 5% fee) and the treasury
-//   the 5% fee. To honour the documented 10/80/10 split we additionally grant the agent
-//   its 10% cut when an agentId is supplied. The seller's net was settled at charge time.
+// Revenue split for a completed sale — 5% platform fee / 95% seller / 0% agent.
+//   The x402 /charge already paid the seller the net (gross − 5% fee) and the
+//   treasury the 5% fee. There is NO additional grant: the old code granted
+//   the agent +10% on top (95 + 10 = 105% paid out). The selling agent's pay
+//   is the seller's 95% net. Parts sum to exactly 100% of gross.
 async function settleSale({ grossCredits, sellerId, agentId }) {
   const gross = Number(grossCredits) || 0;
   const r2 = (n) => Math.round(n * 100) / 100;
   const split = {
     gross,
-    platform: r2(gross * 0.10),   // stays in treasury (5% taken as x402 fee + retained margin)
-    seller: r2(gross * 0.80),     // already received as net from the x402 charge
-    agent: r2(gross * 0.10),      // granted below when agentId is provided
+    platform: r2(gross * 0.05),   // taken as the x402 fee at charge time
+    seller: r2(gross * 0.95),     // already received as net from the x402 charge
+    agent: 0,                     // no top-up: any agent commission must come out of the seller's 95%, never on top
     sellerId: sellerId || null,
     agentId: agentId || null,
     sellerPaidAtCharge: true,
     agentGranted: false
   };
-  if (agentId && split.agent > 0) {
-    try {
-      const { status, body } = await postJSON('/api/x402/grant', { user: agentId, amount: split.agent });
-      split.agentGranted = status < 400 && !!body.ok;
-    } catch (e) {
-      split.agentGranted = false;
-    }
-  }
   return split;
 }
 

@@ -12,7 +12,7 @@
 const llmRouter = require('./llm-router');
 const { runAgentWithTools } = require('./agent-tool-run');
 
-const MODEL = process.env.GROQ_TOOL_MODEL || 'llama-3.1-8b-instant';
+const MODEL = process.env.GROQ_TOOL_MODEL || process.env.GROQ_MODEL || 'openai/gpt-oss-20b';
 
 const ROSTER =
 `ORACLE — research, knowledge, science, health/body, psychology, physiology, esoteric/spiritual

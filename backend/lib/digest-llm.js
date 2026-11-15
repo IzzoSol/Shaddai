@@ -106,7 +106,7 @@ function retryAfterMs(body) {
 async function groq(messages, { maxTokens = 1400, timeoutMs = 90000, retries = 4 } = {}) {
   const key = env('GROQ_API_KEY');
   if (!key) throw new Error('no GROQ_API_KEY');
-  const model = env('GROQ_MODEL') || 'llama-3.1-8b-instant';
+  const model = env('GROQ_MODEL') || 'openai/gpt-oss-20b';
   let wait = 4000;
   for (let attempt = 0; ; attempt++) {
     const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {

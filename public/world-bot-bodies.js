@@ -109,5 +109,52 @@
     scrap: { body: 0xd9772a, head: 0x4a5566, eye: 0xffc933, accent: 0xd4504a }, lanky: { body: 0xd8cfb8, head: 0xe0d6bd, eye: 0xffd35a, accent: 0x7a8794 },
     unicycle: { body: 0xf08a1c, head: 0xf08a1c, eye: 0x33d6ff, accent: 0xd4302a }, analyst: { body: 0xece8de, head: 0xf1eee6, eye: 0xff3a30, accent: 0xc9a24a }, casino: { body: 0x6a3b1a, head: 0x6a3b1a, eye: 0xff3fa4, accent: 0xe8b43c }
   };
-  root.WorldBotBodies = { build: build, KINDS: Object.keys(DEF), DEFAULTS: DEF };
+  /* ── setBody: Forge operative → glow-bot visuals (fix/world-gaps 2026-11-11) ──
+   * setBody(THREE, agentId, operative) — operative = { slots:{body,headwear,outfit,aura,handheld,hair,eyes,background,accent}, buildHash, archetype } (backend/forge/forge-core.js).
+   * Slot map (finalize plan §7): body → base kind/mesh, outfit → torso colour, aura → glow colour (point light on the bot; bloom colour stays the caller's composer setting), eyes → eye emissive, accent → accent colour, handheld → mesh in the right-hand socket, headwear → mesh on the head socket, hair → hair-cap colour, background → returned as `backdrop` data (office / Realm spawn backdrop — the caller applies it, this file owns no scene).
+   * Unknown/missing slot values fall back to the kind default and never throw; an operative with no slots renders the plain procedural glow bot with forged:false. */
+  var BODY_KIND = { humanoid: 'scrap', android: 'analyst', cyborg: 'unicycle', 'sylvan-form': 'lanky' };
+  var AURA_COLOUR = { neon: 0x33d6ff, flames: 0xff6a3a, 'sprouting-vines': 0x39d353, 'cosmic-nebula': 0x9b59ff };
+  var EYE_COLOUR = { glowing: 0xffe066, scanner: 0x33d6ff, 'third-eye': 0x9b59ff };
+  var OUTFIT_BODY = { hoodie: 0x2a2f36, 'plate-armor': 0x8a929b, 'leaf-woven-mantle': 0x3f7a4a, 'tech-kimono': 0x4a3a6a };
+  var ACCENT_COLOUR = { azure: 0x33aaff, magenta: 0xff3fa4, green: 0x39d353, gold: 0xe8b43c };
+  var HAIR_COLOUR = { natural: 0x2a2018, silver: 0xd8d8d8, green: 0x39d353, violet: 0x9b59ff };
+  function setBody(THREE, agentId, operative) {
+    var slots = (operative && operative.slots) || null;
+    if (!slots) { var plain = build(THREE, 'scrap'); plain.forged = false; plain.agentId = agentId || null; plain.operative = operative || null; return plain; }
+    var kind = BODY_KIND[slots.body] || 'scrap';
+    var def = DEF[kind] || DEF.scrap;
+    var style = {
+      body: OUTFIT_BODY[slots.outfit] != null ? OUTFIT_BODY[slots.outfit] : def.body,
+      head: def.head,
+      eye: EYE_COLOUR[slots.eyes] != null ? EYE_COLOUR[slots.eyes] : def.eye,
+      accent: ACCENT_COLOUR[slots.accent] != null ? ACCENT_COLOUR[slots.accent] : def.accent
+    };
+    var out = build(THREE, kind, style);
+    out.forged = true; out.agentId = agentId || null; out.operative = operative;
+    out.buildHash = operative.buildHash || null; out.archetype = operative.archetype || null;
+    out.aura = slots.aura || null; out.backdrop = slots.background || null;
+    var auraC = AURA_COLOUR[slots.aura];
+    if (auraC != null) { var li = new THREE.PointLight(auraC, 0.6, 2.5); li.position.set(0, 1.2, 0); out.root.add(li); out.auraLight = li; }
+    var hand = out.sockets && out.sockets.handR;
+    if (hand) {
+      var hm = null, acc = style.accent;
+      if (slots.handheld === 'cyber-katana') { hm = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.7, 0.08), new THREE.MeshStandardMaterial({ color: 0x8a929b, metalness: 0.85, roughness: 0.3, emissive: acc, emissiveIntensity: 0.7 })); hm.position.set(0, -0.35, 0); }
+      else if (slots.handheld === 'mage-staff') { hm = new THREE.Group(); var st = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.9, 8), new THREE.MeshStandardMaterial({ color: 0x6a4a2a, roughness: 0.8 })); st.position.y = -0.3; var orb = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 8), new THREE.MeshStandardMaterial({ color: 0x111111, emissive: auraC != null ? auraC : acc, emissiveIntensity: 1.6 })); orb.position.y = 0.18; hm.add(st); hm.add(orb); }
+      else if (slots.handheld === 'wooden-scythe') { hm = new THREE.Group(); var hf = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.8, 8), new THREE.MeshStandardMaterial({ color: 0x6a4a2a, roughness: 0.8 })); hf.position.y = -0.25; var bl = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.04, 0.02), new THREE.MeshStandardMaterial({ color: 0x8a929b, metalness: 0.8, roughness: 0.35 })); bl.position.set(0.14, 0.16, 0); bl.rotation.z = 0.5; hm.add(hf); hm.add(bl); }
+      else if (slots.handheld === 'coffee-cup') { hm = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.04, 0.1, 12), new THREE.MeshStandardMaterial({ color: 0xf1ece4, roughness: 0.6 })); hm.position.set(0, -0.12, 0); }
+      if (hm) { hand.add(hm); out.handheldMesh = hm; }
+    }
+    var hd = out.sockets && out.sockets.head;
+    if (hd) {
+      if (slots.headwear === 'neural-crown') { var cr = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.02, 8, 24), new THREE.MeshStandardMaterial({ color: 0xc9a24a, metalness: 0.9, roughness: 0.3, emissive: style.accent, emissiveIntensity: 0.5 })); cr.position.y = 0.32; cr.rotation.x = Math.PI / 2; hd.add(cr); out.headwearMesh = cr; }
+      else if (slots.headwear === 'mage-hood') { var ho = new THREE.Mesh(new THREE.ConeGeometry(0.26, 0.42, 12, 1, true), new THREE.MeshStandardMaterial({ color: 0x2a2f36, roughness: 0.9, side: THREE.DoubleSide })); ho.position.y = 0.3; hd.add(ho); out.headwearMesh = ho; }
+      else if (slots.headwear === 'antlers') { var an = new THREE.Group(); [-1, 1].forEach(function (s) { var br = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.025, 0.3, 6), new THREE.MeshStandardMaterial({ color: 0x6a4a2a, roughness: 0.85 })); br.position.set(0.14 * s, 0.42, 0); br.rotation.z = -0.5 * s; an.add(br); }); hd.add(an); out.headwearMesh = an; }
+      else if (slots.headwear === 'oni-mask') { var om = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.22, 0.06), new THREE.MeshStandardMaterial({ color: 0xc9403a, roughness: 0.6, emissive: 0x7a1010, emissiveIntensity: 0.4 })); om.position.set(0, 0.18, 0.2); hd.add(om); out.headwearMesh = om; }
+      var hairC = HAIR_COLOUR[slots.hair];
+      if (hairC != null) { var hr = new THREE.Mesh(new THREE.SphereGeometry(0.2, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.55), new THREE.MeshStandardMaterial({ color: hairC, roughness: 0.85 })); hr.position.y = 0.3; hr.scale.set(1, 0.8, 1); hd.add(hr); out.hairMesh = hr; }
+    }
+    return out;
+  }
+  root.WorldBotBodies = { build: build, setBody: setBody, KINDS: Object.keys(DEF), DEFAULTS: DEF };
 })(typeof window !== 'undefined' ? window : globalThis);

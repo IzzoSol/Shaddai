@@ -18,7 +18,7 @@ async function boot(opts) {
     op2: { id: 'op2', owner: 'owner2', tools: [], skills: [] },
     tchr: { id: 'tchr', owner: 'teacherUser', tools: [], skills: [] }
   };
-  const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(opsDb, id) ? opsDb[id] : null), update: (id, p) => Object.assign(opsDb[id], p) };
+  const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(opsDb, id) ? opsDb[id] : null), listByOwner: (owner) => Object.values(opsDb).filter((o) => o.owner === owner), update: (id, p) => Object.assign(opsDb[id], p) };
   let clock = 1700000000000;
   const academy = createAcademy({
     dir: tmpDir(), economy, operatives, now: () => clock, adminIds: ['owner1'],
