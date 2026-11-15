@@ -799,6 +799,7 @@ window.__worldBuilt = false;
   // (Wrapped in a function so ?map=v4 can run it AFTER the v4 heightmap is loaded — these builders
   //  sample heightAt at BUILD time. Without the flag it runs inline exactly where it always did.)
   function __buildRealmModules(){
+      console.info('[realm-modules] building, MAP_V4=' + MAP_V4 + ' L=' + !!L);
       const _ocLoader = new GLTFLoader(__loadMgr);
       _ocLoader.setDRACOLoader(dracoLoader); _ocLoader.setMeshoptDecoder(MeshoptDecoder);
       if(!MAP_V4 && L && window.buildWorldOcean)     worldOcean      = window.buildWorldOcean({ THREE, scene, layout: L, loader: _ocLoader });   // v4: replaced by world-water.js
@@ -867,7 +868,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('grid-fabric', function(api){   // MAP v4 GRID FABRIC (city v3: Commons / NE campus / NW race — Shaddai building library, grid-fabric-v4.json)
       if(!api) return api;
-      fetch('/assets/world/track-clear-v4.json').then(function(r){ return r.json(); }).then(function(j){ const m = {}; j.keys.forEach(function(k){ m[k] = 1; }); window.__trackClear = m; }).catch(function(){}).then(function(){ return window.buildWorldClustersV4 ? Promise.resolve() : _loadScript('/world-clusters-v4.js?v=20261024a'); }).then(function(){
+      fetch('/assets/world/track-clear-v4.json').then(function(r){ return r.json(); }).then(function(j){ const m = {}; j.keys.forEach(function(k){ m[k] = 1; }); window.__trackClear = m; }).catch(function(){}).then(function(){ return window.buildWorldClustersV4 ? Promise.resolve() : _loadScript('/world-clusters-v4.js?v=20261115a'); }).then(function(){
         const gl = new GLTFLoader(); gl.setDRACOLoader(dracoLoader); gl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldClustersV4({ THREE, scene, loader: gl, heightAt: api.heightAt, url: '/assets/world/grid-fabric-v4.json', name: 'grid-fabric-v4',
           onMaterial: function(mat){ const I = window.__clustersV4Internals, g = I && I.glowFor ? I.glowFor(mat) : null; if(g && _v4Sky && _v4Sky.addEmissive) _v4Sky.addEmissive(mat, g); } });   // night glow: real emissive materials only (glass/trim/skylight/artslot/default buckets)   // full <250 m · lod1 <900 · block lod2 <2600
@@ -936,7 +937,7 @@ window.__worldBuilt = false;
     .then(_ldStep('clusters', function(api){   // MAP v4 DISTRICTS (world-clusters-v4.js ← realm-clusters-v4.json, same file as the Blender scene)
       if(!api) return api;
       if(/[?&]realmclusters=0\b/.test(location.search)) return api;   // MISSING-BUILDINGS fix (2026-11-11): realm districts build by default now (?realmclusters=0 opts out). The old ?realmclusters=1 opt-in never worked — raw 0x08 byte instead of \b in the regex.
-      return _loadScript('/world-clusters-v4.js?v=20261024a').then(function(){
+      return _loadScript('/world-clusters-v4.js?v=20261115a').then(function(){
         const cl = new GLTFLoader(); cl.setDRACOLoader(dracoLoader); cl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldClustersV4({ THREE, scene, loader: cl, heightAt: api.heightAt });
       }).then(function(c){ window.__w3dDebug.clustersV4 = c; }).catch(function(e){ console.warn('[map-v4] clusters failed:', e && e.message); }).then(function(){ return api; });
@@ -1262,9 +1263,12 @@ window.__worldBuilt = false;
   function __kickBuildings(){
   try{
     _ldBegin('buildings');
+    console.info('[buildings] L=' + !!L + ' buildWorldBuildings=' + !!window.buildWorldBuildings);
     if(L && window.buildWorldBuildings){
       worldBuildings = window.buildWorldBuildings(THREE, scene, L, worldTerrain && worldTerrain.heightAt, agentBodyLoader, __onWorldBuildingsDone);
+      console.info('[buildings] build started');
     } else {
+      console.warn('[buildings] SKIPPED — L=' + !!L + ' buildWorldBuildings=' + !!window.buildWorldBuildings);
       window.__worldBuilt = true;   // no builder present → don't trap the loading gate
       _ldEnd('buildings');
     }
@@ -5620,7 +5624,7 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyT' || e.repeat) retur
   if(!window.__cityLayout){ if(n % 10 === 0) console.info('[city-layout] waiting for __cityLayout...'); return; }
   clearInterval(iv);
   console.info('[city-layout] building with roads=' + (window.__cityLayout.roads ? window.__cityLayout.roads.length : 0));
-  _loadScript('/world-city-layout.js?v=20261017h').then(function(){ if(window.WorldCityLayout){ window.__cityLayoutView = window.WorldCityLayout.build({ THREE, scene, U: V4_U, heightAt: _v4T.heightAt, layout: window.__cityLayout }); console.info('[city-layout] build done'); } else { console.warn('[city-layout] WorldCityLayout not defined'); } })
+  _loadScript('/world-city-layout.js?v=20261115a').then(function(){ if(window.WorldCityLayout){ window.__cityLayoutView = window.WorldCityLayout.build({ THREE, scene, U: V4_U, heightAt: _v4T.heightAt, layout: window.__cityLayout }); console.info('[city-layout] build done'); } else { console.warn('[city-layout] WorldCityLayout not defined'); } })
     .catch(function(e){ console.warn('[city-layout] build failed:', e && e.message); }); }, 1000); })();
 // DISTRICT SIGNS (2026-10-16): holo pylon per Grid district + a toast when you cross into one (world-districts.js, data = Blender-authored districts-v1.json)
 (function bootDistricts(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; }
