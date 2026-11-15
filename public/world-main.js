@@ -762,7 +762,7 @@ window.__worldBuilt = false;
       if(window.buildColosseumExterior) window.__colosseumExt = window.buildColosseumExterior(THREE, { scene, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });   // real-size Southern Colosseum on the map (lobby doors → E → arena)
       if(L && window.buildWorldFalProps)  window.__worldFalProps = window.buildWorldFalProps({ THREE, scene, loader: _ocLoader, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });   // fal models at REAL size (×3.89 u/m)
       if(L && window.buildWorldNature)    window.__worldNature = window.buildWorldNature({ THREE, scene, loader: _ocLoader, layout: L, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });   // CC0 nature, instanced, real size
-      if(L && window.buildWorldTransit)   window.__worldTransitApi = window.buildWorldTransit({ THREE, scene, layout: L, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) }); 
+      if(L && window.buildWorldTransit){ window.__worldTransitApi = window.buildWorldTransit({ THREE, scene, layout: L, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) }); console.info('[transit] built OK'); } else { console.warn('[transit] SKIPPED — L=' + !!L + ' buildWorldTransit=' + !!window.buildWorldTransit); } 
       if(window.__worldTransitApi && window.WorldTransitKit && !/[?&]transitkit=0/.test(location.search)) window.WorldTransitKit.dress({ THREE, GLTFLoader, api: window.__worldTransitApi }).catch(function(e){ console.warn('[transit-kit]', e && e.message); });
       if(window.__worldTransitApi && window.WorldRealmKits && !/[?&]realmkits=0/.test(location.search)) window.WorldRealmKits.build({ THREE, GLTFLoader, scene, transit: window.__worldTransitApi, getPlayer: function(){ return playerPos; }, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) }).then(function(r){ window.__realmKits = r; }).catch(function(e){ console.warn('[realm-kits]', e && e.message); });  // Ringed Realm maglev (stations, trains, E to ride)
       if(window.__worldTransitApi && window.buildWorldTownsfolk) try{ window.__townsfolk = window.buildWorldTownsfolk({ THREE, GLTFLoader, meshopt: MeshoptDecoder, draco: dracoLoader, cloneSkinned, scene, transit: window.__worldTransitApi, getPlayer: function(){ return playerPos; }, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) }); }catch(e){ console.warn('[townsfolk]', e && e.message); }   // 2026-10-22 rigged NPCs at their posts (baked clips)
@@ -5562,10 +5562,16 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyT' || e.repeat) retur
     _v4Water.waterHeightAt = function(x, z, t){ const w = wh(x, z, t); return w != null ? w : R.at(x, z); };
     console.info('[rivers]', R.segments, 'segments'); }).catch(function(e){ console.warn('[rivers]', e && e.message); }); }, 1000); })();
 // CITY LAYOUT ROADS + PLOTS (2026-10-16, ref image 66): the designed district layout's roads and claimable plots (world-city-layout.js; ?citylayout=0 off)
-(function bootCityLayout(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; }
-  if(!window.__loadPlayable || !_v4T || !_v4T.heightAt || !window.__cityLayout) return; clearInterval(iv);
-  _loadScript('/world-city-layout.js?v=20261017h').then(function(){ if(window.WorldCityLayout) window.__cityLayoutView = window.WorldCityLayout.build({ THREE, scene, U: V4_U, heightAt: _v4T.heightAt, layout: window.__cityLayout }); })
-    .catch(function(e){ console.warn('[city-layout]', e && e.message); }); }, 1000); })();
+(function bootCityLayout(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); console.warn('[city-layout] timeout after 300s — __loadPlayable=' + !!window.__loadPlayable + ' _v4T=' + !!_v4T + ' __cityLayout=' + !!window.__cityLayout); return; }
+  if(!window.__loadPlayable){ if(n % 10 === 0) console.info('[city-layout] waiting for __loadPlayable...'); return; }
+  if(!_v4T || !_v4T.heightAt){ if(n % 10 === 0) console.info('[city-layout] waiting for terrain...'); return; }
+  // Fallback: if __cityLayout still missing after 10s, fetch it directly
+  if(!window.__cityLayout && n >= 10){ console.info('[city-layout] __cityLayout missing — fetching directly'); fetch('/assets/world/grid-fabric-districts-v1.json?v=20261023n').then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(function(plan){ if(plan && plan.roads){ window.__cityLayout = plan; console.info('[city-layout] fetched layout, roads=' + plan.roads.length); } else { console.warn('[city-layout] plan has no roads'); } }).catch(function(e){ console.warn('[city-layout] fetch failed:', e && e.message); }); return; }
+  if(!window.__cityLayout){ if(n % 10 === 0) console.info('[city-layout] waiting for __cityLayout...'); return; }
+  clearInterval(iv);
+  console.info('[city-layout] building with roads=' + (window.__cityLayout.roads ? window.__cityLayout.roads.length : 0));
+  _loadScript('/world-city-layout.js?v=20261017h').then(function(){ if(window.WorldCityLayout){ window.__cityLayoutView = window.WorldCityLayout.build({ THREE, scene, U: V4_U, heightAt: _v4T.heightAt, layout: window.__cityLayout }); console.info('[city-layout] build done'); } else { console.warn('[city-layout] WorldCityLayout not defined'); } })
+    .catch(function(e){ console.warn('[city-layout] build failed:', e && e.message); }); }, 1000); })();
 // DISTRICT SIGNS (2026-10-16): holo pylon per Grid district + a toast when you cross into one (world-districts.js, data = Blender-authored districts-v1.json)
 (function bootDistricts(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; }
   if(!window.__loadPlayable || !_v4T || !_v4T.heightAt) return; clearInterval(iv);
