@@ -144,7 +144,7 @@ footer{position:relative;z-index:1;text-align:center;padding:32px;border-top:1px
   <a class="nav-logo" href="/">◈ <span>SHADDAI</span></a>
   <a class="nav-link" href="/index.html">Dashboard</a>
   <a class="nav-link act" href="/forge-3d.html">3D Forge</a>
-  <a class="nav-link" href="/pixel-forge.html" target="_blank">Pixel Forge</a>
+  <a class="nav-link" href="/dashboard?view=forge">Forge</a>
   <a class="nav-link" href="/pricing.html" target="_blank">Plans</a>
 </nav>
 
@@ -153,7 +153,7 @@ footer{position:relative;z-index:1;text-align:center;padding:32px;border-top:1px
   <h1 class="hero-title">Build. Deploy. <span>Trade.</span></h1>
   <p class="hero-sub">Forge sovereign AI operatives with 3D GLB bodies, wire real tools, and list them on the Bazaar. Every agent earns you Sparks.</p>
   <div class="hero-cta">
-    <a class="btn btn-em" href="/pixel-forge.html" target="_blank">⬡ Forge New Agent</a>
+    <a class="btn btn-em" href="/dashboard?view=forge" target="_blank">⬡ Forge New Agent</a>
     <a class="btn btn-gd" href="/marketplace-shop-v2.html" target="_blank">🏪 Open Bazaar</a>
   </div>
 </div>
@@ -175,7 +175,7 @@ footer{position:relative;z-index:1;text-align:center;padding:32px;border-top:1px
       <div class="forge-step"><span class="n">3</span> Deploy to Office or Bazaar</div>
       <div class="forge-step"><span class="n">4</span> Earn Sparks per call</div>
     </div>
-    <a class="btn btn-em" href="/pixel-forge.html" target="_blank">⬡ Open Pixel Forge →</a>
+    <a class="btn btn-em" href="/dashboard?view=forge" target="_blank">⬡ Open the Forge →</a>
   </div>
 
   <div class="section-hd">
@@ -282,7 +282,7 @@ function renderOps(){
   const list=filterOps();
   document.getElementById('gallCount').textContent=`${list.length} operative${list.length!==1?'s':''}`;
   if(!list.length){
-    grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><span class="e-icon">⬡</span><p>${_filter==='all'?'No operatives forged yet. Start in Pixel Forge.':'None match this filter.'}</p><a class="btn btn-em" href="/pixel-forge.html" target="_blank">⬡ Forge Your First Agent</a></div>`;
+    grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><span class="e-icon">⬡</span><p>${_filter==='all'?'No operatives forged yet. Start in the Forge.':'None match this filter.'}</p><a class="btn btn-em" href="/dashboard?view=forge" target="_blank">⬡ Forge Your First Agent</a></div>`;
     return;
   }
   grid.innerHTML='';

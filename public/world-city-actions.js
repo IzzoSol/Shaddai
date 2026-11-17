@@ -10,7 +10,7 @@
  *   HUB_HOME_*                                → home     status / inhabit / rent / check-in      (status:'new')
  *   GATE_START, PIT_*                         → race     track + open heats + enter              (status:'new')
  *   STALL_*, BLD_GALLERY_SHOP, SLOT_GALLERY_* → bazaar   listing view, read-only                 (live)
- *   DEED_OFFICE, BUILDER_YARD                 → plots    counts from plots-v4.json, claim soon   (MCP-only today)
+ *   DEED_OFFICE, BUILDER_YARD                 → plots    counts from plots-v4.json, claim live via /api/city-deeds
  *   everything else                           → copy prompt + "view on dashboard"
  *
  *   var actions = window.buildCityActions({ city?, hud?, copyUrl?, apiBase?, fetchImpl?, getUser?, hasSkill?,
@@ -716,7 +716,10 @@
     FAMILIES.plots = function (ctx) {
       clear(ctx.body);
       var m = ctx.marker;
-      function show(counts, total) {
+      // Off-switch: ?citydeeds=0 skips the deeds fetch/merge and renders the stub exactly as before.
+      var deedsOff = false;
+      try { deedsOff = /[?&]citydeeds=0/.test((win.location && win.location.search) || ''); } catch (e) { deedsOff = false; }
+      function show(counts, total, claimableId) {
         if (!ctx.alive()) return;
         clear(ctx.body);
         add(ctx.body, el('p', null, total + ' plots in the south-west district'));
@@ -728,18 +731,67 @@
         if (m.name === 'BUILDER_YARD' && Array.isArray(m.props.catalogue)) {
           add(ctx.body, el('div', 'ca-sub', 'Building kits: ' + m.props.catalogue.map(prettyId).join(', ')));
         }
-        var b = add(ctx.body, btn(m.name === 'BUILDER_YARD' ? 'Build · coming soon' : 'Claim · coming soon', 'ghost', function () {}, 'claim'));
-        b.disabled = true;
+        var b;
+        if (m.name === 'BUILDER_YARD') {
+          b = add(ctx.body, btn('Build · coming soon', 'ghost', function () {}, 'claim'));
+          b.disabled = true;
+        } else if (claimableId) {
+          b = add(ctx.body, btn('Claim ' + claimableId, '', function () {
+            api('POST', '/api/city-deeds/buy', { plotId: claimableId }).then(function (res) {
+              if (!ctx.alive()) return;
+              var o = outcome(res, false);
+              if (o.kind === 'ok') { say('Plot claimed: ' + claimableId, 'ok'); FAMILIES.plots(ctx); }
+              else ctx.handle(res, false);
+            });
+          }, 'claim'));
+        } else {
+          b = add(ctx.body, btn('Claim · coming soon', 'ghost', function () {}, 'claim'));
+          b.disabled = true;
+        }
         add(ctx.body, el('p', 'ca-sub', 'Claiming a plot in the city opens soon. The fee is set by plot size.'));
+      }
+      // Server deeds (null = fetch failed/off → proceed exactly as today, stub only).
+      function loadDeeds() {
+        if (deedsOff) return Promise.resolve(null);
+        return api('GET', '/api/city-deeds').then(function (res) {
+          if (res && res.ok && res.json && res.json.ok && res.json.deeds) return res.json.deeds;
+          return null;
+        });
+      }
+      function firstClaimable(rows, deeds) {
+        for (var i = 0; i < rows.length; i++) {
+          var p = rows[i] || {};
+          if (p.plot_id && (!deeds || !deeds[p.plot_id]) && (p.state || 'empty') === 'empty') return p.plot_id;
+        }
+        return null;
       }
       var st = null;
       try { st = opts.city && opts.city.stats ? opts.city.stats() : null; } catch (e) { st = null; }
-      if (st && st.loaded && st.plotsByState) { show(st.plotsByState, st.plots); return Promise.resolve(); }
+      if (st && st.loaded && st.plotsByState) {
+        return loadDeeds().then(function (deeds) {
+          var counts = {};
+          ['empty', 'claimed', 'built', 'listed', 'lapsed'].forEach(function (k) { counts[k] = st.plotsByState[k] || 0; });
+          if (!deeds) { show(counts, st.plots, null); return; }
+          // Deeds only ever move a plot empty → claimed; built/listed/lapsed stay as the static file says.
+          var n = Object.keys(deeds).length;
+          counts.claimed += n;
+          counts.empty = Math.max(0, counts.empty - n);
+          return (fetchImpl ? rawGet(plotsUrl) : Promise.resolve(null)).then(function (j) {
+            var rows = (j && (Array.isArray(j) ? j : j.plots)) || [];
+            show(counts, st.plots, firstClaimable(rows, deeds));
+          });
+        });
+      }
       return (fetchImpl ? rawGet(plotsUrl) : Promise.resolve(null)).then(function (j) {
         var rows = (j && (Array.isArray(j) ? j : j.plots)) || [], c = {};
-        rows.forEach(function (p) { var s = p && p.state || 'empty'; c[s] = (c[s] || 0) + 1; });
         if (!rows.length) return ctx.soon('Plot records are loading. Try again in a moment.');
-        show(c, rows.length);
+        return loadDeeds().then(function (deeds) {
+          rows.forEach(function (p) {
+            var s = (deeds && p.plot_id && deeds[p.plot_id]) ? 'claimed' : (p && p.state || 'empty');
+            c[s] = (c[s] || 0) + 1;
+          });
+          show(c, rows.length, deeds ? firstClaimable(rows, deeds) : null);
+        });
       });
     };
 

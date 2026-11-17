@@ -17,7 +17,11 @@
 (function (root) {
   'use strict';
   var M = 7 / 1.8;
-  function build(o) {
+  function nowMs() { return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(); }
+  // WAVE2 (issue #4): build() is split into prepare / rasterBox / finish so buildAsync() can rasterise the
+  // same boxes in time-sliced chunks. The raster is order-independent per box (each cell keeps the max top),
+  // so a sliced build produces a byte-identical grid to the synchronous one.
+  function prepare(o) {
     o = o || {};
     var U = o.U || M, cellM = o.cell || 2, C = cellM * U, pad = C * 0.7072, boxes = [], i, k;
     // 1. collect oriented rects in world space: { cx, cz, ax, az (unit axis of w), hw, hd, h }
@@ -45,30 +49,59 @@
       q.ex = ex; q.ez = ez;
       if (q.cx - ex < x0) x0 = q.cx - ex; if (q.cx + ex > x1) x1 = q.cx + ex; if (q.cz - ez < z0) z0 = q.cz - ez; if (q.cz + ez > z1) z1 = q.cz + ez;
     }
-    if (!boxes.length) return { topAt: function () { return -Infinity; }, stats: { cells: 0, bytes: 0, mb: 0, boxes: 0, filledCells: 0, cellU: C, cellM: cellM } };
+    if (!boxes.length) return { empty: true, C: C, cellM: cellM };
     x0 -= C; z0 -= C; x1 += C; z1 += C;
-    var nx = Math.ceil((x1 - x0) / C) + 1, nz = Math.ceil((z1 - z0) / C) + 1, grid = new Float32Array(nx * nz).fill(-Infinity), filled = 0;
-    // 3. rasterise (cell centre inside the rect inflated by pad)
-    for (i = 0; i < boxes.length; i++) {
-      var r = boxes[i], ia = Math.max(0, Math.floor((r.cx - r.ex - pad - x0) / C)), ib = Math.min(nx - 1, Math.floor((r.cx + r.ex + pad - x0) / C)),
-        ja = Math.max(0, Math.floor((r.cz - r.ez - pad - z0) / C)), jb = Math.min(nz - 1, Math.floor((r.cz + r.ez + pad - z0) / C));
-      for (var j = ja; j <= jb; j++) for (var ii = ia; ii <= ib; ii++) {
-        var px = x0 + (ii + 0.5) * C - r.cx, pz = z0 + (j + 0.5) * C - r.cz;
-        var u = px * r.ux + pz * r.uz, v = -px * r.uz + pz * r.ux;
-        if (r.circle ? (px * px + pz * pz > (r.hw + pad) * (r.hw + pad)) : (Math.abs(u) > r.hw + pad || Math.abs(v) > r.hd + pad)) continue;
-        var idx = j * nx + ii; if (grid[idx] === -Infinity) filled++; if (r.h > grid[idx]) grid[idx] = r.h;
-      }
+    var nx = Math.ceil((x1 - x0) / C) + 1, nz = Math.ceil((z1 - z0) / C) + 1, grid = new Float32Array(nx * nz).fill(-Infinity);
+    return { boxes: boxes, grid: grid, nx: nx, nz: nz, x0: x0, z0: z0, x1: x1, z1: z1, C: C, cellM: cellM, pad: pad, filled: 0 };
+  }
+  // 3. rasterise ONE box (cell centre inside the rect inflated by pad)
+  function rasterBox(st, r) {
+    var grid = st.grid, nx = st.nx, x0 = st.x0, z0 = st.z0, C = st.C, pad = st.pad;
+    var ia = Math.max(0, Math.floor((r.cx - r.ex - pad - x0) / C)), ib = Math.min(nx - 1, Math.floor((r.cx + r.ex + pad - x0) / C)),
+      ja = Math.max(0, Math.floor((r.cz - r.ez - pad - z0) / C)), jb = Math.min(st.nz - 1, Math.floor((r.cz + r.ez + pad - z0) / C));
+    for (var j = ja; j <= jb; j++) for (var ii = ia; ii <= ib; ii++) {
+      var px = x0 + (ii + 0.5) * C - r.cx, pz = z0 + (j + 0.5) * C - r.cz;
+      var u = px * r.ux + pz * r.uz, v = -px * r.uz + pz * r.ux;
+      if (r.circle ? (px * px + pz * pz > (r.hw + pad) * (r.hw + pad)) : (Math.abs(u) > r.hw + pad || Math.abs(v) > r.hd + pad)) continue;
+      var idx = j * nx + ii; if (grid[idx] === -Infinity) st.filled++; if (r.h > grid[idx]) grid[idx] = r.h;
     }
+  }
+  function finish(st) {
+    if (st.empty) return { topAt: function () { return -Infinity; }, stats: { cells: 0, bytes: 0, mb: 0, boxes: 0, filledCells: 0, cellU: st.C, cellM: st.cellM } };
+    var grid = st.grid, nx = st.nx, nz = st.nz, x0 = st.x0, z0 = st.z0, C = st.C;
     return {
       topAt: function (x, z) {
         var ii = Math.floor((x - x0) / C), j = Math.floor((z - z0) / C);
         if (ii < 0 || j < 0 || ii >= nx || j >= nz) return -Infinity;
         return grid[j * nx + ii];
       },
-      stats: { cells: nx * nz, nx: nx, nz: nz, bytes: grid.byteLength, mb: grid.byteLength / 1048576, bbox: { x0: x0, x1: x1, z0: z0, z1: z1 }, cellU: C, cellM: cellM, boxes: boxes.length, filledCells: filled }
+      stats: { cells: nx * nz, nx: nx, nz: nz, bytes: grid.byteLength, mb: grid.byteLength / 1048576, bbox: { x0: x0, x1: st.x1, z0: z0, z1: st.z1 }, cellU: C, cellM: st.cellM, boxes: st.boxes.length, filledCells: st.filled }
     };
   }
-  var api = { build: build };
+  function build(o) {
+    var st = prepare(o);
+    if (!st.empty) for (var i = 0; i < st.boxes.length; i++) rasterBox(st, st.boxes[i]);
+    return finish(st);
+  }
+  // Same result as build(), but the raster loop yields to the event loop every `sliceMs` (default 8 ms)
+  // so a 2-4 s raster no longer freezes the page when a city race is started.
+  function buildAsync(o, sliceMs) {
+    var st = prepare(o), budget = sliceMs > 0 ? sliceMs : 8;
+    if (st.empty) return Promise.resolve(finish(st));
+    var i = 0;
+    return new Promise(function (resolve) {
+      (function step() {
+        var t0 = nowMs();
+        while (i < st.boxes.length) {
+          rasterBox(st, st.boxes[i]); i++;
+          if (nowMs() - t0 >= budget) break;
+        }
+        if (i < st.boxes.length) setTimeout(step, 0);
+        else resolve(finish(st));
+      })();
+    });
+  }
+  var api = { build: build, buildAsync: buildAsync };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (root) root.WorldCityHeights = api;
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));

@@ -153,6 +153,51 @@ function listKits() {
   });
 }
 
+/* The REAL academy catalogue ids (lib/academy curriculum + live registry).
+   Forge-time skill selection is validated against it — an unknown id is an
+   explicit validation error, never a silent drop. Null when the academy
+   modules are unavailable (selection then passes through unvalidated, the
+   same defensive posture as softAuth elsewhere in this codebase). */
+function academySkillIds() {
+  try {
+    const ids = new Set();
+    const { ENTRIES } = require('./academy/curriculum/entries');
+    for (const e of ENTRIES || []) { const sk = (e && e.skill) || e; if (sk && sk.id) ids.add(sk.id); }
+    try {
+      const store = require('./academy/store');
+      const registry = require('./academy/registry');
+      for (const s of registry.listSkills(store) || []) if (s && s.id) ids.add(s.id);
+    } catch (_) { /* curriculum alone is enough to validate */ }
+    return ids;
+  } catch (_) { return null; }
+}
+
+/* Normalise a forge spec's academy skill + workflow selection.
+   Returns { academySkills, workflows } or { error }. */
+function cleanAcademySelection(spec) {
+  const out = { academySkills: [], workflows: [] };
+  if (spec && spec.academySkills !== undefined && spec.academySkills !== null) {
+    if (!Array.isArray(spec.academySkills)) return { error: 'academySkills must be a list of academy skill ids' };
+    const ids = academySkillIds();
+    for (const s of spec.academySkills) {
+      const id = String(s || '').trim();
+      if (!id) continue;
+      if (ids && !ids.has(id)) return { error: `unknown academy skill "${id}" — pick from the academy catalogue (GET /api/agent-forge/skills)` };
+      if (!out.academySkills.includes(id)) out.academySkills.push(id);
+    }
+    out.academySkills = out.academySkills.slice(0, 64);
+  }
+  if (spec && spec.workflows !== undefined && spec.workflows !== null) {
+    if (!Array.isArray(spec.workflows)) return { error: 'workflows must be a list of workflow ids' };
+    for (const s of spec.workflows) {
+      const id = String(s || '').trim();
+      if (id && !out.workflows.includes(id)) out.workflows.push(id);
+    }
+    out.workflows = out.workflows.slice(0, 64);
+  }
+  return out;
+}
+
 /* ── persona ─────────────────────────────────────────────────────────────── */
 
 const TRAITS = {
@@ -189,6 +234,14 @@ function personaMarkdown(spec) {
     '## What it does',
     '',
     (spec.kits || []).map((k) => `- ${(JOB_KITS[k] && JOB_KITS[k].label) || k}`).join('\n') || '- General work.',
+    ...((spec.academySkills || []).length
+      ? ['', '## Academy training chosen at the Forge', '',
+         ...(spec.academySkills || []).map((s) => `- ${s} (academy catalogue — enrolled through the Athenaeum; passing the exam installs the skill's tools for real)`)]
+      : []),
+    ...((spec.workflows || []).length
+      ? ['', '## Workflows chosen at the Forge', '',
+         ...(spec.workflows || []).map((s) => `- ${s}`)]
+      : []),
     '',
     '## Rules',
     '',
@@ -263,6 +316,9 @@ function validate(spec) {
   if (!Array.isArray(kits)) errs.push('kits must be a list');
   else for (const k of kits) if (!JOB_KITS[k]) errs.push(`unknown kit: ${k}`);
 
+  const sel = cleanAcademySelection(spec || {});
+  if (sel.error) errs.push(sel.error);
+
   return errs;
 }
 
@@ -318,6 +374,12 @@ function forgeAgent(spec) {
     traits: (spec.traits || []).filter((t) => TRAITS[t]),
     kits,
     skills,
+    // Forge-time skill selection from the REAL academy catalogue + chosen
+    // workflows. Persisted on the record and mirrored onto the linked
+    // operative (agent-forge-routes linkOperative), so the Gallery/agent
+    // view — which reads the operative — shows the same selection.
+    academySkills: cleanAcademySelection(spec).academySkills,
+    workflows: cleanAcademySelection(spec).workflows,
     owner,
     avatarUrl: spec.avatarUrl || null,
     walletKey: needsWallet ? walletKey : null,

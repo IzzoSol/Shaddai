@@ -945,18 +945,51 @@ router.post('/fetch-url', async (req, res) => {
 // FILE SYSTEM (path-sandboxed to user's home directory)
 // ─────────────────────────────────────────────────────────────
 const HOME_DIR = require('os').homedir();
+const HOME_REAL = (() => { try { return fs.realpathSync(HOME_DIR); } catch (_) { return HOME_DIR; } })();
+
+function _insideHome(p) {
+  return p === HOME_REAL || p.startsWith(HOME_REAL + path.sep);
+}
 
 function safePath(inputPath) {
   if (!inputPath) return null;
   const resolved = path.resolve(inputPath);
-  // Block traversal outside home directory (security boundary)
-  if (!resolved.startsWith(HOME_DIR)) {
+  // Block traversal outside home directory (security boundary). The prefix
+  // check must be separator-aware: '/home/user2' starts with the string
+  // '/home/user' but is NOT inside it.
+  if (!(resolved === HOME_DIR || resolved.startsWith(HOME_DIR + path.sep))) {
     throw new Error(`Access denied: path outside allowed directory`);
   }
-  return resolved;
+  // Symlink-escape protection: canonicalise the deepest existing ancestor and
+  // re-check containment, so a symlink inside HOME pointing outside cannot
+  // smuggle the path out of the sandbox.
+  let probe = resolved;
+  const suffix = [];
+  while (!fs.existsSync(probe)) {
+    const parent = path.dirname(probe);
+    if (parent === probe) break;
+    suffix.unshift(path.basename(probe));
+    probe = parent;
+  }
+  let real = probe;
+  try { real = fs.realpathSync(probe); } catch (_) { /* keep lexical probe */ }
+  const canonical = suffix.length ? path.join(real, ...suffix) : real;
+  if (!_insideHome(canonical)) {
+    throw new Error(`Access denied: path outside allowed directory`);
+  }
+  return canonical;
 }
 
-router.post('/read-file', (req, res) => {
+// SECURITY (2026-11-15, founder-reported): the four filesystem routes below
+// list, read and WRITE arbitrary files under HOME. They sat behind only
+// softAuth, which lets guests through as 'local' — so anyone, signed out,
+// could enumerate repo-internal folders (docs/, backend/data/), read any file
+// under HOME (incl. ~/.ssh, backend/data/economy.json), and write files.
+// They are now owner/admin-only via requireAdminUser (verified Firebase email
+// in ADMIN_EMAILS, or the ADMIN_TOKEN master header) — the same gate
+// admin-routes.js uses for owner endpoints. Fails closed in production when
+// no admin identity is configured.
+router.post('/read-file', requireAdminUser, (req, res) => {
   try {
     const filePath = req.body.filePath || req.body.path;
     if (!filePath) return res.status(400).json({ error: 'filePath required', content: '' });
@@ -971,7 +1004,7 @@ router.post('/read-file', (req, res) => {
 });
 
 // Write a file (sandboxed to HOME_DIR — for skill editing)
-router.post('/write-file', (req, res) => {
+router.post('/write-file', requireAdminUser, (req, res) => {
   try {
     const filePath = req.body.filePath || req.body.path;
     const content  = req.body.content;
@@ -987,7 +1020,7 @@ router.post('/write-file', (req, res) => {
   } catch(e) { fail(res, 500, 'internal_error', e.message); }
 });
 
-router.post('/scan-folder', (req, res) => {
+router.post('/scan-folder', requireAdminUser, (req, res) => {
   try {
     const folderPath = req.body.folderPath || req.body.path;
     if (!folderPath) return res.status(400).json({ error: 'folderPath required', files: [] });
@@ -1000,7 +1033,7 @@ router.post('/scan-folder', (req, res) => {
   }
 });
 
-router.post('/scan-folders', (req, res) => {
+router.post('/scan-folders', requireAdminUser, (req, res) => {
   try {
     const inputPaths = req.body.paths || req.body.folders || [];
     const results = {};
@@ -2188,6 +2221,7 @@ router.post('/billing/checkout', async (req, res) => {
   const { tier = 'pro', successUrl, cancelUrl } = req.body;
   const STRIPE_KEY = process.env.STRIPE_SECRET_KEY || '';
   const PRICE_IDS = {
+    build:   process.env.STRIPE_PRICE_BUILD || '',
     builder: process.env.STRIPE_PRICE_BUILDER || '',
     pro:     process.env.STRIPE_PRICE_PRO || '',
     alpha:   process.env.STRIPE_PRICE_ALPHA || ''
@@ -2202,7 +2236,8 @@ router.post('/billing/checkout', async (req, res) => {
         success_url: successUrl || 'http://localhost:3000/?billing=success',
         cancel_url: cancelUrl || 'http://localhost:3000/?billing=cancel'
       }).toString(), {
-        headers: { Authorization: `Bearer ${STRIPE_KEY}`, 'Content-Type': 'application/x-www-form-urlencoded' }
+        headers: { Authorization: `Bearer ${STRIPE_KEY}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+        timeout: 15000 // axios has no default timeout — an unanswered Stripe call used to hang this route
       });
       return res.json({ url: stripeRes.data.url, sessionId: stripeRes.data.id });
     } catch(e) {

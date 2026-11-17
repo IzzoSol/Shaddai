@@ -86,10 +86,14 @@ try {
   TIER_CONFIG = require('./lib/tiers').tierConfig();
 } catch (e) {
   console.error('[billing] lib/tiers unavailable, using emergency defaults:', e && e.message);
+  // Emergency mirror of lib/tiers.js (canonicalised 2026-11-15: Build $9 /
+  // Builder $19 / Pro $49; elite is legacy-only, no longer sold).
   TIER_CONFIG = {
-    free:  { name:'Free',  price:0,   currency:'usd', interval:'month', monthlyCredits:500,   modelTiers:['cheap'], maxAgents:7, rateLimit:30,  features:{scheduling:false,batching:false,byok:true,advancedWorkflows:false,prioritySupport:false}, description:'Get started' },
-    pro:   { name:'Pro',   price:49,  currency:'usd', interval:'month', monthlyCredits:5000,  modelTiers:['cheap','standard'], maxAgents:7, rateLimit:200, features:{scheduling:true,batching:false,byok:true,advancedWorkflows:true,prioritySupport:false}, description:'Pro' },
-    elite: { name:'Max',   price:199, currency:'usd', interval:'month', monthlyCredits:50000, modelTiers:['cheap','standard','premium'], maxAgents:99, rateLimit:600, features:{scheduling:true,batching:true,byok:true,advancedWorkflows:true,prioritySupport:true}, description:'Max' },
+    free:    { name:'Free',  price:0,   currency:'usd', interval:'month', monthlyCredits:500,   modelTiers:['cheap'], maxAgents:7, rateLimit:30,  features:{scheduling:false,batching:false,byok:true,advancedWorkflows:false,prioritySupport:false}, description:'Get started' },
+    build:   { name:'Build', price:9,   currency:'usd', interval:'month', monthlyCredits:1500,  modelTiers:['cheap'], maxAgents:7, rateLimit:60,  features:{scheduling:false,batching:false,byok:true,advancedWorkflows:false,prioritySupport:false}, description:'Build' },
+    builder: { name:'Builder', price:19, currency:'usd', interval:'month', monthlyCredits:2500, modelTiers:['cheap','standard'], maxAgents:7, rateLimit:120, features:{scheduling:false,batching:false,byok:true,advancedWorkflows:true,prioritySupport:false}, description:'Builder' },
+    pro:     { name:'Pro',   price:49,  currency:'usd', interval:'month', monthlyCredits:5000,  modelTiers:['cheap','standard'], maxAgents:7, rateLimit:200, features:{scheduling:true,batching:false,byok:true,advancedWorkflows:true,prioritySupport:false}, description:'Pro' },
+    elite:   { name:'Max',   price:199, currency:'usd', interval:'month', monthlyCredits:50000, modelTiers:['cheap','standard','premium'], maxAgents:99, rateLimit:600, features:{scheduling:true,batching:true,byok:true,advancedWorkflows:true,prioritySupport:true}, description:'Max (legacy)' },
   };
 }
 

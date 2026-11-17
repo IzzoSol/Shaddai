@@ -15,7 +15,7 @@
  * Tiers now reward points/leaderboard rank, not Sparks. Daily cap (dailyCap = 600) limits Sparks WAGERED per day; free runs (stake 0) are unlimited.
  * A future bonus may only be paid out of a real burn-funded pool; do not add a multiplier without one.
  * Effects: coloured screen pulse per trick kind (spin cyan / flip magenta / varial gold / grab green), floating trick feed, combo bar, speed lines above ~16 m/s, stamina bar while flying.
- * Hook for real leaderboards: LB entries {score, tier, ts} (localStorage now; POST /api/skate/score later).
+ * Hook for real leaderboards: LB entries {score, tier, ts} (localStorage cache; POST /api/skate/score live).
  */
 (function (root) {
   'use strict';
@@ -104,7 +104,17 @@
     function finish() {
       S.phase = 'done'; var tier = null; TUNE.tiers.forEach(function (t) { if (S.score >= t.score) tier = t; });
       var payout = 0, burned = 0; if (S.stake) { var st = settleRun(S.stake, !!tier); payout = st.payout; burned = st.burn; if (payout > 0) add(payout, tier ? 'refund ' + tier.name : 'refund minus fee'); S.stake = 0; }
-      var lb = lbLoad(); lb.push({ score: S.score, tier: tier ? tier.name : '-', ts: Date.now() }); lb.sort(function (a, b) { return b.score - a.score; }); lbSave(lb); S.best = lb[0] ? lb[0].score : S.score;
+      var lb = lbLoad(); lb.push({ score: S.score, tier: tier ? tier.name : '-', ts: Date.now() }); lb.sort(function (a, b) { return b.score - a.score; }); lbSave(lb);
+      if (!/[?&]skateboard=local/.test(location.search)) {
+        try {
+          fetch('/api/skate/score', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user: (window.SHDDAI_USER || 'guest'), score: S.score, tier: tier ? tier.name : '-' }) })
+            .then(function (r) { return r.json(); })
+            .then(function (d) { if (d && d.ok && Array.isArray(d.top)) { lbSave(d.top.map(function (e) { return { score: e.score, tier: e.tier || '-', ts: e.at || 0 }; })); } })
+            .catch(function () {});
+        } catch (e) {}
+      }
+      S.best = lb[0] ? lb[0].score : S.score;
       pulse(tier ? '#e8c45c' : '#8fa3b8'); toast('SKATE JAM over - ' + S.score + ' pts' + (tier ? ' - ' + tier.name : ' - no tier') + (payout || burned ? '  (stake back: ' + payout + (burned ? ', ' + burned + ' burned' : '') + ')' : ''));
       setTimeout(function () { if (S.phase === 'done') { S.phase = 'idle'; draw(); } }, 7000);
     }

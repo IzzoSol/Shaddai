@@ -14,7 +14,7 @@
   var S = { on: true, list: [], scanT: 0, stepT: 0, hidden: 0, checked: 0, badSkins: [], o: null, sph: null, v: null };
   function path(o) { var a = []; for (var x = o; x && x.parent; x = x.parent) a.push(x.name || x.type); return a.reverse().join(' > ').slice(0, 160); }
   function guardSkin(m) {
-    if (m.userData.__skinChecked || m.userData.__skinClean) return; m.userData.__skinChecked = true;   // __skinClean: verified council GLB (world-main SPIKE FIX)
+    if (m.userData.__skinChecked) return; m.userData.__skinChecked = true;   // 2026-11-15 wave1 fix 1: __skinClean council rigs are NO LONGER exempt. This guard only READS indices per-component (interleaved-safe) and pins bounds on genuinely bad skins — the Nov-7 spike came from _repairSkins WRITING interleaved data, and that repair still skips clean files in world-main.
     var g = m.geometry, si = g && g.attributes && g.attributes.skinIndex, nb = m.skeleton && m.skeleton.bones ? m.skeleton.bones.length : 0, bad = !m.skeleton;
     // per component, not si.array: an interleaved attribute's array is the whole shared vertex buffer (positions, uvs...) = false "255"
     if (si && !bad) { var mx = 0; for (var i = 0; i < si.count; i++) for (var c = 0; c < si.itemSize; c++) { var b = si.getComponent(i, c); if (b > mx) mx = b; } bad = mx >= nb; }
@@ -66,7 +66,7 @@
       SM.prototype.__pgPatched = true;
       var abt = SM.prototype.applyBoneTransform;   // 2026-10-24: raycasts hit the same bad-skin crash (three.core applyBoneTransform -> bones[i].matrixWorld)
       if (abt) SM.prototype.applyBoneTransform = function (index, target) { var sk = this.skeleton, si = this.geometry && this.geometry.attributes.skinIndex;
-        if (sk && si && !this.userData.__skinClean) { for (var c = 0; c < 4; c++) { var bi = si.getComponent(index, c); if (bi >= sk.bones.length || !sk.bones[bi]) return target; } } return abt.call(this, index, target); };
+        if (sk && si) { for (var c = 0; c < 4; c++) { var bi = si.getComponent(index, c); if (bi >= sk.bones.length || !sk.bones[bi]) return target; } } return abt.call(this, index, target); };   // wave1 fix 1: __skinClean exemption removed here too — a mis-paired council clone crashed raycasts with "matrixWorld of undefined" (three.core applyBoneTransform) in live recordings
       ['computeBoundingSphere', 'computeBoundingBox'].forEach(function (fn) {
         var orig = SM.prototype[fn]; if (!orig) return;
         SM.prototype[fn] = function () {

@@ -119,6 +119,7 @@
       G.updateMatrixWorld(true); return out.map(function (g) { var v = new THREE.Vector3(g.x, 0, g.z).applyMatrix4(R.matrixWorld); return { x: v.x, y: v.y, z: v.z, kind: g.kind, verb: g.verb, idx: g.idx }; });
     }
     var crates = new THREE.InstancedMesh(new THREE.BoxGeometry(1.4, 1.4, 1.4), new THREE.MeshStandardMaterial({ color: 0x2a2410, emissive: 0xE8C45C, emissiveIntensity: 1.3, metalness: 0.8, roughness: 0.3 }), 12), crPos = [];
+    crates.frustumCulled = false;   // WAVE3 JOB 3: update() rewrites every matrix per frame (bob/spin/visibility scale) — r180 caches the instanced bounding sphere from the first render's matrices (identity if a render lands before the first update), which would cull the whole park-spread set when the origin leaves the frustum. 12 instances / 1 draw: never cull.
     for (var ci = 0; ci < 12; ci++) { var q3 = loopAt(ci / 12 + 0.02); crPos.push([q3[0] + Math.cos(ci) * 2.5, 1.5, q3[1] + Math.sin(ci) * 2.5]); } R.add(crates);
     var _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _p = new THREE.Vector3(), _s = new THREE.Vector3(1, 1, 1), tt = 0, crVis = crPos.map(function () { return true; });
     function update(dt) { tt += dt; for (var k = 0; k < crPos.length; k++) { _e.set(tt * 0.9 + k, tt * 1.3, tt * 0.5); _q.setFromEuler(_e); _p.set(crPos[k][0], crPos[k][1] + Math.sin(tt * 2 + k) * 0.25, crPos[k][2]); _s.setScalar(crVis[k] ? 1 : 0.0001); _m.compose(_p, _q, _s); crates.setMatrixAt(k, _m); } crates.instanceMatrix.needsUpdate = true; }

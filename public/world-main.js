@@ -7,6 +7,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { installKitColorFix } from '/kit-color-fix.js?v=20261022a'; installKitColorFix(GLTFLoader);   // 2026-10-22 owner-approved: kit vertex colours were linearized twice (13x dark); ?kitcolorfix=0 = old
+import { installKTX2 } from '/world-ktx2.js?v=20261115a';   // KTX2 phase 0 (2026-11-15): vendor + ?ktx2=1 wiring only, no .ktx2 assets yet; install call sits after the renderer exists — flag off = untouched
 // DEVKIT (world-devkit.js, plan S0a): every GLTF (Meshy included) gets its normals sanitized before use; ?devkit=1 F8 freeze / F9 suspects; ?gui=1
 window.__devkit = window.WorldDevkit ? window.WorldDevkit.create({ THREE }) : null;
 if(window.__devkit) window.__devkit.patchGLTFLoader(GLTFLoader);
@@ -20,7 +21,9 @@ import { clone as _cloneSkinnedByName } from 'three/addons/utils/SkeletonUtils.j
 // the hierarchy and re-link every skeleton by POSITION in a parallel traversal (exact for any rig, names or not).
 function cloneSkinned(src){
   const c = _cloneSkinnedByName(src); let bad = false;
-  c.traverse(function(o){ if(o.isSkinnedMesh && (!o.skeleton || o.skeleton.bones.some(function(b){ return !b; }))) bad = true; });
+  c.traverse(function(o){ if(!o.isSkinnedMesh) return; if(!o.skeleton || o.skeleton.bones.some(function(b){ return !b; })){ bad = true; return; }
+    const si = o.geometry && o.geometry.attributes && o.geometry.attributes.skinIndex;   // wave1 fix 1: a name-clone can pair every bone yet still carry skin indices past the bone count — under animation that clone explodes the same way, so it takes the position re-link below too
+    if(si){ const nb = o.skeleton.bones.length; for(let v = 0; v < si.count && !bad; v++) for(let j = 0; j < si.itemSize; j++){ if(si.getComponent(v, j) >= nb){ bad = true; break; } } } });
   if(!bad) return c;
   const sl = [], dl = [], c2 = src.clone(true); src.traverse(function(o){ sl.push(o); }); c2.traverse(function(o){ dl.push(o); });
   const map = new Map(); for(let i = 0; i < sl.length; i++) map.set(sl[i], dl[i]);
@@ -29,6 +32,18 @@ function cloneSkinned(src){
       if(bones.every(function(b){ return !!b; })) d.bind(new THREE.Skeleton(bones, s0.skeleton.boneInverses.map(function(m){ return m.clone(); })), d.bindMatrix.clone()); } }
   console.warn('[cloneSkinned] name re-link failed; re-linked by hierarchy position'); return c2;
 }
+// SKIN SANITY (2026-11-15, wave1 fix 1): one-time check for a freshly built skinned body/clone — every
+// SkinnedMesh must have a skeleton, no undefined bone slots, and no skinIndex component at or past the
+// bone count. A body that fails is near-correct at bind pose but explodes into shards once animation
+// rotates the mis-paired bones, and crashes raycasts in SkinnedMesh.applyBoneTransform ("matrixWorld of
+// undefined" — the red banner flood in the 2026-11-15 recordings). Interleaved attributes are read
+// per-component (never via .array, which is the whole shared vertex buffer). Runs once per body/clone.
+function _skinSanity(root){ let ok = true;
+  root.traverse(function(o){ if(!ok || !o.isSkinnedMesh) return; const sk = o.skeleton, si = o.geometry && o.geometry.attributes && o.geometry.attributes.skinIndex;
+    if(!sk || !sk.bones || !sk.bones.length){ ok = false; return; }
+    for(let k = 0; k < sk.bones.length; k++){ if(!sk.bones[k]){ ok = false; return; } }
+    if(si){ const nb = sk.bones.length; for(let v = 0; v < si.count && ok; v++) for(let c = 0; c < si.itemSize; c++){ if(si.getComponent(v, c) >= nb){ ok = false; break; } } } });
+  return ok; }
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { initRideables } from './world-rideables.js';   // rideable voyager vehicles (board with G)
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
@@ -108,10 +123,15 @@ const canvas = document.getElementById('c3d');
 // MOBILE LITE (2026-11-14, realm-polish): iPhone Safari killed the tab during load ("A problem repeatedly occurred" = Jetsam memory kill; desktop loads fine). Every mobile fix in this file is gated on this one flag; ?mobilelite=0 disables all of them. Desktop: always false, original behaviour byte-for-byte. See MOBILE_CRASH_AUDIT.md.
 const _MOBILE_LITE = !!(window.__isMobile && !/[?&]mobilelite=0/.test(location.search));
 window.__mobileLite = _MOBILE_LITE;
+// WAVE4 C-3 (FPS RESEARCH #2): purely-visual secondary rAF loops (reef train/ferry here; race-HQ spin and the
+// realm-roads shuttle in their own modules) skip their update body while their surface is hidden/far — the rAF
+// itself always stays alive and nothing stateful is ever gated. ?bgloops=on forces every loop to run as before.
+const _BG_LOOPS_FORCE = /[?&]bgloops=on\b/.test(location.search);
 let renderer;
 try{ renderer = new THREE.WebGLRenderer({ canvas, antialias:false, powerPreference:'high-performance' }); }  // AA off: the bloom composer already softens edges, and MSAA under a render-target composer is wasted GPU
 catch(e){ try{ window.__showGfxPaused && window.__showGfxPaused('The 3D world could not start: ' + (e && e.message ? e.message : 'your browser or device does not support WebGL2.') + ' Try reloading, or play the Classic 2D world instead.'); }catch(_){} throw e; }   // 2026-11-14 realm-polish: creation failure (three r180 "Error creating WebGL context.") was an uncaught throw — loader froze at 0% with the error buried under it. Same pattern as world3d.html P0-6.
 renderer.setPixelRatio(_MOBILE_LITE ? Math.min(devicePixelRatio, 0.55) : Math.min(devicePixelRatio,1.5));  // cap for smoothness on high-DPI screens // MOBILE LITE (FIX-C): POTATO ratio from the very first allocation — the EffectComposer + bloom chain built at L2290 capture the renderer's ratio at construction, ~3,100 lines before _applyQualityTier first runs, so mobile otherwise peaks at 1.5x targets pre-entry
+installKTX2(GLTFLoader, renderer);   // KTX2 phase 0 (2026-11-15): ?ktx2=1 only — returns false + touches nothing when off; no .ktx2 assets ship yet, so flag-on only arms the loader for future converted GLBs
 // CONTEXT LOSS (2026-11-08, spec §1.2): phones / iframes drop the GL context under memory pressure. Was a silent freeze; now a clear reload card.
 canvas.addEventListener('webglcontextlost', function(e){ e.preventDefault(); console.warn('[world] WebGL context lost');
   if(_MOBILE_LITE && window.__showGfxPaused){ try{ window.__showGfxPaused('The 3D view was paused to save memory on your phone. Your progress is saved. Reload, or play the Classic 2D world instead.'); }catch(_){} return; }   // MOBILE LITE (FIX-D): phones get the paused screen with the 2D exit; desktop keeps the #glLost card below. (A full Jetsam kill runs no JS at all — the defence for that is the lower peak memory from FIX-A/B/C.)
@@ -271,6 +291,7 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
           _sceneW.add(g); window.__reefTrain = g;
           const V = 45 * V4_U, DWELL = 12; let s = 0, dir = 1, wait = DWELL, t0 = performance.now();
           (function tick(){ requestAnimationFrame(tick); const now = performance.now(), dt = Math.min(0.1, (now - t0) / 1000); t0 = now;
+            if(!_BG_LOOPS_FORCE && g.visible === false) return;   // WAVE4 C-3: the reef cull above already hides the train beyond 1.6 km — don't move what isn't drawn (t0 already reset, so it resumes cleanly; ?reefcull=0 keeps it always visible = always running)
             if(wait > 0) wait -= dt; else { s += dir * V * dt; if(s >= TD - 30 * V4_U){ s = TD - 30 * V4_U; dir = -1; wait = DWELL; } if(s <= 30 * V4_U){ s = 30 * V4_U; dir = 1; wait = DWELL; } }
             const p = at(s); g.position.set(p.x, tileY(p.x, p.z), p.z); g.rotation.y = p.yaw; })(); })();
         console.log('[reef] undersea line -> shore: ' + Math.round(TD / V4_U) + ' m, ' + N + ' glass tiles, portal at tile ' + shoreK); };
@@ -414,8 +435,10 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
           .catch(function(e){ console.warn('[reef] ferry failed:', e && e.message); });
         const L = Math.hypot(S.x - H.x, S.z - H.z), ux = (S.x - H.x) / L, uz = (S.z - H.z) / L, px = -uz, pz = ux, SPEED = 6 * V4_U, END = 44 * V4_U;   // runs from the plaza edge (44 m) to the station's hub-side edge (~110 m from the hub)
         let s = END, dir = 1, t0 = performance.now();
+        const FERRY_GATE_R2 = Math.pow(1600 * V4_U, 2);   // WAVE4 C-3: same 1.6 km radius the reef cull uses
         (function tick(){ requestAnimationFrame(tick); if(!ferry) return;
           const now = performance.now(), dt = Math.min(0.05, (now - t0) / 1000); t0 = now;
+          if(!_BG_LOOPS_FORCE){ const fdx = playerPos.x - ferry.position.x, fdz = playerPos.z - ferry.position.z; if(fdx * fdx + fdz * fdz > FERRY_GATE_R2) return; }   // WAVE4 C-3: the ferry is pure scenery (nothing reads its position) — freeze it while the player is beyond the reef cull radius; t0 already reset, so it resumes cleanly
           s += dir * SPEED * dt; if(s > L - END){ dir = -1; s = L - END; } if(s < END){ dir = 1; s = END; }
           const x = H.x + ux * s + px * 8 * V4_U, z = H.z + uz * s + pz * 8 * V4_U;
           ferry.position.set(x, _wyAt(x, z) + Math.sin(now / 600) * 0.2 * V4_U, z);
@@ -548,7 +571,10 @@ if(MAP_V4){
   camera.near = 1.5; camera.far = window.__qFar || 48000; camera.updateProjectionMatrix();   // near 0.5->1.5 (0.38 m): 3x finer depth at 5 km, kills the far z-fight shimmer on roads/track decks   // ~39 000-unit-wide world (half 19 444)
   window.__w3dDebug.mapV4 = true;
 }
-function _loadScript(src){ return new Promise(function(res, rej){ const s=document.createElement('script'); s.src=src; s.async=false; s.onload=()=>res(); s.onerror=()=>rej(new Error('script 404 '+src)); document.head.appendChild(s); }); }
+const __LOADPRIO_OFF = /[?&]loadprio=0(?:&|$|#)/.test(location.search);   // STAGE 1 (LOADING_PIPELINE.md): ?loadprio=0 restores pre-stage-1 fetch behaviour exactly
+function _loadScript(src, prio){ return new Promise(function(res, rej){ const s=document.createElement('script'); s.src=src; s.async=false; if(prio && !__LOADPRIO_OFF){ try{ s.fetchPriority = prio; }catch(_){ } } s.onload=()=>res(); s.onerror=()=>rej(new Error('script 404 '+src)); document.head.appendChild(s); }); }
+const __LOADQUEUE_OFF = /[?&]loadqueue=0(?:&|$|#)/.test(location.search);   // LOADING STAGE 5: ?loadqueue=0 = every streamed GLB loads directly, exactly as before this stage
+function _qLoad(loader, url, ok, fail, prio, pos){ if(!__LOADQUEUE_OFF && window.__queueLoad){ window.__queueLoad(loader, url, ok, fail, prio, pos); } else { loader.load(url, ok, undefined, fail); } }   // LOADING STAGE 5: route streamed GLBs through the shared priority queue (world-editor.js __queueLoad); direct .load fallback when the queue is absent or the flag is off
 // ── LOAD PERF (docs/PERF-LOAD.md): performance.mark/measure around every startup step → window.__loadTimings +
 //    a '[load] step ms' console table once the chain settles. Long tasks (PerformanceObserver 'longtask') are
 //    attributed to the steps that were running when they fired (steps overlap: several stream in parallel).
@@ -558,7 +584,7 @@ const __LD = window.__LD = { steps: {}, order: [], long: [], t0: 0, done: false,
   plan: MAP_V4 ? ['terrain','realm-modules','buildings','canon','city-v3','first-frame','fill','clusters','grid-fabric','dragons','wildlife','dragon-ride','goto','hud','city-actions','void-castle','sky-traffic','interiors-v3','sky']
                : ['buildings','first-frame'],
   // steps the SPAWN AREA needs before the loading screen lifts (the light loader's progress bar); the rest streams after entry
-  critical: MAP_V4 ? ['terrain','realm-modules','buildings','canon','grid-fabric','city-v3','sky'] : ['buildings'] };
+  critical: MAP_V4 ? ( /[?&]canoncrit=1/.test(location.search) ? ['terrain','realm-modules','buildings','canon','grid-fabric','city-v3','sky'] : ['terrain','realm-modules','buildings','grid-fabric','city-v3','sky'] ) : ['buildings'] };   // LOADING STAGE 3: 'canon' out of the ENTER gate (streams in like the other non-critical steps); ?canoncrit=1 restores it
 window.__build = '1003d-batcher-off'; window.__loadTimings = [];
 try{ new PerformanceObserver(function(l){ l.getEntries().forEach(function(e){ __LD.long.push([e.startTime, e.duration]); }); }).observe({ type:'longtask', buffered:true }); }catch(_){}
 function _ldBegin(name){
@@ -810,13 +836,26 @@ window.__worldBuilt = false;
       if(L && window.buildWorldFalProps)  window.__worldFalProps = window.buildWorldFalProps({ THREE, scene, loader: _ocLoader, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });   // fal models at REAL size (×3.89 u/m)
       if(L && window.buildWorldNature)    window.__worldNature = window.buildWorldNature({ THREE, scene, loader: _ocLoader, layout: L, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });   // CC0 nature, instanced, real size
       if(L && window.buildWorldTransit){ window.__worldTransitApi = window.buildWorldTransit({ THREE, scene, layout: L, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) }); console.info('[transit] built OK'); } else { console.warn('[transit] SKIPPED — L=' + !!L + ' buildWorldTransit=' + !!window.buildWorldTransit); } 
+      // MOBILE LITE CUT 1 (2026-11-15, wave1 fix 7 / MOBILE_PASS2_PLAN P-M2): the four dressing builders below
+      // are the realm-dressing GLB wave (kits ~45 MB + npcs ~31 MB trees). They start pre-entry and are still
+      // parsing when warm-up force-uploads every texture — the superposition peak that gets phone tabs
+      // Jetsam-killed. On mobile they move into the _afterSpawn IIFE below (the spawn view never contains
+      // them; townsfolk are proximity-gated from playerPos anyway). ?mobilelite=0 restores the pre-entry
+      // start on phones too. WAVE3 JOB 2 (2026-11-15): the deferral is now the default on EVERY platform —
+      // desktop no longer parses this wave against the loader/warm-up peak either; ?dress=early restores
+      // the pre-entry build order exactly. Only build TIMING changes; in-world behaviour is identical.
+      var _dress = function(){
       if(window.__worldTransitApi && window.WorldTransitKit && !/[?&]transitkit=0/.test(location.search)) window.WorldTransitKit.dress({ THREE, GLTFLoader, api: window.__worldTransitApi }).catch(function(e){ console.warn('[transit-kit]', e && e.message); });
       if(window.__worldTransitApi && window.WorldRealmKits && !/[?&]realmkits=0/.test(location.search)) window.WorldRealmKits.build({ THREE, GLTFLoader, scene, transit: window.__worldTransitApi, getPlayer: function(){ return playerPos; }, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) }).then(function(r){ window.__realmKits = r; }).catch(function(e){ console.warn('[realm-kits]', e && e.message); });  // Ringed Realm maglev (stations, trains, E to ride)
       if(window.__worldTransitApi && window.buildWorldTownsfolk) try{ window.__townsfolk = window.buildWorldTownsfolk({ THREE, GLTFLoader, meshopt: MeshoptDecoder, draco: dracoLoader, cloneSkinned, scene, transit: window.__worldTransitApi, getPlayer: function(){ return playerPos; }, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) }); }catch(e){ console.warn('[townsfolk]', e && e.message); }   // 2026-10-22 rigged NPCs at their posts (baked clips)
       if(window.__worldTransitApi && window.WorldRealmDress) window.WorldRealmDress.build({ THREE, GLTFLoader, meshopt: MeshoptDecoder, draco: dracoLoader, scene, transit: window.__worldTransitApi, waterAt: function(x,z){ if(_v4Water && _v4Water.isWater) return _v4Water.isWater(x,z) ? _v4Water.waterHeightAt(x,z) : null; const M = _v4Meta, R = M && (M.realms||[]).find(r=> r.id==='ocean'); if(!R) return null; const r = Math.hypot(x,z)/V4_U, c = (Math.atan2(x,-z)*180/Math.PI+360)%360; return (c>=R.c0 && c<=R.c1 && r>=R.r0_m) ? (+M.water_level_m||0)*V4_U : null; }, getPlayer: function(){ return playerPos; }, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) }).then(function(r){ window.__realmDress = r; }).catch(function(e){ console.warn('[realm-dress]', e && e.message); });
+      };
+      if(!_MOBILE_LITE && !/[?&]dress=early/.test(location.search)){ var _dressInline = _dress; _dress = function(){ window.__mobileDress = _dressInline; }; }   // WAVE3 JOB 2: on desktop, calling _dress() now parks the wave in the same slot _afterSpawn already drains on mobile — one deferral path for all platforms; ?dress=early skips the wrap and the line below runs the builders inline, exactly as desktop did before wave 3
+      if(_MOBILE_LITE) window.__mobileDress = _dress; else _dress();
       // LOAD SPEED (2026-10-23): the edge realms, the bazaar and the city screens (~10 MB of GLBs) start only after the player has spawned,
       // so their downloads never compete with the boot. Nothing changes visually - they stream in a few seconds after landing.
       (function _afterSpawn(){ window.__afterSpawnT0 = window.__afterSpawnT0 || Date.now(); if(!((document.body.classList.contains('in-world') && window.__spawnBusy === false) || (window.__loadPlayable && Date.now() - window.__afterSpawnT0 > 30000))){ setTimeout(_afterSpawn, 1000); return; }   /* 2026-10-24 fallback: never wait forever on the intro flag */
+      if(window.__mobileDress){ var _md = window.__mobileDress; window.__mobileDress = null; try{ _md(); }catch(e){ console.warn('[mobile-dress]', e && e.message); } }   // wave1 fix 7 Cut 1: the deferred dressing wave starts now — post-spawn, off the loader peak
       if(window.WorldBiomeScatter) window.WorldBiomeScatter.build({ THREE, scene, getPlayer: function(){ return playerPos; }, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });   /* 2026-10-23 forests / desert / mountains */
       if(window.WorldRealmRoads) window.WorldRealmRoads.build({ THREE, scene, transit: window.__worldTransitApi, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0),
         waterAt: function(x,z){ let y = null; const r = window.__rivers && window.__rivers.at(x,z); if(r != null) y = r; if(_v4Water && _v4Water.isWater && _v4Water.isWater(x,z)){ const w = _v4Water.waterHeightAt(x,z); if(w != null && (y == null || w > y)) y = w; } return y; } }).catch(function(e){ console.warn('[realm-roads]', e && e.message); });   /* 2026-10-23 roads to every realm + Skyline Spur rail */
@@ -842,11 +881,12 @@ window.__worldBuilt = false;
     // if(L && window.buildWorldMarketsScreen) worldMarkets = window.buildWorldMarketsScreen(THREE, scene, L);
   }catch(e){ console.warn('world core build failed:', e && e.message); }
   // MAP v4: load terrain → water, THEN the heightAt-dependent realm modules + buildings (below).
-  window.__mapV4Ready = !MAP_V4 ? Promise.resolve(null) : (_ldBegin('terrain'), _loadScript('/world-terrain-v4.js?v=20261105a'))
-    .then(()=> _loadScript('/world-water.js?v=20261107b'))
+  window.__mapV4Ready = !MAP_V4 ? Promise.resolve(null) : (_ldBegin('terrain'), _loadScript('/world-terrain-v4.js?v=20261105a', 'high'))
+    .then(()=> _loadScript('/world-water.js?v=20261107b', 'high'))
     .then(()=> window.buildWorldTerrainV4({ THREE, scene, camera, base: /[?&]waterways=1\b/.test(location.search) ? '/assets/terrain-ww/' : '/assets/terrain/' }))   // ?waterways=1: patched heightmap + Harbor Ring Canal (tools/carve-ring-canal.py)
     .then(function(api){
       _v4T = api; _v4Meta = api.meta || null; window.__w3dDebug.terrainV4 = api;
+      try{ _applyTerrainAF(); }catch(e){}   // C-9: terrain landed after boot — apply the current tier's anisotropy now (it loads at 8)
       try{ _v4Water = _buildV4Water(api); window.__w3dDebug.waterV4 = _v4Water; }catch(e){ console.warn('[map-v4] water build failed:', e && e.message); }
       if(_v4Sky && _v4Water) _v4Sky.setWater(_v4Water);   // sky may have loaded first
       console.info('[map-v4] terrain ready · half', Math.round(api.half||0), 'u · grid centre h', api.heightAt(0,0).toFixed(1), 'u · water', _v4Water ? 'on' : 'off');
@@ -860,15 +900,15 @@ window.__worldBuilt = false;
       // SHADDAI's own maglev (world-train-v2.js, built in code) — preferred; the downloaded GLB stays as fallback
       if(window.__worldTransitApi && window.__worldTransitApi.setTrainModel && window.buildMaglevTrainV2){ try{ const tv2 = window.buildMaglevTrainV2({ THREE }); window.__worldTransitApi.setTrainModel(tv2, tv2.userData.lengthM, 1); if(_v4Sky && _v4Sky.addEmissive) tv2.userData.emissiveMats.forEach(function(m){ _v4Sky.addEmissive(m); }); window.__trainV2 = tv2; }catch(e){ console.warn('[transit] train v2 failed:', e && e.message); } }
       else if(window.__worldTransitApi && window.__worldTransitApi.setTrainModel){ const tl = new GLTFLoader(); tl.setMeshoptDecoder(MeshoptDecoder);
-        tl.load('/assets/vehicles/maglev-train.glb?v=1', function(g){ try{ window.__worldTransitApi.setTrainModel(g.scene, 60); }catch(e){ console.warn('[transit] train model failed:', e && e.message); } }, undefined, function(){}); }
-      return _loadScript('/world-canon-v4.js?v=20261023e').then(function(){
+        _qLoad(tl, '/assets/vehicles/maglev-train.glb?v=1', function(g){ try{ window.__worldTransitApi.setTrainModel(g.scene, 60); }catch(e){ console.warn('[transit] train model failed:', e && e.message); } }, function(){}, 1, null); }
+      return _loadScript('/world-canon-v4.js?v=20261023e', 'high').then(function(){
         const kl = new GLTFLoader(); kl.setDRACOLoader(dracoLoader); kl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldCanonV4({ THREE, scene, loader: kl });
       }).then(function(c){ window.__w3dDebug.canonV4 = c; }).catch(function(e){ console.warn('[map-v4] canon failed:', e && e.message); }).then(function(){ return api; });
     }))
     .then(_ldStep('grid-fabric', function(api){   // MAP v4 GRID FABRIC (city v3: Commons / NE campus / NW race — Shaddai building library, grid-fabric-v4.json)
       if(!api) return api;
-      fetch('/assets/world/track-clear-v4.json').then(function(r){ return r.json(); }).then(function(j){ const m = {}; j.keys.forEach(function(k){ m[k] = 1; }); window.__trackClear = m; }).catch(function(){}).then(function(){ return window.buildWorldClustersV4 ? Promise.resolve() : _loadScript('/world-clusters-v4.js?v=20261115a'); }).then(function(){
+      fetch('/assets/world/track-clear-v4.json').then(function(r){ return r.json(); }).then(function(j){ const m = {}; j.keys.forEach(function(k){ m[k] = 1; }); window.__trackClear = m; }).catch(function(){}).then(function(){ return window.buildWorldClustersV4 ? Promise.resolve() : _loadScript('/world-clusters-v4.js?v=20261115a', 'high'); }).then(function(){
         const gl = new GLTFLoader(); gl.setDRACOLoader(dracoLoader); gl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldClustersV4({ THREE, scene, loader: gl, heightAt: api.heightAt, url: '/assets/world/grid-fabric-v4.json', name: 'grid-fabric-v4',
           onMaterial: function(mat){ const I = window.__clustersV4Internals, g = I && I.glowFor ? I.glowFor(mat) : null; if(g && _v4Sky && _v4Sky.addEmissive) _v4Sky.addEmissive(mat, g); } });   // night glow: real emissive materials only (glass/trim/skylight/artslot/default buckets)   // full <250 m · lod1 <900 · block lod2 <2600
@@ -877,7 +917,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('city-v3', function(api){   // MAP v4 CITY v3 RUNTIME (world-city-v3.js ← markers/plots/art-slots-v4.json): E-prompts, plot beacons (lights = ledger), art slots
       if(!api) return api;
-      return _loadScript('/world-city-v3.js?v=20261023a').then(function(){
+      return _loadScript('/world-city-v3.js?v=20261023a', 'high').then(function(){
         window.__cityV3 = window.buildWorldCityV3({ THREE, scene, heightAt: api.heightAt,
           getPlayer: ()=> ({ pos: (_interiors && _interiors.isInside()) ? null : playerPos }),
           canInteract: ()=> !(typeof bikeMode!=='undefined' && bikeMode) && !(typeof hover!=='undefined' && hover && hover.isRiding && hover.isRiding()) && !((document.getElementById('dossier')||{classList:{contains:()=>false}}).classList.contains('open')) && !(_rideOn()),
@@ -902,7 +942,7 @@ window.__worldBuilt = false;
     // GAMEPLAY SYSTEMS FIRST (mobs + mounts + store panel): they load right after the city actions, ahead of the heavy visual extras (fill / clusters / dragons / wildlife)
     .then(_ldStep('mobs', function(api){   // WILDERNESS MOBS (world-mobs.js): 8 camps, themed enemies, Sparks loot, respawn timer
       if(!api) return api;
-      return _loadScript('/world-mobs.js?v=20261024a').then(function(){
+      return _loadScript('/world-mobs.js?v=20261024a', 'low').then(function(){
         window.__mobs = window.buildWorldMobs({ THREE, scene, camera, heightAt: api.heightAt, terrainMeta: _v4Meta || null,
           extraCamps: [{ id: 'citadel-guard', kind: 'skeleton', x: 0, z: -4060 * V4_U, n: 6, spread_m: 9 }],   /* 2026-10-24 skeleton guard in front of the citadel gate (aggro only within 10 m) */
           getPlayer: ()=> ({ pos: playerPos, alive: !(_interiors && _interiors.isInside()) && (window.__playerHP == null || window.__playerHP > 0) && (!window.WorldCombatMode || window.WorldCombatMode.mobsTarget()) }),
@@ -916,7 +956,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('mount-ride', function(api){   // MOUNTS (world-mount-ride.js + world-mounts.js): M = Mount Store, E = mount / dismount
       if(!api) return api;
-      return Promise.all([_loadScript('/world-mounts.js?v=20261016a'), _loadScript('/world-mount-ride.js?v=20261105a')]).then(function(){
+      return Promise.all([_loadScript('/world-mounts.js?v=20261016a', 'low'), _loadScript('/world-mount-ride.js?v=20261105a', 'low')]).then(function(){
         const ml = new GLTFLoader(); ml.setDRACOLoader(dracoLoader); ml.setMeshoptDecoder(MeshoptDecoder);
         window.__interiorsExit = function(){ try{ if(_interiors && _interiors.isInside && _interiors.isInside() && _interiors.exit) _interiors.exit(); }catch(_){} };
         window.__interiorsEnter = function(code){ try{ if(_interiors && _interiors.enter){ if(_interiors.isInside && _interiors.isInside() && _interiors.exit) _interiors.exit(); _interiors.enter(code); } }catch(e){ console.warn('[academy] field trip failed:', e && e.message); } };
@@ -927,7 +967,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('fill', function(api){   // MAP v4 FILL (world-fill-v4.js): realm vegetation, waystations, floating islands, bridges
       if(!api || !_v4Meta) return api;
-      return _loadScript('/world-fill-v4.js?v=20261011k').then(function(){
+      return _loadScript('/world-fill-v4.js?v=20261011k', 'low').then(function(){
         const fl = new GLTFLoader(); fl.setDRACOLoader(dracoLoader); fl.setMeshoptDecoder(MeshoptDecoder);   // own loader: streams after entry
         _v4Fill = window.buildWorldFillV4({ THREE, scene, camera, loader: fl, heightAt: api.heightAt,
           isWater: (_v4Water && _v4Water.isWater) ? (x, z)=> _v4Water.isWater(x, z) : null, terrainMeta: _v4Meta });
@@ -937,14 +977,14 @@ window.__worldBuilt = false;
     .then(_ldStep('clusters', function(api){   // MAP v4 DISTRICTS (world-clusters-v4.js ← realm-clusters-v4.json, same file as the Blender scene)
       if(!api) return api;
       if(/[?&]realmclusters=0\b/.test(location.search)) return api;   // MISSING-BUILDINGS fix (2026-11-11): realm districts build by default now (?realmclusters=0 opts out). The old ?realmclusters=1 opt-in never worked — raw 0x08 byte instead of \b in the regex.
-      return _loadScript('/world-clusters-v4.js?v=20261115a').then(function(){
+      return _loadScript('/world-clusters-v4.js?v=20261115a', 'high').then(function(){
         const cl = new GLTFLoader(); cl.setDRACOLoader(dracoLoader); cl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldClustersV4({ THREE, scene, loader: cl, heightAt: api.heightAt });
       }).then(function(c){ window.__w3dDebug.clustersV4 = c; }).catch(function(e){ console.warn('[map-v4] clusters failed:', e && e.message); }).then(function(){ return api; });
     }))
     .then(_ldStep('dragons', function(api){   // MAP v4 CROSSING DRAGONS (world-dragons.js) — one per ring station, beaten = crossing open forever
       if(!api) return api;
-      return _loadScript('/world-dragons.js?v=20261105b').then(function(){
+      return _loadScript('/world-dragons.js?v=20261105b', 'low').then(function(){
         const dl = new GLTFLoader(); dl.setDRACOLoader(dracoLoader); dl.setMeshoptDecoder(MeshoptDecoder);
         const KEY = 'w3d_dragons_defeated';
         const load = ()=>{ try{ return JSON.parse(localStorage.getItem(KEY) || '[]'); }catch(_){ return []; } };
@@ -979,7 +1019,7 @@ window.__worldBuilt = false;
     .then(_ldStep('wildlife', function(api){   // MAP v4 WILDLIFE (world-wildlife-v4.js): wolf packs in the wilderness — calm by day, more + hunting at night
       if(!api || !_v4Meta) return api;
       if(/[?&]wildlife=0/.test(location.search) || window.__isMobile) return api;   // wolves off on phones   // owner wants wolves/skeletons kept (2026-10-03); ?wildlife=0 turns them off for perf tests
-      return _loadScript('/world-wildlife-v4.js?v=20260927a').then(function(){
+      return _loadScript('/world-wildlife-v4.js?v=20260927a', 'low').then(function(){
         const wl = new GLTFLoader(); wl.setMeshoptDecoder(MeshoptDecoder);
         window.__wildlife = window.buildWorldWildlifeV4({ THREE, scene, loader: wl, cloneSkinned, heightAt: api.heightAt, terrainMeta: _v4Meta,
           getPlayer: ()=> ({ pos: playerPos, alive: !(_interiors && _interiors.isInside()) }),
@@ -991,7 +1031,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('dragon-ride', function(api){   // MAP v4 DRAGON RIDING (world-dragon-ride.js): H at a Perch pad / Dragon Harness → call + ride your dragon
       if(!api) return api;
-      return _loadScript('/world-dragon-ride.js?v=20260928elem').then(function(){
+      return _loadScript('/world-dragon-ride.js?v=20260928elem', 'low').then(function(){
         return fetch('/assets/world/markers-v4.json').then(r => r.json()).then(function(mj){
           const rl = new GLTFLoader(); rl.setDRACOLoader(dracoLoader); rl.setMeshoptDecoder(MeshoptDecoder);
           window.__dragonRide = window.buildDragonRide({ THREE, scene, loader: rl, cloneSkinned, heightAt: api.heightAt,
@@ -1009,7 +1049,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('goto', function(api){   // MAP v4 GOTO (world-goto.js): `?goto=<dashboard_id|marker name>` deep link from the dashboard
       if(!api || !window.__cityV3) return api;
-      return _loadScript('/world-goto.js?v=20260927a').then(function(){
+      return _loadScript('/world-goto.js?v=20260927a', 'low').then(function(){
         window.__worldGoto = window.buildWorldGoto({
           city: window.__cityV3,
           getPlayerHandle: function(){ return playerPos; },
@@ -1051,7 +1091,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('hud', function(api){   // MAP v4 HUD (world-hud-v4.js): HP / stamina bars, dragon boss bar, pack-hunting chip, SPARKS + city ping toasts
       if(!api) return api;
-      return _loadScript('/world-hud-v4.js?v=20260927a').then(function(){
+      return _loadScript('/world-hud-v4.js?v=20260927a', 'low').then(function(){
         window.__hudV4 = window.buildHudV4({
           getHP: ()=> window.__playerHP == null ? 100 : window.__playerHP,
           getStamina: ()=> (_rideOn()) ? window.__dragonRide.stamina() : ((_pctlOut && _pctlOut.stamina != null) ? _pctlOut.stamina : 1),
@@ -1063,7 +1103,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('void-castle', function(api){   // MAP v4 VOID CASTLE (world-void-castle.js): owner's void-castle aesthetic on the Deep Void pit's north lip — procedural, 28k tris, 11 draws
       if(!api || !_v4Meta) return api;
-      return _loadScript('/world-void-castle.js?v=20260927a').then(function(){
+      return _loadScript('/world-void-castle.js?v=20260927a', 'low').then(function(){
         window.__voidCastle = window.buildWorldVoidCastle({ THREE, scene, heightAt: api.heightAt, terrainMeta: _v4Meta,
           getPlayer: ()=> ({ pos: playerPos }),
           nightFactor: ()=> (_v4Sky && _v4Sky.nightFactor != null ? (typeof _v4Sky.nightFactor === 'function' ? _v4Sky.nightFactor() : _v4Sky.nightFactor) : 0),
@@ -1079,7 +1119,7 @@ window.__worldBuilt = false;
     .then(_ldStep('sky-traffic', function(api){   // MAP v4 SKY TRAFFIC (world-sky-traffic.js): 40 voxel ships on 12 lanes over The Grid, night running lights
       // DISABLED 2026-10-03: 40 moving ships = expensive overhead. Polishing core gameplay first.
       if(!api) return api; return api;   // skip sky-traffic load
-      return _loadScript('/world-sky-traffic.js?v=20260928a').then(function(){
+      return _loadScript('/world-sky-traffic.js?v=20260928a', 'low').then(function(){
         const sl = new GLTFLoader(); sl.setMeshoptDecoder(MeshoptDecoder);
         window.__skyTraffic = window.buildWorldSkyTraffic({ THREE, scene, loader: sl, heightAt: api.heightAt,
           getPlayer: ()=> ({ pos: playerPos }),
@@ -1094,8 +1134,8 @@ window.__worldBuilt = false;
     .then(_ldStep('interiors-v3', function(api){   // MAP v4 INTERIORS v3 (world-interiors-v3.js): 3,349 walk-in shops/offices/labs/market/homes/culture lane/deed office/campus (docs/INTERIORS-V3.md). Lazy: data index only until you are within 40 m.
       if(!api) return api;
       // furniture library (world-furniture.js, Blender kit K12): registers at once, GLB loads in the background; rooms laid out before it lands keep the box fallback. ?furniture=0 = boxes only
-      const furn = /[?&]furniture=0/.test(location.search) ? Promise.resolve() : _loadScript('/world-furniture.js?v=20261015a').then(function(){ if(window.SHADDAI_FURNITURE) window.SHADDAI_FURNITURE.load(THREE, GLTFLoader); }).catch(function(e){ console.warn('[furniture] loader failed', e); });
-      return furn.then(function(){ return _loadScript('/world-interiors-v3.js?v=20261024a'); }).then(function(){
+      const furn = /[?&]furniture=0/.test(location.search) ? Promise.resolve() : _loadScript('/world-furniture.js?v=20261015a', 'low').then(function(){ if(window.SHADDAI_FURNITURE) window.SHADDAI_FURNITURE.load(THREE, GLTFLoader); }).catch(function(e){ console.warn('[furniture] loader failed', e); });
+      return furn.then(function(){ return _loadScript('/world-interiors-v3.js?v=20261024a', 'low'); }).then(function(){
         window.__interiorsV3 = window.buildWorldInteriorsV3({ THREE, scene, heightAt: api.heightAt, city: window.__cityV3,
           getPlayer: ()=> ({ pos: (_interiors && _interiors.isInside()) ? null : playerPos }),
           onUse: function(e){ if(window.__onInteriorUse) window.__onInteriorUse(e); else console.info('[interiors-v3] use', e.type, e.kind, e.building.id); },
@@ -1104,11 +1144,11 @@ window.__worldBuilt = false;
         const prev = window.__onCityInteract;
         window.__onCityInteract = function(m){ const mine = window.__interiorsV3.handleInteract(m); if(prev && !(mine && m.interior && m.interior.type === 'lift')) prev(m); };
         window.__w3dDebug.interiorsV3 = window.__interiorsV3;
-        _loadScript('/world-interior-levels.js?v=20261023a').then(function(){ if(window.WorldInteriorLevels) window.WorldInteriorLevels.attach({ THREE, scene, interiors: window.__interiorsV3, getPlayer: function(){ return playerPos; } }); }).catch(function(e){ console.warn('[levels]', e && e.message); });   // building upper floors + roof via the lift
+        _loadScript('/world-interior-levels.js?v=20261023a', 'low').then(function(){ if(window.WorldInteriorLevels) window.WorldInteriorLevels.attach({ THREE, scene, interiors: window.__interiorsV3, getPlayer: function(){ return playerPos; } }); }).catch(function(e){ console.warn('[levels]', e && e.message); });   // building upper floors + roof via the lift
         // REAL AGENTS INSIDE (2026-10-16): staff + seated agents instead of capsules (world-interior-agents.js, ?interioragents=0 = capsules)
-        _loadScript('/world-interior-agents.js?v=20261016b').then(function(){ if(window.WorldInteriorAgents) window.WorldInteriorAgents.attach({ THREE, interiors: window.__interiorsV3, loader: agentBodyLoader, cloneSkinned: cloneSkinned, animLib: _agentAnimLib }); }).catch(function(e){ console.warn('[interior-agents]', e && e.message); });
+        _loadScript('/world-interior-agents.js?v=20261016b', 'low').then(function(){ if(window.WorldInteriorAgents) window.WorldInteriorAgents.attach({ THREE, interiors: window.__interiorsV3, loader: agentBodyLoader, cloneSkinned: cloneSkinned, animLib: _agentAnimLib }); }).catch(function(e){ console.warn('[interior-agents]', e && e.message); });
         // REALM HOMES (world-realm-homes.js, docs/REALM-HOMES.md): earth burrows, cave homes, leaf tree homes, pod homes, arctic domes — instanced, enterable
-        return window.__interiorsV3.ready.then(function(){ if(window.WorldRealmInteriors) window.WorldRealmInteriors.sync(); return _loadScript('/world-realm-homes.js?v=20261015c'); }).then(function(){
+        return window.__interiorsV3.ready.then(function(){ if(window.WorldRealmInteriors) window.WorldRealmInteriors.sync(); return _loadScript('/world-realm-homes.js?v=20261015c', 'low'); }).then(function(){
           const rh = window.__realmHomes = window.buildWorldRealmHomes({ THREE, scene, heightAt: api.heightAt, interiors: window.__interiorsV3, layout: window.WORLD_LAYOUT });
           const PLAN = { meadow: [['earth-burrow', 6], ['cave-home', 2]], forge: [['forge-home', 4]], darkvault: [['leaf-tree-home', 4]], arctic: [['arctic-dome', 6]] };
           const stVillages = function(plan){ ((window.WORLD_LAYOUT && window.WORLD_LAYOUT.stations) || []).forEach(function(st){
@@ -2277,9 +2317,10 @@ if(!window.__SHD_FOG_ON) scene.fog.density = 0;
 if(MAP_V4){
   skyDome.visible = false; starGroup.visible = false;   // replaced by world-sky-v4.js (stars/clouds/moon are in its shader)
   sun2.visible = false; rim.visible = false;            // one directional light only: the sky drives `sun`
-  _ldBegin('sky'); _loadScript('/world-sky-v4.js?v=20261011k').then(function(){
+  _ldBegin('sky'); _loadScript('/world-sky-v4.js?v=20261115a', 'high').then(function(){
     _v4Sky = window.buildWorldSkyV4({ THREE, scene, renderer, camera, sunLight: sun, hemiLight: hemi, ambientLight: ambient,
       fog: scene.fog, water: _v4Water, dayLengthMin: 24,
+      themePalette: window.__skyThemePalette || null,   // WAVE2 (issue #5): if a theme was applied before the sky loaded, it owns the palette from frame one
       shadows: /[?&]shadows\b/.test(location.search) });   // PERF: shadow pass OFF by default (measured ~4,900 casters = a 2nd full scene draw on an HD 620); add ?shadows for it
     window.__w3dDebug.skyV4 = _v4Sky;
   }).catch(function(e){ console.warn('[map-v4] sky failed:', e && e.message); }).then(function(){ _ldEnd('sky'); });
@@ -2300,8 +2341,18 @@ const monument = new THREE.Group();
 // post-processing bloom
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
-const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight), 0.14, 0.4, 0.92); // strength starts at MEDIUM (0.14); FPS governor climbs to 0.28 if machine can handle it
+// WAVE4 C-1 (FPS RESEARCH #2): the bloom pass renders at HALF resolution. UnrealBloomPass builds its whole
+// 5-level mip chain from the size it is handed, so halving that size quarters the top-level pixels and cuts
+// ~75% of the chain's fragment work [ESTIMATE — FPS_RESEARCH_2.md B3] while strength/radius/threshold and the
+// composer's own full-res targets stay exactly as they were. ?bloomres=full = the previous full-res path.
+const _BLOOM_HALF = !/[?&]bloomres=full\b/.test(location.search);
+const bloom = new UnrealBloomPass(new THREE.Vector2(_BLOOM_HALF ? Math.max(2, Math.round(innerWidth / 2)) : innerWidth, _BLOOM_HALF ? Math.max(2, Math.round(innerHeight / 2)) : innerHeight), 0.14, 0.4, 0.92); // strength starts at MEDIUM (0.14); FPS governor climbs to 0.28 if machine can handle it
 composer.addPass(bloom);
+// addPass() and every composer.setSize() reset the pass to the composer's FULL effective size, so the half
+// size must be re-applied after both (here, and in _applyQualityTier below — the only composer resize site).
+const _bloomDbSize = new THREE.Vector2();
+function _sizeBloom(){ if(!_BLOOM_HALF) return; renderer.getDrawingBufferSize(_bloomDbSize); bloom.setSize(Math.max(2, Math.round(_bloomDbSize.x / 2)), Math.max(2, Math.round(_bloomDbSize.y / 2))); }
+_sizeBloom();
 // VFX engine: pooled bursts / trails / decals, <= 8 draws, never adds lights (flash hook left empty until it writes into the light pool)
 window.__vfx = _VFX_ON ? window.WorldVFX.create({ THREE, scene, camera, unit: V4_U, getTier: function(){ try{ return _Q.tiers[_Q.tier].name; }catch(_){ return 'MEDIUM'; } },   // _Q is declared later (TDZ): `typeof _Q` THROWS there, so try/catch; _applyQualityTier sets the real tier
   getViewHeight: function(){ return renderer.domElement.height; } }) : null;
@@ -2336,7 +2387,7 @@ function _pcPreload(code){
   code = String(code).toUpperCase();
   if(_pcCache[code]) return _pcCache[code];
   const url = (window.WorldOperatives && /^FORGE-/.test(code)) ? window.WorldOperatives.glbFor(code) : '/assets/agents/'+encodeURIComponent(code)+'.glb?v=14';  // FORGE-<id> = free base operatives (Forge 3D archetypes)
-  _pcCache[code] = new Promise(function(res, rej){ agentBodyLoader.load(url, res, undefined, rej); });
+  _pcCache[code] = new Promise(function(res, rej){ _qLoad(agentBodyLoader, url, res, rej, 1, null); });
   return _pcCache[code];
 }
 
@@ -2364,6 +2415,7 @@ const _PLAYER_EYE_K = PLAYER_BODY_HEIGHT / 3.6;       // ratio to scale the eye/
 let _bodyQueue = [], _bodyBusy = false;
 function queueAgentBody(entry){ _bodyQueue.push(entry); if(!_bodyBusy) setTimeout(_nextAgentBody, 1500); }
 function _nextAgentBody(){
+  if(!window.__loadPlayable && !/[?&]bodies=early/.test(location.search)){ setTimeout(_nextAgentBody, 1000); return; }   // LOADING STAGE 3: council bodies wait for playable on ALL platforms (mobile FIX-B parity) — standees stand in until then; ?bodies=early restores the old desktop timing. Parked branch must NOT set _bodyBusy (the retry timer re-enters on its own).
   // Don't parse body GLBs while the spawn animation is running — the parse blocks the main
   // thread for 100-400ms and causes the ENTER-press and portal-descent freezes.
   if(worldSpawn && worldSpawn.isAnimating()){ setTimeout(_nextAgentBody, 600); return; }
@@ -2377,8 +2429,10 @@ function _nextAgentBody(){
   // 3D architect model they picked in the Forge (entry.a.model, UPPERCASE key).
   // If that GLB 404s, the error handler below leaves the billboard/ring fallback up.
   const modelKey = (entry.a.isOperative && entry.a.model) ? String(entry.a.model).toUpperCase() : code;
-  const url = '/assets/agents/' + encodeURIComponent(modelKey) + '.glb?v=14';  // v12 = SHADDAI rigged; v10 = TURTLE→Neon Valkyrie (dance idle/walk/run/vault); Meshy-rigged bodies
-  agentBodyLoader.load(url, (gltf)=>{
+  const url = (/^FORGE-/.test(modelKey) && window.WorldOperatives && typeof window.WorldOperatives.glbFor === 'function' && !/[?&]forgebodies=0(?:&|$)/.test(location.search))
+    ? window.WorldOperatives.glbFor(modelKey)
+    : '/assets/agents/' + encodeURIComponent(modelKey) + '.glb?v=14';  // v12 = SHADDAI rigged; v10 = TURTLE→Neon Valkyrie (dance idle/walk/run/vault); Meshy-rigged bodies
+  _qLoad(agentBodyLoader, url, (gltf)=>{
     try{
       const body = gltf.scene;
       body.traverse(c=>{
@@ -2426,6 +2480,24 @@ function _nextAgentBody(){
       scene.add(body);
       _agentBodies[code] = body;
       entry.body = body; entry.bodyBaseY = body.position.y;
+      // ORPHAN WIRING — agent gear (?gear=1 load only, ?gear=preview equips first-per-slot,
+      // or window.__GEAR_LOADOUT = { CODENAME: [itemName, …] }). Default OFF.
+      if (/[?&]gear=(1|preview)/.test(location.search) && window.WorldAgentGear) {
+        try {
+          window.WorldAgentGear.load(THREE, GLTFLoader).then(function () {
+            try {
+              var _names = null;
+              var _lo = window.__GEAR_LOADOUT && window.__GEAR_LOADOUT[code];
+              if (Array.isArray(_lo)) _names = _lo;
+              else if (/[?&]gear=preview/.test(location.search)) {
+                var _seen = {}; _names = [];
+                (window.WorldAgentGear.items || []).forEach(function (it) { if (!_seen[it.slot]) { _seen[it.slot] = 1; _names.push(it.name); } });
+              }
+              if (_names) _names.forEach(function (n) { try { window.WorldAgentGear.equip(body, n); } catch (e) {} });
+            } catch (e) { console.warn('[gear] equip failed for ' + code, e && e.message); }
+          });
+        } catch (e) { console.warn('[gear] load failed', e && e.message); }
+      }
       // Real skeletal rig (v8 Meshy bodies)? Build a mixer + actions dict and idle-loop it.
       // __hasMixer makes the bones-free procedural animator skip this body.
       if(gltf.animations && gltf.animations.length){
@@ -2491,18 +2563,26 @@ function _nextAgentBody(){
         playAgentAction(entry, 'idle', entry._idleSlow ? {timeScale:0.55, crossfadeDuration:0} : {crossfadeDuration:0});
         try{ mixer.update(0.001); }catch(_){}   // NEVER T-pose: the idle pose is applied to the skeleton before the first render
       }
+      // SKIN SANITY (2026-11-15, wave1 fix 1): first-animation-frame check — the idle pose was applied by
+      // mixer.update(0.001) above (clip-less bodies are checked at bind pose). __skinClean council rigs are
+      // NOT exempt: a mis-paired body explodes into shards under animation and floods the error banner via
+      // applyBoneTransform. On failure the body is dropped and the portrait sprite / beam / glow standee
+      // stays up — the same fallback as a failed GLB load, never an exploded mesh.
+      if(!_skinSanity(body)){ scene.remove(body); if(_agentBodies[code] === body) delete _agentBodies[code]; entry.body = null; entry._mixer = null; console.warn('[agent body] ' + code + ': skin sanity failed — body dropped, portrait sprite kept'); }
+      else {
       // real 3D body replaces the floating holograph: drop the billboard, beam & glow.
       // (the agent's portrait card still opens on click / press E via the dossier.)
       if(entry.sprite) entry.sprite.visible = false;
       if(entry.beam)   entry.beam.visible = false;
       if(entry.frame){ entry.frame.visible = false; }
+      }
     }catch(e){ console.warn('[agent body] process', code, e.message); }
     setTimeout(_nextAgentBody, 200);           // next one
-  }, undefined, (err)=>{ console.warn('[agent body]', code, err && err.message);
+  }, (err)=>{ console.warn('[agent body]', code, err && err.message);
     // owner 2026-10-16: "agents CANT be missing" - a failed fetch (network blip, busy server) re-queues the body up to 3 times (2 s, 5 s, 10 s)
     entry._tries = (entry._tries || 0) + 1;
     if(entry._tries <= 3) setTimeout(function(){ _bodyQueue.push(entry); if(!_bodyBusy){ _bodyBusy = true; _nextAgentBody(); } }, [2000, 5000, 10000][entry._tries - 1]);
-    setTimeout(_nextAgentBody, 200); });
+    setTimeout(_nextAgentBody, 200); }, 1, (entry.pos || (entry.a && entry.a.pos) || null));
 }
 
 // ── Aura particle ring (build-plan §2) — a living halo of light orbiting each agent ──
@@ -2535,7 +2615,7 @@ let _agentLibP = null;
 function _agentAnimLib(){
   if(_agentLibP) return _agentLibP;
   _agentLibP = Promise.all([
-    new Promise(function(res, rej){ agentBodyLoader.load('/assets/anim/agent-clips.glb', function(g){ res(g.animations || []); }, undefined, rej); }),
+    new Promise(function(res, rej){ _qLoad(agentBodyLoader, '/assets/anim/agent-clips.glb', function(g){ res(g.animations || []); }, rej, 2, null); }),
     fetch('/assets/anim/agent-clips.json').then(function(r){ return r.json(); })
   ]).then(function(r){ return { clips: r[0], meta: r[1] }; }).catch(function(e){ console.warn('[agent-lib] library failed to load:', e && e.message); return null; });
   return _agentLibP;
@@ -3189,8 +3269,51 @@ function buildCandles(d){
     wick.position.set(x,1.4+(yL+yH)/2,MKT.pos.z); candleGroup.add(wick);
   });
 }
+// WAVE4 C-7 (FPS RESEARCH #2): pooled candle chart. buildCandles above disposes + recreates ~2 meshes per
+// candle on every 60 s refresh — a periodic geometry/GC hitch. This pool creates each body/wick pair ONCE
+// (one shared unit-box geometry; four shared materials — the chart only ever uses the up/down colours) and
+// rewrites scale/position/material in place per refresh; pairs beyond the current candle count are hidden,
+// never disposed. Output is identical: same box dimensions (unit box scaled), same positions, same material
+// parameters. ?candlepool=0 = the original rebuild path above.
+const _CANDLE_POOL_ON = !/[?&]candlepool=0\b/.test(location.search);
+const _candleGeo = new THREE.BoxGeometry(1, 1, 1);
+const _candleBodyMatUp = new THREE.MeshStandardMaterial({color:0x00e5a0,emissive:0x00e5a0,emissiveIntensity:0.65,metalness:0.3,roughness:0.4,toneMapped:false});
+const _candleBodyMatDn = new THREE.MeshStandardMaterial({color:0xff4d6a,emissive:0xff4d6a,emissiveIntensity:0.65,metalness:0.3,roughness:0.4,toneMapped:false});
+const _candleWickMatUp = new THREE.MeshBasicMaterial({color:0x00e5a0,toneMapped:false});
+const _candleWickMatDn = new THREE.MeshBasicMaterial({color:0xff4d6a,toneMapped:false});
+const _candlePool = [];
+function _candlePair(i){
+  let p = _candlePool[i];
+  if(!p){
+    const body = new THREE.Mesh(_candleGeo, _candleBodyMatUp), wick = new THREE.Mesh(_candleGeo, _candleWickMatUp);
+    candleGroup.add(body); candleGroup.add(wick);
+    p = _candlePool[i] = { body: body, wick: wick };
+  }
+  return p;
+}
+function buildCandlesPooled(d){
+  const cs=d.candles||[];
+  if(!cs.length){ for(let i=0;i<_candlePool.length;i++){ _candlePool[i].body.visible=false; _candlePool[i].wick.visible=false; } return; }
+  const min=Math.min(...cs.map(c=>c.l)), max=Math.max(...cs.map(c=>c.h)), span=(max-min)||1;
+  const W=42, n=cs.length, bw=W/n, H=17, x0=MKT.pos.x-W/2;
+  cs.forEach((c,i)=>{
+    const up=c.c>=c.o;
+    const yO=((c.o-min)/span)*H, yC=((c.c-min)/span)*H, yL=((c.l-min)/span)*H, yH=((c.h-min)/span)*H;
+    const bodyH=Math.max(0.18,Math.abs(yC-yO)), x=x0+i*bw+bw/2;
+    const p=_candlePair(i);
+    p.body.material = up ? _candleBodyMatUp : _candleBodyMatDn;
+    p.body.scale.set(bw*0.62, bodyH, bw*0.62);
+    p.body.position.set(x, 1.4+Math.min(yO,yC)+bodyH/2, MKT.pos.z);
+    p.body.visible = true;
+    p.wick.material = up ? _candleWickMatUp : _candleWickMatDn;
+    p.wick.scale.set(bw*0.12, Math.max(0.1,yH-yL), bw*0.12);
+    p.wick.position.set(x, 1.4+(yL+yH)/2, MKT.pos.z);
+    p.wick.visible = true;
+  });
+  for(let i=cs.length;i<_candlePool.length;i++){ _candlePool[i].body.visible=false; _candlePool[i].wick.visible=false; }
+}
 function refreshMarket(){
-  fetch('/api/markets/ohlc?symbol='+MKT.symbol).then(r=>r.ok?r.json():null).then(d=>{ if(!d||!d.ok) return; MKT.last=d; buildCandles(d);
+  fetch('/api/markets/ohlc?symbol='+MKT.symbol).then(r=>r.ok?r.json():null).then(d=>{ if(!d||!d.ok) return; MKT.last=d; (_CANDLE_POOL_ON ? buildCandlesPooled : buildCandles)(d);
     const up=(d.change24h||0)>=0;
     mktLabel.innerHTML='<div class="nm" style="color:#00e5a0;font-size:15px;text-shadow:0 0 12px #00e5a0">📈 '+d.symbol+' · MARKETS</div>'+
       '<div class="sk" style="font-size:13px;color:'+(up?'#00e5a0':'#ff4d6a')+'">$'+Number(d.price).toLocaleString()+'  '+(up?'▲':'▼')+' '+Math.abs(d.change24h)+'%</div>'+
@@ -3642,7 +3765,7 @@ if (window.buildWorldSpawn && window.WORLD_LAYOUT) {
 let _themes = null;
 if (window.buildWorldThemes) {
   try {
-    _themes = window.buildWorldThemes({ THREE, scene, refs: {
+    _themes = window.buildWorldThemes({ THREE, scene, skyOwnsRig: !!MAP_V4, refs: {
       fog: scene.fog,
       lights: { key, gold, sun, hemi, ambient },
       skyUniforms: { top: skyMat.uniforms.top.value, mid: skyMat.uniforms.mid.value, horizon: skyMat.uniforms.horizon.value, glow: skyMat.uniforms.glow.value },
@@ -3650,7 +3773,12 @@ if (window.buildWorldThemes) {
       terrain: worldTerrain,
     }});
     // Once a global theme is active, stop the per-frame biome-sky + day/night BG lerp from fighting it.
-    if (_themes.onAfterTheme) _themes.onAfterTheme(function(name){ window._themeLocked = (name != null); });
+    // WAVE2 (issue #5): the theme no longer writes scene.background / sun / hemi / ambient itself
+    // (skyOwnsRig) — it hands sky-v4 a palette and sky-v4, the single owner, applies it coherently.
+    if (_themes.onAfterTheme) _themes.onAfterTheme(function(name){ window._themeLocked = (name != null);
+      try{ var _pal = (name && _themes.skyPalette) ? _themes.skyPalette(name) : null; window.__skyThemePalette = _pal;
+        if (_pal && _v4Sky && _v4Sky.setThemePalette) _v4Sky.setThemePalette(_pal, { snap: !window.__skyPalSnapped });
+        window.__skyPalSnapped = true; }catch(e){} });
     window.applyTheme = function(name){ _themes.applyTheme(name); };
     // redirect the existing ⚙ panel buttons (applyTerrain) → the theme engine
     const _TMAP = { grid:'tron', snow:'snow', desert:'desert', void:'void', neon:'neon', meadow:'meadow' };
@@ -3919,7 +4047,7 @@ function _snapshotPose(root){
 }
 function _restorePose(snap){ if(!snap) return; for(const s of snap){ s.b.quaternion.copy(s.q); s.b.position.copy(s.p); } }
 // pull an animation clip from a separate GLB onto the player mixer (same Meshy rig/skeleton)
-function _addClipsFrom(url){ const _mx=playerMixer; agentBodyLoader.load(url, (g)=>{ if(!playerMixer || playerMixer!==_mx) return; (g.animations||[]).forEach(cl=>{ if(!playerClips[cl.name]) playerClips[cl.name]=playerMixer.clipAction(cl); }); _resolvePlayerCanon(playerAvatar); }, undefined, ()=>{}); }
+function _addClipsFrom(url){ const _mx=playerMixer; _qLoad(agentBodyLoader, url, (g)=>{ if(!playerMixer || playerMixer!==_mx) return; (g.animations||[]).forEach(cl=>{ if(!playerClips[cl.name]) playerClips[cl.name]=playerMixer.clipAction(cl); }); _resolvePlayerCanon(playerAvatar); }, ()=>{}, 2, null); }
 
 // ── PLAYER LOCOMOTION RIG (T-POSE FIX 2026-09-25) ────────────────────────────────────────────────
 // ROOT CAUSE of the T-posed player: 5 of the 8 agent GLBs (SHADDAI/NEXUS/ORACLE/PIKADON/QUILL — and
@@ -4063,16 +4191,19 @@ function _setupPlayerRig(m, animations, label, gen){
     });
   } else report();
 }
+function _defaultHeroFile(){ return window.WorldOperatives ? window.WorldOperatives.glbFor(window.WorldOperatives.defaultCode()) : '/assets/agents/SHADDAI.glb'; }   // wave1 fix 4: the committed operative body — the only step of the old hero chain that exists on deploys
 function _loadHero(file, gen){
   if(gen===undefined) gen = ++_playerRigGen;
-  agentBodyLoader.load(file.charAt(0)==='/' ? file : '/assets/player/'+file, (g)=>{
+  _qLoad(agentBodyLoader, file.charAt(0)==='/' ? file : '/assets/player/'+file, (g)=>{
     if(gen!==_playerRigGen) return;   // a picked operative (or newer load) superseded this default body
     while(playerAvatar.children.length) playerAvatar.remove(playerAvatar.children[0]); // drop placeholder
     const m=g.scene;
     const box=_safeBox(m); const sz=new THREE.Vector3(); box.getSize(sz);
     m.scale.setScalar(PLAYER_BODY_HEIGHT/(sz.y||1));   // height-match the world's agents (was 3.6 → felt tiny)
     const b2=_safeBox(m); m.position.y=-b2.min.y;
-    m.traverse(c=>{ if(c.isMesh){ c.castShadow=true; c.frustumCulled=false; } });
+    m.traverse(c=>{ if(c.isMesh){ c.castShadow=true; c.frustumCulled=false;
+      const ms = Array.isArray(c.material) ? c.material : [c.material];   // wave1 fix 3: agentBodyFix forced emissiveIntensity >= 3.0 at parse and this path applied NO material treatment, so the boot hero (an agent GLB via WorldOperatives) rendered blown out. Apply the plaza path's 0.3 clamp.
+      ms.forEach(mm=>{ if(mm && 'emissiveIntensity' in mm) mm.emissiveIntensity = Math.min(mm.emissiveIntensity != null ? mm.emissiveIntensity : 0, 0.3); }); } });
     playerAvatar.add(m);
     _setupPlayerRig(m, g.animations, 'hero '+file, gen);
     // PERF: the extra Run/rigged clip GLBs (~9MB each) are only needed for the DEFAULT hero, which is
@@ -4082,14 +4213,14 @@ function _loadHero(file, gen){
     // default hero, Walk works immediately and Run just becomes available a beat later (_addClipsFrom
     // already tolerates late arrival — the clip simply pops into playerClips when it lands).
     if(file.indexOf('hero')===0){ setTimeout(function(){ _addClipsFrom('/assets/player/hero-run.glb'); _addClipsFrom('/assets/player/hero-rigged.glb'); }, 4000); }
-  }, undefined, ()=>{   // hero-walk → robot → the committed SHADDAI agent body (player/*.glb are gitignored, so deploys only have the last)
-    if(gen!==_playerRigGen) return;   // superseded: don't restart the fallback chain over a picked operative
-    if(file==='hero-walk.glb') _loadHero('robot.glb', gen); else if(file==='robot.glb') _loadHero(window.WorldOperatives ? window.WorldOperatives.glbFor(window.WorldOperatives.defaultCode()) : '/assets/agents/SHADDAI.glb', gen); else console.warn('player model failed; capsule avatar kept'); });
+  }, ()=>{   // wave1 fix 4: the chain now STARTS at the committed operative body (_defaultHeroFile) — hero-walk.glb / robot.glb are gitignored player/*.glb that 404 on every deploy (two wasted round-trips on the boot path). If the default body itself fails, the capsule stays.
+    if(gen!==_playerRigGen) return;   // superseded: don't restart the fallback over a picked operative
+    const _df = _defaultHeroFile(); if(file !== _df) _loadHero(_df, gen); else console.warn('player model failed; capsule avatar kept'); }, 1, null);
 }
 // Always load a default player body at boot — this is the safety net that guarantees the player
 // has a body even if the picker's onArrive never fires setPlayerCharacter (removing it left the
 // player bodiless = "models don't load"). The picked operative swaps this out on arrival.
-setTimeout(function(){ if(!playerAvatar.children.length) _loadHero('hero-walk.glb'); }, 22000);   // safety net only: a picked operative normally sets the body first (saves 3 requests + 1.3 MB at boot)
+setTimeout(function(){ if(!playerAvatar.children.length) _loadHero(_defaultHeroFile()); }, 22000);   // safety net only: a picked operative normally sets the body first (saves 3 requests + 1.3 MB at boot)
 
 // ── PLAY AS A CHOSEN OPERATIVE: swap the player body for that agent's real GLB (from the spawn picker) ──
 // Uses _pcCache — the GLB was preloaded during sky-dive, so .then() fires after the next microtask
@@ -4122,7 +4253,7 @@ window.setPlayerCharacter = function(code){
         if(hasTex && 'colorSpace' in mm.map) mm.map.colorSpace = THREE.SRGBColorSpace; // albedo must be sRGB or it renders washed/flat
         if(mm.color){ mm.color.set(0xffffff); if(!hasTex) mm.color.lerp(_pacc, 0.6); }  // textured: show real albedo; plain blob: tint to agent color
         if('emissiveIntensity' in mm) mm.emissiveIntensity = Math.min(mm.emissiveIntensity != null ? mm.emissiveIntensity : 0, 0.3);
-        if(hasTex && mm.emissive){ mm.emissive.setRGB(1,1,1); if(!mm.emissiveMap) mm.emissiveMap = mm.map; mm.emissiveIntensity = 3.0; mm.color.setRGB(3,3,3); }   // 2026-10-11 owner: bodies render black - the agent textures are very dark (mean ~50/255), so lift them x3 in both the lit and glow channels - the painted map drives the glow so lights/normals can never black them out
+        if(hasTex && mm.emissive){ mm.emissive.setRGB(1,1,1); if(!mm.emissiveMap) mm.emissiveMap = mm.map; mm.emissiveIntensity = Math.min(mm.emissiveIntensity != null ? mm.emissiveIntensity : 0, 0.3); }   // 2026-11-15 wave1 fix 3: the 2026-10-11 x3 lift (emissiveIntensity = 3.0 + colour x3) is REMOVED — at 3x the texture renders almost unlit and crosses the bloom threshold = the pale glowing "ghost" body (ZEROX_AND_LOAD_DIAGNOSIS #2B). The plaza path's 0.3 clamp governs here too; the lit channel (colour reset to white above) + IBL carry the body, not self-glow.
         if('metalness' in mm) mm.metalness = Math.min(mm.metalness != null ? mm.metalness : 0.5, 0.15);
         if('roughness' in mm) mm.roughness = Math.max(mm.roughness != null ? mm.roughness : 0.5, 0.6);
         if('envMapIntensity' in mm) mm.envMapIntensity = 0.7;                           // IBL gives the body form
@@ -4140,7 +4271,7 @@ window.setPlayerCharacter = function(code){
     _setupPlayerRig(m, g.animations, code, gen);
     window._playerCharacter = code;
   }).catch(function(e){ console.warn('[setPlayerCharacter] could not load', code, '— falling back to hero body', e && e.message);
-    if(gen===_playerRigGen && !playerAvatar.children.length) _loadHero('hero-walk.glb'); });
+    if(gen===_playerRigGen && !playerAvatar.children.length) _loadHero(_defaultHeroFile()); });
 };
 // map our state names to the model's clip names (Meshy: walking_man/running/clip0; robot: Walking/Running)
 const _ALIAS = { Idle:['clip0','Idle','idle'], Walk:['walking_man','Walk','Walking'], Run:['running','Run','Running'],
@@ -4219,6 +4350,12 @@ window.__playerHP = 100; let _dragonKB = null, _shakeT = 0, _shakeI = 0;
 window.__dragonShake = function(i, d){ _shakeI = Math.max(_shakeI, i || 0.4); _shakeT = Math.max(_shakeT, d || 0.3); };
 window.__onDragonHit = function(dmg, kind, info){
   if(window.WorldDodge && window.WorldDodge.blocks(kind || 'dragon')){ if(window.__hitfx && window.__hitfx.text) { try{ window.__hitfx.text('DODGE', playerAvatar && playerAvatar.position); }catch(_){} } return; }   // i-frames of the dodge roll
+  if(window.__combatCore){   // ORPHANS (?combat=1): the core owns parry / block / hitstun / knockback for combat damage. A dodged or parried hit never reaches the HP below; a blocked hit arrives reduced; a guard break arrives full. Core death forces the existing death path via __playerHP.
+    var _cr = window.__combatCore.hit({ dmg: dmg, kind: kind || 'dragon', dir: (info && info.knockback) ? { x: info.knockback.x, z: info.knockback.z } : { x: 0, z: 0 } });
+    if(!_cr.applied) return;
+    dmg = _cr.dmg; info = { knockback: _cr.knockback };
+    if(_cr.state === 'dead') window.__playerHP = 0;
+  }
   if(window.WorldGear){ try{ dmg = window.WorldGear.absorb(dmg); }catch(_){} }   // ARMORY: shields reduce / the aegis barrier soaks
   if(!(dmg > 0)) return;
   if(window.__campfire){ try{ window.__campfire.hurt(); }catch(_){} }   // no fire-healing for 3 s after a hit
@@ -4226,12 +4363,21 @@ window.__onDragonHit = function(dmg, kind, info){
   window.__playerHP = Math.max(0, window.__playerHP - dmg);
   if(info && info.knockback) _dragonKB = { x: info.knockback.x, z: info.knockback.z, t: 0.35 };
   window.__dragonShake(kind === 'stagger' ? 0.25 : 0.6, 0.35);
-  if(window.__playerHP <= 0){ if(window.WorldSurvival){ window.WorldSurvival.die('dragon'); } else { window.__playerHP = 100; if(window.__dragons && window.__dragons.clearStatus) window.__dragons.clearStatus(); const c = window.WORLD_LAYOUT.stations[0].pos; playerPos.x = c[0]; playerPos.z = c[1]; if(window.__toast) window.__toast('💀 Downed — back at Central Station'); } }
+  if(window.__playerHP <= 0){ if(window.WorldSurvival){ window.WorldSurvival.die('dragon'); } else { window.__playerHP = 100; if(window.__dragons && window.__dragons.clearStatus) window.__dragons.clearStatus(); const c = window.WORLD_LAYOUT.stations[0].pos; playerPos.x = c[0]; playerPos.z = c[1]; playerPos.y = ((worldTerrain && worldTerrain.heightAt) ? worldTerrain.heightAt(c[0], c[1]) : 0) + 0.1; if(window.__toast) window.__toast('💀 Downed — back at Central Station'); } }   // wave1 fix 6: this fallback death path had the same 2D-teleport bug as WorldSurvival.respawn — y now sampled from the terrain at Central Station
 };
 function playerBasicAttack(){ const which=_pComboFlip?'attack2':'attack1'; _pComboFlip=!_pComboFlip;
+  if(window.__combatCore && !window.__combatCore.input('light')) return;   // ORPHANS (?combat=1): the core gates the swing — hitstun, stamina and buffering live there; a rejected swing plays no clip and lands no hit
+  if(window.__weapons) window.__weapons.onAttack();   // ORPHANS (?weapons=1): draw the player's weapon on attack; it sheathes after 3 s idle (weapons boot owns the timer)
   if(!playPlayerOnce(which,{timeScale:1.15})) _pTween={t:0,dur:0.3,kind:'lunge'};
+  if(window.__combatCore) return;   // ORPHANS (?combat=1): the hit lands from the core 'active' event at the right moment with the core's damage — the plain fan-out below is the no-flag path
   if(window.__titans) window.__titans.meleeHit(playerAvatar.position, fwd, 6*V4_U, 12);
-  if(window.__dragons) window.__dragons.meleeHit(playerAvatar.position, fwd, 6*V4_U, 12); if(window.__wildlife) window.__wildlife.meleeHit(playerAvatar.position, fwd, 3*V4_U, 12); if(window.__mobs) window.__mobs.meleeHit(playerAvatar.position, fwd, 5*V4_U, 14); _attackFlash(); }   // VFX POLISH: quick slash-arc + muzzle flash so swings read clearly (cosmetic only)
+  if(window.__dragons) window.__dragons.meleeHit(playerAvatar.position, fwd, 6*V4_U, 12); if(window.__wildlife) window.__wildlife.meleeHit(playerAvatar.position, fwd, 3*V4_U, 12); if(window.__mobs) window.__mobs.meleeHit(playerAvatar.position, fwd, 5*V4_U, 14); if(window.__siege) window.__siege.credit(14); _attackFlash(); }   // VFX POLISH: quick slash-arc + muzzle flash so swings read clearly (cosmetic only) // ORPHANS (?siege=1): a plain-path swing also credits the live siege battle (14 = the mob value)
+
+// ── Shift+click = HEAVY (?combat=1 only): the core's heavy attack (30 dmg, 22 stamina) with the
+// rig's 'heavy' clip. The hit itself lands from the core 'active' event, like the light combo. ──
+function playerHeavyAttack(){ if(!window.__combatCore || !window.__combatCore.input('heavy')) return;
+  if(window.__weapons) window.__weapons.onAttack();
+  if(!playPlayerOnce('heavy',{timeScale:1})) _pTween={t:0,dur:0.35,kind:'lunge'}; }
 
 // ── Q = PROJECTILE — fire the current agent's signature bolt (+ a cast pose if the rig has one) ──
 function playerProjectile(){
@@ -4268,7 +4414,7 @@ function playerKick(){ if(window.__dragons) window.__dragons.meleeHit(playerAvat
 // ── projectile system (mesh props + procedural orbs/feathers) ──
 const _projectiles=[]; const _propCache={};
 function _loadProp(name){ if(_propCache[name]) return _propCache[name];
-  _propCache[name]=new Promise(res=>agentBodyLoader.load('/assets/vfx/'+name+'.glb', g=>res(g.scene), undefined, ()=>res(null))); return _propCache[name]; }
+  _propCache[name]=new Promise(res=>_qLoad(agentBodyLoader, '/assets/vfx/'+name+'.glb', g=>res(g.scene), ()=>res(null), 3, null)); return _propCache[name]; }
 // Muzzle/VFX origin. y=3.2 & reach=1.8 were tuned for the OLD 3.6-tall body (≈hand/weapon height).
 // Body is now PLAYER_BODY_HEIGHT (7.0), so scale both by _PLAYER_EYE_K (=7.0/3.6) to keep the emit point
 // at hand/weapon level instead of mid-torso. (3.6→7.0 body change.)
@@ -4412,7 +4558,7 @@ function _updateCombat(dt){
     else                           playerAvatar.rotation.x = -Math.sin(pr*Math.PI)*0.32;    // lunge
     if(pr>=1){ playerAvatar.rotation.x=0; _pTween=null; } }
 }
-addEventListener('mousedown', e=>{ if(e.button===0 && controls.isLocked && !(worldSpawn && worldSpawn.isAnimating())) playerBasicAttack(); });
+addEventListener('mousedown', e=>{ if(e.button===0 && controls.isLocked && !(window.__fishing && window.__fishing.state === 'fighting') && !(worldSpawn && worldSpawn.isAnimating())){ if(e.shiftKey && window.__combatCore) playerHeavyAttack(); else playerBasicAttack(); } });   // ORPHANS (?combat=1): Shift+click = heavy (core-gated); without the flag Shift+click is a normal swing // ORPHANS (?fishing=1): while a fish is on the line, click reels instead of attacking
 // UNIFIED SCHEME: Q = projectile · F = flip (SHADDAI = fly) · K = kick. (E handled in the interact
 // listener below — building/agent for everyone, SECOND projectile for SHADDAI.)
 addEventListener('keydown', e=>{ if(_typingNow()||e.repeat) return;
@@ -4420,7 +4566,7 @@ addEventListener('keydown', e=>{ if(_typingNow()||e.repeat) return;
   if(e.code==='KeyQ') playerProjectile();
   else if(e.code==='KeyF') playerFlipOrFly();
   else if(e.code==='KeyK') playerKick();
-  else if(e.code==='KeyZ' && window.WorldDodge && !(typeof hover!=='undefined' && hover && hover.isRiding && hover.isRiding()) && !(window.__mountRide && window.__mountRide.isRiding()) && !(window.__dragonRide && window.__dragonRide.isRiding())){ if(window.WorldDodge.trigger()){ playPlayerOnce('roll',{timeScale:1.35}) || playPlayerOnce('slide',{timeScale:1.3}) || playPlayerOnce('flip',{timeScale:1.3}); } }   // on-foot dodge roll (Z; on a board Z is the barrel roll)
+  else if(e.code==='KeyZ' && window.WorldDodge && !(typeof hover!=='undefined' && hover && hover.isRiding && hover.isRiding()) && !(window.__mountRide && window.__mountRide.isRiding()) && !(window.__dragonRide && window.__dragonRide.isRiding())){ if(window.__combatCore ? window.__combatCore.input('roll') : window.WorldDodge.trigger()){ playPlayerOnce('roll',{timeScale:1.35}) || playPlayerOnce('slide',{timeScale:1.3}) || playPlayerOnce('flip',{timeScale:1.3}); } }   // on-foot dodge roll (Z; on a board Z is the barrel roll) // ORPHANS (?combat=1): the roll goes through the core (18 stamina + cooldown) which triggers the dodge itself; without the flag the old direct trigger stands
 });
 
 addEventListener('click', (ev)=>{
@@ -4520,7 +4666,11 @@ function openDossier(a){
 }
 
 // this is the owner's own world → they hold owner/admin rights here
-window.SHADDAI_USER = window.SHADDAI_USER || 'owner';
+// G-2 (one identity): read the same session source as the realm bootstrap
+// (shd_userid from /api/world/redeem) before the legacy 'owner' fallback —
+// in the realm page the HTML bootstrap has already set SHADDAI_USER, so
+// this line stays a no-op there; standalone it now prefers the session uid.
+window.SHADDAI_USER = window.SHADDAI_USER || (function () { try { return localStorage.getItem('shd_userid') || ''; } catch (e) { return ''; } })() || 'owner';
 window.removeAgent = function(a){
   if(!a || !a.id) return;
   if(!confirm('Remove '+a.codename+' from Shaddai World AND the Forge?\nThis permanently deletes the operative.')) return;
@@ -4908,20 +5058,27 @@ window.removeAgent = function(a){
       if(warm) return; warm=true; set(94, LABEL.warm);
       _ldBegin('warm');
       var p = (renderer.compileAsync ? renderer.compileAsync(scene, camera) : Promise.resolve(renderer.compile(scene, camera)));
-      var _wc = /[?&]warmcap=(\d+)/.exec(location.search), _capMs = _wc ? +_wc[1] : (/[?&]precompile=0\b/.test(location.search) ? 6000 : 30000);   // ?warmcap=ms overrides the cap (measurement)
+      var _wc = /[?&]warmcap=(\d+)/.exec(location.search), _capMs = _wc ? +_wc[1] : 6000;   // ?warmcap=ms overrides the cap (measurement). 2026-11-15 wave1 fix 4: default 30 s -> 6 s on ALL platforms (the proven ?precompile=0 value, now the default so the flag is a no-op alias). The overshoot no longer waits on the loader: bgCompile (top of file) keeps re-running compileAsync every 2.5 s once __loadPlayable (x36), so remaining programs finish lazily in-world instead of blocking entry.
       var _wt0 = performance.now();
       p = Promise.race([p, new Promise(function(r){ setTimeout(r, _capMs); })]);
-      p.then(function(){ window.__bootTimings.push({ name: 'warm-programs', at: Math.round(_wt0), ms: Math.round(performance.now() - _wt0), programs: renderer.info.programs ? renderer.info.programs.length : -1, capMs: _capMs }); });   // FREEZE FIX W1: 6 s → 30 s cap; past the cap the rest compiled synchronously on the first in-world frame (21-31 s frame headless). Old PERF note: the whole-scene shader warm-up took 40+ s (the '94%' stall) - cap it; the rest compiles lazily while streaming in
+      p.then(function(){ window.__bootTimings.push({ name: 'warm-programs', at: Math.round(_wt0), ms: Math.round(performance.now() - _wt0), programs: renderer.info.programs ? renderer.info.programs.length : -1, capMs: _capMs }); });   // FREEZE FIX W1: 6 s → 30 s cap; past the cap the rest compiled synchronously on the first in-world frame (21-31 s frame headless). Old PERF note: the whole-scene shader warm-up took 40+ s (the '94%' stall) - cap it; the rest compiles lazily while streaming in. 2026-11-15 wave1 fix 4: cap is 6 s again (above) — bgCompile's post-entry compileAsync loop (verified in this file: gated on __loadPlayable, 2.5 s interval, x36) covers the tail lazily.
       p.catch(function(e){ console.warn('warmup', e && e.message); }).then(function(){
+        if(_MOBILE_LITE){ _ldEnd('warm'); set(100); try{ if(window.__liteSlides) window.__liteSlides.stop(); }catch(_){ } setTimeout(function(){ window.__loadPlayable = true; if(!window.__prefetchHold){ document.getElementById('enterBtn').click(); } }, 350); return; }   // MOBILE LITE CUT 2 (2026-11-15, wave1 fix 7 / MOBILE_PASS2_PLAN P-M3): skip the two _introWarming renders on phones — they force-upload every texture built so far in one spike, while the dressing wave may still be parsing. Textures upload lazily during the sky-dive instead (spawn mode is already low-res) and bgCompile keeps warming programs post-entry. The 6 s compile cap itself is global since wave1 fix 4.
         _introWarming = true;   // animate() does quiet composer renders behind the screen (GPU uploads happen now, not on reveal)
-        requestAnimationFrame(function(){ requestAnimationFrame(function(){ _ldEnd('warm'); set(100); try{ if(window.__liteSlides) window.__liteSlides.stop(); }catch(_){ } setTimeout(function(){ window.__loadPlayable = true; document.getElementById('enterBtn').click(); }, 350); }); });   // 2026-10-03: was a flat 3 s wait after 100% (dead time); 350 ms = one clean fade
+        requestAnimationFrame(function(){ requestAnimationFrame(function(){ _ldEnd('warm'); set(100); try{ if(window.__liteSlides) window.__liteSlides.stop(); }catch(_){ } setTimeout(function(){ window.__loadPlayable = true; if(!window.__prefetchHold){ document.getElementById('enterBtn').click(); } }, 350); }); });   // 2026-10-03: was a flat 3 s wait after 100% (dead time); 350 ms = one clean fade
       });
     })();
   }
 
   // Coming from the dashboard portal (?peek): auto-fire the ENTER flow so you STILL get the GTA
   // sky-dive + portal picker (previously it skipped straight in with no sky-dive).
-  if(location.search.indexOf('peek')>=0){ (function _waitEnter(){ var b=document.getElementById('enterBtn'); if(b && b.classList.contains('show')){ b.click(); } else setTimeout(_waitEnter, 200); })(); }
+  // ?prefetch=1 (dashboard idle prefetch, loading stage 2): boot to playable and HOLD —
+  // no auto-enter, no audio unlock. The dashboard adopts this frame and calls
+  // __releasePrefetch() on the real portal click. ?peek keeps its auto-enter behaviour.
+  if (location.search.indexOf('prefetch') >= 0) {
+    window.__prefetchHold = true;
+    window.__releasePrefetch = function(){ var b = document.getElementById('enterBtn'); if (b) b.click(); };
+  } else if(location.search.indexOf('peek')>=0){ (function _waitEnter(){ var b=document.getElementById('enterBtn'); if(b && b.classList.contains('show')){ b.click(); } else setTimeout(_waitEnter, 200); })(); }
 
   // ── GRID → DIMENSION WARP: neon grid erupts from the button, forms, then rushes forward through a
   //    dimensional gate. Pure 2D canvas (cheap). The world is already loaded + shader-warmed by now,
@@ -5195,11 +5352,11 @@ const _Q = {
   // 4 tiers: LOW → MEDIUM → HIGH → ULTRA
   // Each tier defines: pixelRatio cap, bloom strength (0=off), prop/NPC cull radius
   tiers: [
-    { name:'POTATO', pr:0.55, bloomStr:0,    cullR:170  },  // weak GPUs settle here — still playable
-    { name:'LOW',    pr:0.75, bloomStr:0,    cullR:230  },
-    { name:'MEDIUM', pr:1.0,  bloomStr:0.14, cullR:220  },
-    { name:'HIGH',   pr:1.2,  bloomStr:0.22, cullR:360  },
-    { name:'ULTRA',  pr:1.5,  bloomStr:0.28, cullR:9999 },
+    { name:'POTATO', pr:0.55, bloomStr:0,    cullR:170,  af:4  },  // weak GPUs settle here — still playable
+    { name:'LOW',    pr:0.75, bloomStr:0,    cullR:230,  af:8  },
+    { name:'MEDIUM', pr:1.0,  bloomStr:0.14, cullR:220,  af:8  },
+    { name:'HIGH',   pr:1.2,  bloomStr:0.22, cullR:360,  af:16 },
+    { name:'ULTRA',  pr:1.5,  bloomStr:0.28, cullR:9999, af:16 },
   ],
   tier:    1,    // start at LOW — smooth first impression; governor climbs within seconds if the machine is fast
   fps:     55,   // EMA fps estimate (seeded at 55 to avoid false-fast on first few frames)
@@ -5209,6 +5366,29 @@ const _Q = {
 };
 window.__quality = _Q.tiers[_Q.tier].name;
 window.__fpsNow = function(){ return _Q.fps; };
+
+// === C9 AF BEGIN ===
+// C-9 per-tier terrain anisotropy (FPS_RESEARCH_2.md): POTATO 4 (bandwidth-bound phones),
+// LOW/MEDIUM 8 (current behaviour), HIGH/ULTRA 16 (desktop quality upgrade — sharper grazing
+// terrain, small bandwidth cost). ?af=N pins one value for every tier (off-switch: ?af=8 =
+// current behaviour at all tiers). Capped by the GPU's max anisotropy. No-op until the v4
+// terrain lands (worldTerrain.api is null before then); the terrain-side setter is idempotent,
+// so per-resize tier re-applies never re-upload textures. Intended value always lands in
+// window.__terrainAF for the perf HUD / debugging.
+function _applyTerrainAF(){
+  try{
+    var t = _Q.tiers[_Q.tier]; if(!t) return;
+    var m = /[?&]af=([0-9]+)/.exec(location.search);
+    var af = m ? parseInt(m[1], 10) : t.af;
+    if(!isFinite(af)) af = t.af;
+    af = Math.max(1, Math.min(16, af));
+    try{ var mx = renderer.capabilities && renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 16; af = Math.min(af, mx || 16); }catch(_){}
+    window.__terrainAF = af;
+    var api = (typeof worldTerrain !== 'undefined' && worldTerrain && worldTerrain.api) ? worldTerrain.api : null;
+    if(api && typeof api.setAnisotropy === 'function') api.setAnisotropy(af);
+  }catch(e){}
+}
+// === C9 AF END ===
 try{ const _gl = renderer.getContext(), _dbg = _gl.getExtension('WEBGL_debug_renderer_info'); window.__gpuName = _dbg ? String(_gl.getParameter(_dbg.UNMASKED_RENDERER_WEBGL)) : ''; }catch(_){}   // info only: every GPU starts on the normal tier (LOW) and the governor adapts
 
 function _applyQualityTier(idx){
@@ -5223,6 +5403,7 @@ function _applyQualityTier(idx){
   // FPS FIX 2026-10-08: EffectComposer.setSize already multiplies by its own _pixelRatio (captured from the renderer at
   // construction), so passing innerWidth*pr scaled the bloom targets twice (1.6-2.25x the pixels on a scaled laptop screen).
   composer.setPixelRatio(pr); composer.setSize(innerWidth, innerHeight);
+  _sizeBloom();   // WAVE4 C-1: composer.setSize just reset the bloom pass to full size — re-apply the half-res size (no-op with ?bloomres=full)
   bloom.strength = t.bloomStr;
   if(window.__vfx) window.__vfx.setTier(t.name);   // particle budget follows the quality tier
   bloom.enabled  = t.bloomStr > 0;   // at POTATO/LOW fully SKIP the multi-pass bloom (was still rendering it at strength 0 = wasted GPU)
@@ -5234,6 +5415,7 @@ function _applyQualityTier(idx){
   window.__quality = t.name;
   window.__w3dTierIdx = idx;   // broadcast for the LOD systems (clusters/fill/realmprops tighten their bands on weak GPUs, restore on fast ones)
   if(typeof _v4Sky !== 'undefined' && _v4Sky) _v4Sky.setQuality(t.name);   // shadow map size + cadence
+  _applyTerrainAF();   // C-9: terrain anisotropy follows the tier (POTATO 4 / LOW+MEDIUM 8 / HIGH+ULTRA 16, ?af=N pins)
   // At the low tiers, hide the agents' additive aura/crown particles — they're pure eye-candy and the
   // heaviest transparent OVERDRAW in the scene. Restored automatically when the governor climbs back up.
   try {
@@ -5365,6 +5547,84 @@ function _staticMerge(){
   }catch(e){ console.warn('[static-merge] failed:', e && e.message); }
 }
 
+// ── C-4: GENERALIZED STATIC-MATRIX FREEZE (FPS research #2 candidate C-4) ──
+// world-buildings.js freezes its own subtree at build time (_runBoundsPass — its comment
+// calls the freeze "the biggest per-frame CPU lever after culling"), but that pass runs
+// before the rest of the world exists, so the dressing kits, the placed GLB statics and
+// the wave-2 city district kept paying a per-frame Matrix4.compose() for every node,
+// forever. This pass generalizes the same freeze to the audited-static owners, armed on
+// the merge pass's schedule (+8 s / +40 s / +100 s after playable — later passes catch
+// streamed-in placeables; a pass is a traverse + flag flips only, no geometry work, so
+// unlike the merge all 3 passes run by default). Freeze = updateMatrix() once (bakes the
+// CURRENT local transform) + matrixAutoUpdate = false. Frozen matrices are bit-identical
+// while static — NOT a downgrade. A frozen node's children are independent decisions:
+// a moving parent still carries frozen children (their matrixWorld is recomputed from
+// the parent's), and a locally-animating child of a frozen parent still animates.
+// SAFETY AUDIT (2026-11-16, every candidate read at its owner's update path):
+//   ROOTS: city-builder district (window.__gridCity.group — the module has no per-frame
+//     transform writes at all), WorldRealmDress group + WorldRealmKits group (their
+//     update() only toggles town .visible for distance culling), and every placeable in
+//     window.__placeables under an audited-static prefix: 'fal:' (world-falprops holders
+//     — transforms set once at placement) and 'realm:' (world-realmprops models — their
+//     update() only toggles .visible).
+//   DENIED inside 'realm:': 'realm:volcano:' — world-volcano's update() sways its dragon
+//     model (rotation.y) and bobs it via userData.baseY; that model registers as a
+//     placeable, so the whole volcano prefix stays unfrozen.
+//   EXCLUDED prefixes (dynamic — freezing would stick them): 'npc:' (townsfolk walk
+//     their posts), 'ocean:' (boats sail/bob), 'transit:' (the hub groups contain the
+//     beacon crystals world-transit.js rotates every frame, update() line ~369),
+//     'fill:' (world-fill-v4's floating islands bob + drift-rotate in update()),
+//     'landmark:' (colosseum group — not transform-audited; left alone).
+//   ALREADY FROZEN BY THEIR OWNERS (counted, never re-touched): canon GLB statics
+//     (world-canon-v4.js sets matrixAutoUpdate=false at load), terrain patches,
+//     world-buildings' own bounds pass.
+//   PER-NODE GUARDS inside a root: the merge pass's animated skip-set (_mergeSkipSet) is
+//     honoured subtree-wide (a registered-animated node taints its ancestor chain inside
+//     the root); SkinnedMesh / Bone / Sprite nodes are never frozen; userData.__noFreeze
+//     opts a node out. Editor safety: under ?edit=1 the pass is a no-op — the placement
+//     editor mutates placeable transforms live and must never fight a baked matrix.
+// Off-switch: ?freezestatic=0 — the pass never runs, nothing is frozen (old behaviour).
+// [C4-FREEZE-BEGIN]
+const _FREEZE_PLACE_PREFIXES = { 'fal:': 1, 'realm:': 1 };   // audited-static placeable prefixes (see audit above)
+const _FREEZE_PLACE_DENY = { 'realm:volcano:': 1 };          // denied prefixes inside an allowed one (volcano dragon)
+function _freezeStaticPass(){
+  if(/[?&]freezestatic=0/.test(location.search)) return;   // off-switch: old path, nothing frozen
+  if(/[?&]edit=1\b/.test(location.search)) return;         // placement editor live-mutates placeables — never freeze under it
+  window.__freezeStaticN = (window.__freezeStaticN || 0) + 1;
+  try{
+    const skip = _mergeSkipSet();
+    const roots = [];
+    if(window.__gridCity && window.__gridCity.group) roots.push(window.__gridCity.group);
+    if(window.__realmDress && window.__realmDress.group) roots.push(window.__realmDress.group);
+    if(window.__realmKits && window.__realmKits.group) roots.push(window.__realmKits.group);
+    const reg = window.__placeables || {};
+    for(const k in reg){
+      const p = reg[k]; if(!p || !p.obj) continue;
+      let denied = false;
+      for(const dx in _FREEZE_PLACE_DENY){ if(k.indexOf(dx) === 0){ denied = true; break; } }
+      if(denied) continue;
+      for(const px in _FREEZE_PLACE_PREFIXES){ if(k.indexOf(px) === 0){ roots.push(p.obj); break; } }
+    }
+    let frozen = 0, already = 0, skipped = 0;
+    for(const root of roots){
+      // honour the animated skip-set subtree-wide: a skip-set node taints its ancestor
+      // chain inside this root (same conservative rule the merge pass applies)
+      const tainted = new Set();
+      root.traverse(function(o){ if(skip.has(o)){ let a = o; while(a){ tainted.add(a); if(a === root) break; a = a.parent; } } });
+      root.traverse(function(o){
+        if(tainted.has(o) || skip.has(o)){ skipped++; return; }
+        if(o.isSkinnedMesh || o.isBone || o.isSprite){ skipped++; return; }
+        if(o.userData && o.userData.__noFreeze){ skipped++; return; }
+        if(o.matrixAutoUpdate === false){ already++; return; }
+        o.updateMatrix(); o.matrixAutoUpdate = false; frozen++;
+      });
+    }
+    window.__freezeStats = { pass: window.__freezeStaticN, roots: roots.length, frozen: frozen, already: already, skipped: skipped };
+    console.info('[static-freeze] pass ' + window.__freezeStaticN + ': ' + frozen + ' matrices frozen across ' + roots.length + ' static roots (' + already + ' already frozen, ' + skipped + ' skipped)');
+  }catch(e){ console.warn('[static-freeze] failed:', e && e.message); }
+}
+// [C4-FREEZE-END]
+
 function _updateGovernor(dt){
   const instantFps = dt > 0 ? 1 / dt : 60;
   // EMA fps: alpha 0.18 — reacts over ~5 frames (was 0.12/~8) so dynamic-res responds to a fill-rate stall quickly
@@ -5407,6 +5667,57 @@ window.__setQualityTier = function(i, cooldownS){ _applyQualityTier(i); _Q.coold
 if(_MOBILE_LITE) try{ window.__setQualityTier(0, 20); }catch(_){}   /* MOBILE LITE (FIX-A): hold POTATO for the first 20 s on phones (the load + dive window) */
 else if(window.__isMobile) try{ window.__setQualityTier(1, 20); }catch(_){}   /* 2026-11-08: phones start LOW (owner: 'doesn't work on mobile'); the governor steps up after 20 s if fps allows */   // MOBILE: start at MEDIUM (owner: keep quality); the governor adjusts from there - the crash fix is skipping the merge, not low quality
 window.__getQualityTier = function(){ return _Q.tier; };
+// === WAVE3 DYNRES BEGIN ===
+// WAVE3 JOB 4 (2026-11-15) — ADAPTIVE RESOLUTION: a dynamic pixel-ratio scaler INSIDE the current
+// quality tier. The tier governor moves in coarse steps (tier = ratio + bloom + cull together, with
+// long cooldowns); this scaler trades ONLY resolution, in 0.1 steps, under SUSTAINED load, and hands
+// it back automatically when the load clears — no asset/effect/quality changes anywhere else.
+//   frame-time EMA > 20 ms sustained ~2 s  -> ratio -= 0.1 (floor 0.55, the POTATO ratio)
+//   frame-time EMA < 12 ms sustained ~5 s  -> ratio += 0.1 (cap = the tier's configured ratio)
+// Ratio changes go through the exact calls _applyQualityTier uses (renderer + composer + bloom
+// resize), so render targets stay consistent. A tier change resets the scaler to the tier ratio
+// (detected via _Q.tier / tier-cap changes — _applyQualityTier itself is untouched).
+// Default ON. ?dynres=0 disables completely: sample() is never called and nothing is applied —
+// the original path runs byte-identically.
+const _DYNRES_ON = !/[?&]dynres=0/.test(location.search);
+const _DynRes = {
+  emaMs: 16.7, slowT: 0, fastT: 0, cur: null, capPr: null, tierSeen: -1,
+  FLOOR: 0.55, STEP: 0.1, SLOW_MS: 20, FAST_MS: 12, DOWN_AFTER: 2.0, UP_AFTER: 5.0,
+  _apply: function(pr){
+    renderer.setPixelRatio(pr);
+    renderer.setSize(innerWidth, innerHeight);
+    composer.setPixelRatio(pr); composer.setSize(innerWidth, innerHeight);
+    _sizeBloom();   // composer.setSize reset the bloom pass size — re-apply, same as _applyQualityTier
+  },
+  _tierPr: function(){ return Math.min(devicePixelRatio, _Q.tiers[_Q.tier].pr); },
+  sample: function(dtMs){
+    const dt = dtMs / 1000;
+    const tierPr = this._tierPr();
+    if(this.tierSeen !== _Q.tier || this.capPr !== tierPr){   // tier change (or DPR change): reset to the tier ratio — _applyQualityTier already applied it
+      this.tierSeen = _Q.tier; this.capPr = tierPr; this.cur = tierPr; this.slowT = 0; this.fastT = 0;
+    }
+    this.emaMs = this.emaMs * 0.9 + dtMs * 0.1;
+    if(this.emaMs > this.SLOW_MS){
+      this.slowT += dt; this.fastT = 0;
+      if(this.slowT >= this.DOWN_AFTER && this.cur > this.FLOOR){
+        this.cur = Math.max(this.FLOOR, Math.round((this.cur - this.STEP) * 100) / 100);
+        this._apply(this.cur); this.slowT = 0;
+        console.log('[dynres] step down ->', this.cur.toFixed(2), '(ema ' + this.emaMs.toFixed(1) + ' ms, tier cap ' + tierPr.toFixed(2) + ')');
+      }
+    } else if(this.emaMs < this.FAST_MS){
+      this.fastT += dt; this.slowT = 0;
+      if(this.fastT >= this.UP_AFTER && this.cur < tierPr){
+        this.cur = Math.min(tierPr, Math.round((this.cur + this.STEP) * 100) / 100);
+        this._apply(this.cur); this.fastT = 0;
+        console.log('[dynres] step up ->', this.cur.toFixed(2), '(ema ' + this.emaMs.toFixed(1) + ' ms, tier cap ' + tierPr.toFixed(2) + ')');
+      }
+    } else {   // deadband: bleed both accumulators so only SUSTAINED load counts
+      this.slowT = Math.max(0, this.slowT - dt); this.fastT = Math.max(0, this.fastT - dt);
+    }
+  }
+};
+window.__dynRes = _DynRes;
+// === WAVE3 DYNRES END ===
 // ── MAGLEV SHORTCUT: press U to go to the nearest maglev station (walk onto the glowing lift pad, press E, pick a destination / ride the ring) ──
 addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) return; const tg = e.target && e.target.tagName; if(tg === 'INPUT' || tg === 'TEXTAREA') return;
   const T = window.__worldTransitApi; if(!T || !T.stations || !T.stations.length){ if(window.Navi && window.Navi.toast) window.Navi.toast('Maglev is still loading'); return; }
@@ -5521,6 +5832,280 @@ window.__GLTFLoaderClass = window.__GLTFLoaderClass || GLTFLoader;   // for clas
   console.log('[combat] lock-on on (?combat=1)');
 }, 250);
 })();
+// ── AGENT WEAPONS (?weapons=1, off by default): the 7 code-built council weapons (world-weapons.js).
+// Attaches one weapon per seated council body (sheathed on the back) and one to the player's rig.
+// The player's weapon draws on attack and sheathes after 3 s idle — no new key (V is the camera,
+// every other letter is taken). Emissive mats join the sky night-ramp like the train/clusters.
+// Council bodies seat over time via _nextAgentBody, so a 1.5 s scan attaches latecomers too; a
+// body swapped out (skin-sanity drop, character change) has its stale entry swept on the next scan.
+// NOTE (visual check, founder): attachWeapon wants the rig at REST pose right after load; bodies
+// seated before this boot runs are attached mid-idle — the mount tracks the hand bone either way,
+// but the grip angle wants an in-game look before the flag ever defaults on.
+(function bootWeapons(){ if(!/[?&]weapons=1\b/.test(location.search)) return; let n = 0; const iv = setInterval(function(){ if(++n > 400){ clearInterval(iv); return; }
+  if(!window.__loadPlayable || typeof playerAvatar === 'undefined') return; clearInterval(iv);
+  const W = window.__weapons = { list: [], _lastAtk: 0,
+    onAttack: function(){ W._lastAtk = performance.now(); for(var i = 0; i < W.list.length; i++){ var it = W.list[i]; if(it.player && !it.w.drawn && window.drawWeapon) window.drawWeapon(it.w); } },
+    _inScene: function(o){ var t = o; while(t && t.parent) t = t.parent; return t === scene; },
+    _attach: function(root, agent, isPlayer){
+      try{
+        var w = window.buildAgentWeapon({ THREE: THREE, agent: agent });
+        if(_v4Sky && _v4Sky.addEmissive) w.emissiveMats.forEach(function(m){ try{ _v4Sky.addEmissive(m); }catch(_){} });
+        if(!window.attachWeapon(w, root, { hand: 'right', sheathed: true })) { console.warn('[weapons] no hand bone on', agent); return null; }
+        var it = { w: w, root: root, agent: agent, player: !!isPlayer }; W.list.push(it); return it;
+      }catch(e){ console.warn('[weapons] attach failed', agent, e && e.message); return null; }
+    },
+    _scan: function(){
+      // sweep stale entries (their weapon group no longer reaches the scene: body swapped/dropped)
+      W.list = W.list.filter(function(it){ return W._inScene(it.w.group); });
+      if(!W.list.some(function(it){ return it.player; })) playerAvatar.__weaponFor = null;   // no live player weapon: allow a re-attach even if the code matches the stale marker (e.g. ZEROX -> VILLAIN -> ZEROX)
+      // player rig (playerAvatar children are fully replaced on character change)
+      var code = (window._playerCharacter || '').toLowerCase();
+      if(playerAvatar.children.length && window.WEAPON_AGENTS.indexOf(code) >= 0 && playerAvatar.__weaponFor !== code){
+        playerAvatar.__weaponFor = code; W._attach(playerAvatar, code, true);
+      }
+      // seated council bodies (keyed by codename; the weapon matches the VISIBLE model, which
+      // for forged operatives is entry.a.model, not the codename)
+      Object.keys(_agentBodies).forEach(function(k){
+        var body = _agentBodies[k]; if(!body || body.__weaponAttached) return;
+        var a = body.userData && body.userData.agent, model = ((a && a.model ? String(a.model) : k) || '').toLowerCase();
+        if(window.WEAPON_AGENTS.indexOf(model) < 0) return;
+        if(W._attach(body, model, false)) body.__weaponAttached = model;
+      });
+    },
+    _tick: function(dt){
+      var now = performance.now();
+      for(var i = 0; i < W.list.length; i++){ var it = W.list[i], st = 'idle';
+        if(it.player){
+          if(now - W._lastAtk < 500) st = 'attack';
+          else if(now - W._lastAtk < 3000) st = 'drawn';
+          else if(it.w.drawn && window.sheatheWeapon) window.sheatheWeapon(it.w);
+        }
+        if(window.__combatCore){ var cs = window.__combatCore.state(); if(cs === 'heavy' || (cs && cs.indexOf('attack') === 0)) st = 'attack'; else if(cs === 'block') st = 'drawn'; }
+        try{ it.w.update(dt, st); }catch(e){ console.warn('[weapons] update failed', it.agent, e && e.message); }
+      }
+    }
+  };
+  _loadScript('/world-weapons.js?v=1').then(function(){
+    W._scan(); setInterval(W._scan, 1500);
+    window.__orphanTicks = window.__orphanTicks || []; window.__orphanTicks.push(function(dt){ W._tick(dt); });
+    console.log('[weapons] on (?weapons=1):', window.WEAPON_AGENTS.length, 'agents');
+  }).catch(function(e){ console.warn('[weapons] load failed', e && e.message); });
+}, 1000);
+})();
+// ── COMBAT CORE (?combat=1, off by default): the deterministic rules module (world-combat-core.js)
+// plugs into the combat the world already has. Light combo / heavy (Shift+click) / roll (Z) /
+// block (hold right mouse) all go through the core; incoming damage (mobs via onHitPlayer,
+// dragons via __onDragonHit) is routed through core.hit() for parry / block / hitstun /
+// knockback. The core's own HP is the COMBAT pool; window.__playerHP stays the death authority
+// (hazards still damage it directly via WorldSurvival, bypassing the core — the two pools can
+// drift, and the core is re-created after a respawn). Nothing here runs without ?combat=1, and
+// the plain fan-out in playerBasicAttack is untouched for the no-flag path.
+(function bootCombatCore(){ if(!/[?&]combat=1\b/.test(location.search)) return; let n = 0; const iv = setInterval(function(){ if(++n > 400){ clearInterval(iv); return; }
+  if(!window.__loadPlayable || !window.WorldDodge || !window.__mobs) return; clearInterval(iv);
+  function newFighter(){
+    var f = window.WorldCombatCore.create({ dodge: window.WorldDodge });
+    f.on('active', function(ev){ if(!ev.start) return; var af = f.attackFor(ev.move), dmg = (af && af.dmg) || 12;
+      try{
+        if(window.__titans) window.__titans.meleeHit(playerAvatar.position, fwd, 6*V4_U, dmg);
+        if(window.__dragons) window.__dragons.meleeHit(playerAvatar.position, fwd, 6*V4_U, dmg);
+        if(window.__wildlife) window.__wildlife.meleeHit(playerAvatar.position, fwd, 3*V4_U, dmg);
+        if(window.__mobs) window.__mobs.meleeHit(playerAvatar.position, fwd, 5*V4_U, dmg);
+        if(window.__siege) window.__siege.credit(dmg);   // ORPHANS (?siege=1): a landed core hit also credits the live siege battle; no-op when the siege is off or not live
+      }catch(e){ console.warn('[combat] fan-out failed', e && e.message); }
+      _attackFlash();
+    });
+    f.on('hit', function(e){ if(e && e.parried && window.__toast) window.__toast('🛡️ Parried!'); });
+    return f;
+  }
+  _loadScript('/world-combat-core.js?v=1').then(function(){
+    window.__combatCore = newFighter();
+    // block = hold right mouse (RMB is otherwise unused; the context menu is suppressed only
+    // while pointer-locked with the flag on, so the normal page menu survives elsewhere).
+    addEventListener('mousedown', function(e){ if(e.button === 2 && controls.isLocked && window.__combatCore) window.__combatCore.input('block'); });
+    addEventListener('mouseup', function(e){ if(e.button === 2 && window.__combatCore) window.__combatCore.input('release-block'); });
+    addEventListener('contextmenu', function(e){ if(window.__combatCore && controls.isLocked) e.preventDefault(); });
+    window.__orphanTicks = window.__orphanTicks || []; window.__orphanTicks.push(function(dt){
+      var f = window.__combatCore; if(!f) return;
+      try{ f.step(dt); }catch(e){ console.warn('[combat] step failed', e && e.message); }
+      if(f.state() === 'dead' && window.__playerHP > 0) window.__combatCore = newFighter();   // respawned: fresh combat pool
+    });
+    console.log('[combat] core on (?combat=1): light/heavy/roll/block wired');
+  }).catch(function(e){ console.warn('[combat] core load failed', e && e.message); });
+}, 1000);
+})();
+// ── FISHING (?fishing=1, off by default): the pure-rules module (world-fishing.js) gets its host.
+// Cast with I (or the 🎣 button that appears near water); a bite rolls 3-8 s later; hold CLICK
+// to reel and keep the tension in the green band. Catches pay Sparks (ShdSparks) and put
+// raw-fish + rare drops into the shared inventory (ShdInv). The rod is always the tier-1 Hand
+// Line for now — better rods as shop stock is the follow-up. Water kind: river (via the rivers
+// module) vs bay; realm: river / arctic / void from the terrain realms, else coast. Hour comes
+// from the sky clock (paused at the fixed day palette by default, so mostly midday fish).
+// Touch: no reel input yet (mouse/keyboard only).
+(function bootFishing(){ if(!/[?&]fishing=1\b/.test(location.search)) return; let n = 0; const iv = setInterval(function(){ if(++n > 400){ clearInterval(iv); return; }
+  if(!window.__loadPlayable || !_v4Water || !_v4Water.isWater) return; clearInterval(iv);
+  _loadScript('/world-fishing.js?v=1').then(function(){
+    var WF = window.WorldFishing; if(!WF) return;
+    var F = window.__fishing = { state: 'idle', species: null, kg: 0, fight: null, biteAt: 0, _near: false, _reel: false,
+      _realm: function(x, z){
+        if(window.__rivers && window.__rivers.at && window.__rivers.at(x, z) != null) return 'river';
+        var M = _v4Meta, r = Math.hypot(x, z) / V4_U, c = (Math.atan2(x, -z) * 180 / Math.PI + 360) % 360, id = 'coast';
+        if(M && M.realms) for(var i = 0; i < M.realms.length; i++){ var R = M.realms[i];
+          var inArc = R.c0 <= R.c1 ? (c >= R.c0 && c <= R.c1) : (c >= R.c0 || c <= R.c1);
+          if(inArc && r >= (R.r0_m || 0)){ id = R.id; break; } }
+        return (id === 'arctic' || id === 'void') ? id : 'coast';
+      },
+      _waterKind: function(x, z){ return (window.__rivers && window.__rivers.at && window.__rivers.at(x, z) != null) ? 'shallows' : 'bay'; },
+      nearWater: function(){
+        var x = playerPos.x, z = playerPos.z, d = 3 * V4_U;   // on the water, swimming, or within one cast of the bank
+        if(_swimming) return true;
+        return _v4Water.isWater(x, z) || _v4Water.isWater(x + d, z) || _v4Water.isWater(x - d, z) || _v4Water.isWater(x, z + d) || _v4Water.isWater(x, z - d);
+      },
+      cast: function(){
+        if(F.state !== 'idle') return;
+        if(!F.nearWater()){ if(window.__toast) window.__toast('🎣 No water nearby — cast from a bank, pier or boat'); return; }
+        F.state = 'waiting'; F.biteAt = performance.now() + (3000 + Math.random() * 5000);
+        if(window.__toast) window.__toast('🎣 Cast! Waiting for a bite…');
+      },
+      _barEl: function(){
+        var el = document.getElementById('fishBar');
+        if(el) return el;
+        el = document.createElement('div'); el.id = 'fishBar';
+        el.style.cssText = 'position:fixed;left:50%;bottom:96px;transform:translateX(-50%);width:min(320px,60vw);z-index:6500;pointer-events:none;display:none;font:12px system-ui;color:#dfe9ff;text-align:center';
+        el.innerHTML = '<div id="fishBarLabel" style="margin-bottom:4px;text-shadow:0 1px 2px #000"></div><div style="position:relative;height:10px;border-radius:5px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.35);overflow:hidden"><div id="fishBarGreen" style="position:absolute;top:0;bottom:0;background:rgba(46,204,113,.45)"></div><div id="fishBarFill" style="position:absolute;left:0;top:0;bottom:0;width:0;background:#37b6ff"></div></div>';
+        document.body.appendChild(el); return el;
+      },
+      _paintBar: function(st){
+        var el = F._barEl(); el.style.display = 'block';
+        var g = WF.GREEN, label = document.getElementById('fishBarLabel'), fill = document.getElementById('fishBarFill'), green = document.getElementById('fishBarGreen');
+        if(label) label.textContent = (WF.SPECIES[F.species] ? WF.SPECIES[F.species].name : F.species) + '  ·  tension ' + Math.round(st.tension * 100) + '%  ·  line ' + Math.round(st.dist * 100) + '%';
+        if(fill){ fill.style.width = Math.min(100, Math.max(0, st.tension * 100)) + '%'; fill.style.background = st.tension > 0.95 ? '#ff5a6e' : (st.tension >= g[0] && st.tension <= g[1] ? '#2ecc71' : '#37b6ff'); }
+        if(green){ green.style.left = (g[0] * 100) + '%'; green.style.width = ((g[1] - g[0]) * 100) + '%'; }
+      },
+      _hideBar: function(){ var el = document.getElementById('fishBar'); if(el) el.style.display = 'none'; },
+      _btnEl: function(){
+        var b = document.getElementById('fishBtn');
+        if(b) return b;
+        b = document.createElement('button'); b.id = 'fishBtn'; b.textContent = '🎣 Cast line  (I)';
+        b.style.cssText = 'position:fixed;right:16px;bottom:120px;z-index:6500;display:none;padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.4);background:rgba(8,20,40,.8);color:#dfe9ff;font:13px system-ui;cursor:pointer';
+        b.addEventListener('click', function(){ F.cast(); });
+        document.body.appendChild(b); return b;
+      },
+      _tick: function(dt){
+        if(F.state === 'waiting' && performance.now() >= F.biteAt){
+          var hour = (_v4Sky && _v4Sky.getTime) ? _v4Sky.getTime() * 24 : 12;
+          var sp = WF.rollBite(F._waterKind(playerPos.x, playerPos.z), hour, F._realm(playerPos.x, playerPos.z), Math.random, 1);
+          if(!sp){ F.state = 'idle'; if(window.__toast) window.__toast('💨 Nothing bit…'); return; }
+          F.species = sp; F.kg = WF.rollWeight(sp, Math.random);
+          F.fight = WF.createFight(sp, F.kg, 1, Math.random);
+          F.state = 'fighting';
+          if(window.__toast) window.__toast('🐟 Bite! ' + (WF.SPECIES[sp] ? WF.SPECIES[sp].name : sp) + ' — hold CLICK to reel, keep the tension green!');
+        } else if(F.state === 'fighting' && F.fight){
+          var st = F.fight.step(dt, F._reel);
+          F._paintBar(st);
+          if(st.state === 'caught'){
+            var rw = WF.rewards(F.species, F.kg, Math.random);
+            if(window.ShdSparks) window.ShdSparks.add(rw.sparks, 'fishing', rw.name);
+            if(window.ShdInv) Object.keys(rw.items).forEach(function(k){ window.ShdInv.add(k, rw.items[k]); });
+            if(window.__toast) window.__toast('🎣 Caught ' + rw.name + ' (' + rw.kg + ' kg, ' + rw.length_cm + ' cm)! +' + rw.sparks + ' Sparks');
+            F.state = 'idle'; F.fight = null; F._hideBar();
+          } else if(st.state === 'broke'){ F.state = 'idle'; F.fight = null; F._hideBar(); if(window.__toast) window.__toast('💥 The line snapped!'); }
+          else if(st.state === 'escaped'){ F.state = 'idle'; F.fight = null; F._hideBar(); if(window.__toast) window.__toast('💨 It got away…'); }
+        }
+      }
+    };
+    addEventListener('mousedown', function(e){ if(e.button === 0) F._reel = true; });
+    addEventListener('mouseup', function(e){ if(e.button === 0) F._reel = false; });
+    addEventListener('keydown', function(e){ if(e.code !== 'KeyI' || e.repeat || _typingNow() || !controls.isLocked) return; F.cast(); });
+    setInterval(function(){ F._near = F.nearWater(); var b = F._btnEl(); b.style.display = (F._near && F.state === 'idle') ? 'block' : 'none'; }, 500);
+    window.__orphanTicks = window.__orphanTicks || []; window.__orphanTicks.push(function(dt){ F._tick(dt); });
+    console.log('[fishing] on (?fishing=1): I to cast near water');
+  }).catch(function(e){ console.warn('[fishing] load failed', e && e.message); });
+}, 1000);
+})();
+// ── CASTLE SIEGE DAY (?siege=1, off by default): the pure-rules module (world-castle-siege.js)
+// gets its event driver. A 5 s ticker runs the schedule (next Saturday 20:00 UTC), the
+// activation gate (50 active players by default — the owner's rule, so a solo player sees the
+// dormant preview: schedule + "unlocks at N (now M)"), and a HUD chip with a Join button.
+// Joining creates the battle and forces FIGHT mode for the siege (per the module's rules).
+// While a battle is live and you have joined, every landed melee swing (plain path and
+// combat-core path) credits the first vulnerable living dragon — elder last, shielded until
+// the other four fall. Dragon-down drops addressed to you land in the shared inventory
+// (ShdInv) with a toast; victory toasts when all five fall. ?siegemin=N lowers the gate for
+// testing only (default 50); it is a debug override, not a way to ship a smaller siege.
+(function bootSiege(){ if(!/[?&]siege=1\b/.test(location.search)) return; let n = 0; const iv = setInterval(function(){ if(++n > 400){ clearInterval(iv); return; }
+  if(!window.__loadPlayable) return; clearInterval(iv);
+  _loadScript('/world-castle-siege.js?v=1').then(function(){
+    var S = window.WorldCastleSiege; if(!S) return;
+    var _min = /[?&]siegemin=(\d+)/.exec(location.search), MIN = _min ? Math.max(1, +_min[1]) : S.ACTIVATE_MIN;
+    var G = window.__siege = { min: MIN, battle: null, start: 0, joined: false, _phase: null,
+      _users: function(){ return (window.__presenceCount || 0) + 1; },   // solo until presence lands (G-6 is not in this branch)
+      _fmt: function(ms){ if(ms < 0) ms = 0; var s = Math.floor(ms / 1000), d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+        return d > 0 ? d + 'd ' + h + 'h' : h > 0 ? h + 'h ' + m + 'm' : m + 'm ' + (s % 60) + 's'; },
+      status: function(){ return S.status(Date.now(), G.start, G._users(), G.min); },
+      join: function(){
+        var st = G.status();
+        if(!st.active){ if(window.__toast) window.__toast(st.message || '🏰 Siege Day is dormant'); return false; }
+        if(st.phase !== 'gather' && st.phase !== 'live'){ if(window.__toast) window.__toast('🏰 Siege Day is ' + st.phase + ' — join during gather/live'); return false; }
+        if(!G.battle){ G.battle = S.create({ rng: Math.random, now: Date.now() }); G.battle.join('you'); G.joined = true;
+          if(window.__toast) window.__toast('⚔️ You joined Castle Siege Day! Strike the dragons — elder falls last.'); }
+        return true;
+      },
+      credit: function(dmg){
+        if(!G.battle || !G.joined || !(dmg > 0)) return;
+        var st = G.status(); if(st.phase !== 'live') return;   // gather is for mustering; damage only counts once live
+        var order = ['ember', 'frost', 'storm', 'void', 'elder'], target = null;
+        for(var i = 0; i < order.length; i++){ var d = G.battle.state().dragons[order[i]]; if(d && !d.dead && G.battle.vulnerable(order[i])){ target = order[i]; break; } }
+        if(!target) return;
+        var evs = G.battle.hit('you', target, dmg);
+        evs.forEach(function(ev){
+          if(ev.type === 'shielded') return;
+          if(ev.type === 'dragon-down'){
+            var got = [];
+            ev.drops.forEach(function(dr){ if(dr.to === 'you'){ if(window.ShdInv) window.ShdInv.add(dr.item, 1); got.push(dr.item + ' (' + dr.why + ')'); } });
+            if(window.__toast) window.__toast('🐉 ' + (S.DRAGONS[ev.dragon] ? S.DRAGONS[ev.dragon].name : ev.dragon) + ' is down!' + (got.length ? ' You got: ' + got.join(', ') : ''));
+          }
+          if(ev.type === 'victory' && window.__toast) window.__toast('🏰 VICTORY! All five dragons have fallen — Castle Siege Day is won!');
+        });
+      },
+      _chipEl: function(){
+        var el = document.getElementById('siegeChip');
+        if(el) return el;
+        el = document.createElement('div'); el.id = 'siegeChip';
+        el.style.cssText = 'position:fixed;right:16px;top:110px;z-index:6500;max-width:240px;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.35);background:rgba(8,20,40,.82);color:#dfe9ff;font:12px system-ui;text-align:left';
+        document.body.appendChild(el); return el;
+      },
+      _tick: function(){
+        var now = Date.now();
+        var st = G.status(), el = G._chipEl(), phase = st.phase;   // status FIRST on the current start, so the 'ended' edge fires before the start rolls over
+        if(phase !== G._phase){   // phase edges: announce the live window, close out a finished battle
+          if(phase === 'live' && G.joined && window.__toast) window.__toast('⚔️ Castle Siege Day is LIVE — strike the dragons!');
+          if(phase === 'ended' && G.battle){ var r = G.battle.results(); if(window.__toast) window.__toast('🏰 Siege Day ended — ' + r.dragons.filter(function(d){ return d.dead; }).length + '/5 dragons down. Next: ' + new Date(S.nextStart(now, {})).toUTCString()); G.battle = null; G.joined = false; }
+          G._phase = phase;
+        }
+        if(phase === 'ended' || !G.start) G.start = S.nextStart(now, {});   // roll to the next siege after the window closes
+        st = G.status(); phase = st.phase;   // re-read for the chip (post-roll it is idle/announce)
+        var html = '<b>🏰 Castle Siege Day</b><br>';
+        if(phase === 'dormant') html += (st.message || 'Dormant') + '<br>Next: ' + new Date(G.start).toUTCString().slice(0, 22) + ' UTC';
+        else if(phase === 'idle' || phase === 'announce') html += 'Next siege in ' + G._fmt(G.start - now) + ' · ' + G._users() + '/' + G.min + ' players';
+        else if(phase === 'gather') html += 'Gathering — starts in ' + G._fmt(G.start - now) + ' · ' + G._users() + '/' + G.min + ' players';
+        else if(phase === 'live'){
+          html += 'LIVE — ' + G._fmt(G.start + S.LIVE_MIN * 60000 - now) + ' left';
+          if(G.battle){ var alive = G.battle.results().dragons.filter(function(d){ return !d.dead; }).length, you = G.battle.results().topPlayers[0];
+            html += '<br>' + alive + ' dragon' + (alive === 1 ? '' : 's') + ' standing' + (you ? ' · your damage: ' + Math.round(you.dmg) : ''); }
+        }
+        if(st.active && (phase === 'gather' || phase === 'live') && !G.joined) html += '<br><button id="siegeJoinBtn" style="margin-top:6px;padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.4);background:#7a1f2b;color:#fff;font:12px system-ui;cursor:pointer">⚔️ Join the siege</button>';
+        else if(G.joined) html += '<br>⚔️ You are in the fight';
+        el.innerHTML = html;
+        var btn = document.getElementById('siegeJoinBtn');
+        if(btn) btn.addEventListener('click', function(){ G.join(); });
+      }
+    };
+    G.start = S.nextStart(Date.now(), {});
+    setInterval(function(){ G._tick(); }, 5000); G._tick();
+    console.log('[siege] on (?siege=1): next siege ' + new Date(G.start).toUTCString() + ', gate ' + G.min + ' players');
+  }).catch(function(e){ console.warn('[siege] load failed', e && e.message); });
+}, 1000);
+})();
 // ── HIT FEEDBACK + GADGETS (world-hitfx.js / world-gadgets.js): hit marker, damage numbers, hurt arc; radar / binoculars / jetpack / scent-away ──
 (function bootFeedback(){ let n = 0; const iv = setInterval(function(){ if(++n > 400){ clearInterval(iv); return; }
   if(!window.__loadPlayable || !window.__mobs || !window.WorldHitFX || !window.WorldGadgets) return; clearInterval(iv);
@@ -5629,6 +6214,23 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyT' || e.repeat) retur
   console.info('[city-layout] building with roads=' + (window.__cityLayout.roads ? window.__cityLayout.roads.length : 0));
   _loadScript('/world-city-layout.js?v=20261115a').then(function(){ if(window.WorldCityLayout){ window.__cityLayoutView = window.WorldCityLayout.build({ THREE, scene, U: V4_U, heightAt: _v4T.heightAt, layout: window.__cityLayout }); console.info('[city-layout] build done'); } else { console.warn('[city-layout] WorldCityLayout not defined'); } })
     .catch(function(e){ console.warn('[city-layout] build failed:', e && e.message); }); }, 1000); })();
+// GRID CITY BUILDER (WAVE2, issue #6; V2 = C-5): the designed Grid city (grid-city-v4.json — 318 buildings)
+// gets built as geometry, phased in after spawn via the same __loadPlayable gate as the other deferred
+// builders so boot time does not regress. V2 (default): the FULL city in 250 m cells with per-tier
+// instanced sets — per-cell bounding spheres + frustum culling, full/proxy/hidden bands reassigned at
+// ~6.7x/s with hysteresis (world-city-builder.js buildCells; the cells are C-6 PVS-lite's input).
+// ?citycells=0 falls back to the exact v1 spawn-district build (<=700 m of origin, 4 InstancedMeshes).
+// ?citybuilder=0 off entirely. (world-grid-city-v4.js stays unwired — superseded; this is a new consumer.)
+(function bootCityBuilder(){ if(/[?&]citybuilder=0\b/.test(location.search)){ window.__cityBuilderDone = true; return; } let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); window.__cityBuilderDone = true; return; }
+  if(!window.__loadPlayable || !worldTerrain || !worldTerrain.heightAt || (MAP_V4 && !_v4T)) return; clearInterval(iv);
+  Promise.all([_loadScript('/world-city-builder.js?v=20261116a').then(function(){ return _loadScript('/world-pvs-lite.js?v=20261116a').catch(function(){ /* C-6 PVS-lite is optional: the city builds without it */ }); }), fetch('/assets/world/grid-city-v4.json').then(function(r){ return r.json(); })]).then(function(r){
+    if(!window.WorldCityBuilder) return; const hAt = function(x, z){ return worldTerrain.heightAt(x, z); };
+    if(/[?&]citycells=0\b/.test(location.search) || !window.WorldCityBuilder.buildCells){ const B0 = window.WorldCityBuilder.build({ THREE, scene, plan: r[1], U: V4_U, heightAt: hAt, radiusM: 700 });
+      if(B0){ window.__gridCity = B0; console.info('[city-builder] spawn district:', B0.stats.buildings, 'buildings,', B0.stats.tiers, 'tiers,', B0.stats.lamps, 'lamps,', B0.stats.drawCalls, 'draw calls'); } window.__cityBuilderDone = true; return; }
+    const B = window.WorldCityBuilder.buildCells({ THREE, scene, plan: r[1], U: V4_U, heightAt: hAt });
+    if(B){ window.__gridCity = B; console.info('[city-builder] celled city:', B.stats.cells, 'cells,', B.stats.tiers, 'tiers,', B.stats.lamps, 'lamps,', B.stats.visibleDrawCalls, 'visible draw calls at spawn (max ' + B.stats.drawCallsMax + ', naive ' + B.stats.naiveDrawCalls + ')');
+      setInterval(function(){ try{ if(playerPos) B.update(playerPos.x, playerPos.z); }catch(e){} }, 150); }
+    window.__cityBuilderDone = true; }).catch(function(e){ console.warn('[city-builder]', e && e.message); window.__cityBuilderDone = true; }); }, 1000); })();
 // DISTRICT SIGNS (2026-10-16): holo pylon per Grid district + a toast when you cross into one (world-districts.js, data = Blender-authored districts-v1.json)
 (function bootDistricts(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; }
   if(!window.__loadPlayable || !_v4T || !_v4T.heightAt) return; clearInterval(iv);
@@ -5645,9 +6247,15 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyT' || e.repeat) retur
   // CITY CIRCUITS (S2.2): quarter-loop / grid-ring fly over the towers — deck clears building tops (grid-city-v4.json tiers) by 12 m.
   // The 2 m height raster takes ~2-4 s to build, so it is only built when a city circuit is requested (TODO: move into a Worker).
   const needCity = ids.some(function(c){ return c === 'quarter-loop' || c === 'grid-ring' || /^(meridian-(8|tri)|grand-course)/.test(c); });
-  const loadCH = function(){ return _loadScript('/world-city-heights.js?v=20261009c').then(function(){ return fetch('/assets/world/grid-city-v4.json'); })
-    .then(function(r){ return r.json(); }).then(function(plan){ return _bootT('city-heights', function(){ return window.WorldCityHeights.build({ plan: plan, U: V4_U, cell: 2 }); }); })
-    .catch(function(e){ console.warn('[race-track] city heights off:', e && e.message); return null; }); };
+  // WAVE2 (issue #4): the height raster used to be built synchronously inside this promise chain — a 2-4 s
+  // main-thread block landing right after a race click. It is now (a) built with WorldCityHeights.buildAsync
+  // (time-sliced, yields every ~8 ms), (b) memoised so boot / prebuild / race-start share ONE build, and
+  // (c) prebuilt during idle after spawn (below), so a city-race click normally finds it already done.
+  let _chP = null;
+  const loadCH = function(){ if(_chP) return _chP; _chP = _loadScript('/world-city-heights.js?v=20261115a').then(function(){ return fetch('/assets/world/grid-city-v4.json'); })
+    .then(function(r){ return r.json(); }).then(function(plan){ return _bootT('city-heights', function(){ return window.WorldCityHeights.buildAsync ? window.WorldCityHeights.buildAsync({ plan: plan, U: V4_U, cell: 2 }) : window.WorldCityHeights.build({ plan: plan, U: V4_U, cell: 2 }); }); })
+    .then(function(CH){ if(CH) window.__cityHeights = CH; return CH; })
+    .catch(function(e){ console.warn('[race-track] city heights off:', e && e.message); return null; }); return _chP; };
   const cityH = !needCity ? Promise.resolve(null) : loadCH();
   Promise.all([import('three/addons/utils/BufferGeometryUtils.js'), cityH]).then(function(res){ const BGU = res[0], CH = res[1];
     window.__raceTracks = {}; window.__cityHeights = CH;
@@ -5664,6 +6272,10 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyT' || e.repeat) retur
     }); }catch(e){ console.warn('[race-track] ' + cid + ' failed', e && e.message); } };
     window.__raceBuild = { build: buildCircuit, loadCH: loadCH, BGU: BGU };
     ids.forEach(function(cid){ buildCircuit(cid, CH); });
+    // WAVE2 (issue #4): idle prebuild of the city-heights raster after spawn — bootRaceTrack only runs once
+    // __loadPlayable, so this never competes with the loader; the sliced build keeps each chunk ~8 ms.
+    if(!window.__cityHeights){ const _pre = function(){ loadCH(); };
+      if(window.requestIdleCallback) requestIdleCallback(_pre, { timeout: 10000 }); else setTimeout(_pre, 5000); }
     ['meridian-8', 'meridian-8b'].forEach(function(p){ const t = window.__raceTracks[p]; if(t) ['-lobe-n', '-lobe-s'].forEach(function(sx){ window.__raceTracks[p + sx] = t; }); });   // short laps ride the full 8's deck
     D.raceTracks = window.__raceTracks;
   }).catch(function(e){ console.warn('[race-track] off:', e && e.message); }).then(function(){ window.__raceTrackDone = true; });
@@ -5864,13 +6476,13 @@ window.__travel = {
       window.__ensureRaceTracks = function(list){ return new Promise(function(res){ try{ const T = window.__raceTracks || (window.__raceTracks = {}), B = window.__raceBuild; if(!B) return res(false);
         let base = []; list.forEach(function(c){ const b = c.replace(/-lobe-[ns]$/, ''); if(base.indexOf(b) < 0) base.push(b); });
         if(base.indexOf('meridian-8b') >= 0 && base.indexOf('meridian-8') < 0 && !T['meridian-8']) base.unshift('meridian-8');
-        const todo = base.filter(function(c){ return !T[c] && /^(meridian-(8|tri)|grand-course)/.test(c); }); if(!todo.length) return res(true);
+        const todo = base.filter(function(c){ return !T[c] && /^(quarter-loop|grid-ring|meridian-(8|tri)|grand-course)/.test(c); }); if(!todo.length) return res(true);
         const pre = window.__cityHeights ? Promise.resolve(window.__cityHeights) : B.loadCH();
         pre.then(function(CHx){ window.__cityHeights = CHx; todo.forEach(function(c){ if(!T[c]) B.build(c, CHx); });
           ['meridian-8', 'meridian-8b'].forEach(function(p){ if(T[p]) ['-lobe-n', '-lobe-s'].forEach(function(sx){ T[p + sx] = T[p]; }); });
           const D = window.__w3dDebug; if(D) D.raceTracks = T; res(true); }).catch(function(){ res(false); }); }catch(e){ res(false); } }); };
       window.__raceStart = function(cid, o){
-        if(/^(meridian-(8|tri)|grand-course)/.test(cid) && !(window.__raceTracks && window.__raceTracks[cid])){
+        if(/^(quarter-loop|grid-ring|meridian-(8|tri)|grand-course)/.test(cid) && !(window.__raceTracks && window.__raceTracks[cid])){
           if(window.Navi && window.Navi.toast) window.Navi.toast('Building the track...');
           window.__ensureRaceTracks([cid]).then(function(ok){ if(ok) window.__raceStartNow(cid, o); else if(window.Navi && window.Navi.toast) window.Navi.toast('Track failed to build'); });
           return true;
@@ -5951,10 +6563,16 @@ function animate(){
     if(window.__mergeArm == null) window.__mergeArm = performance.now();
     else if(performance.now() - window.__mergeArm > (window.__staticMergeN === 1 ? 8000 : window.__staticMergeN === 2 ? 40000 : 100000)) _bootT('static-merge', _staticMerge);
   }
+  if(window.__loadPlayable && !/[?&]freezestatic=0/.test(location.search)){   // C-4: generalized static-matrix freeze, armed like the merge pass (+8 s / +40 s / +100 s after playable); passes are traverse-only (no geometry work), so all 3 run by default — later passes catch streamed-in placeables
+    if(window.__freezeArm == null) window.__freezeArm = performance.now();
+    else if((window.__freezeStaticN || 0) < 3 && performance.now() - window.__freezeArm > [8000, 40000, 100000][window.__freezeStaticN || 0]) _bootT('static-freeze', _freezeStaticPass);
+  }
   _updateGovernor(dt);   // FPS governor: auto-adjusts pixelRatio/bloom/cullR every frame (cheap EMA)
+  if(_DYNRES_ON) _DynRes.sample(dt * 1000);   // WAVE3 JOB 4: adaptive resolution inside the tier (?dynres=0 = never called, original path)
   // SKY-DIVE SPAWN: drives portal markers + the sky/descent camera. While animating it OWNS the camera.
   if(worldSpawn) worldSpawn.update(dt, clock.elapsedTime);
   if(_elevators) _elevators.update(dt, clock.elapsedTime);   // moving platforms carry the player + set elevator groundY
+  if(window.WorldPVS) window.WorldPVS.update(camera);   // C-6 PVS-lite: hides raster-proven-invisible low cells (500 ms / 10 m gates inside; fails open)
   if(_elevators){
     if(_elevators.isRiding()){ _liftPrompt.style.display='block'; _liftPrompt.textContent='◘ RIDING — walk off the pad to step off'; }
     else if(_elevators.nearestInfo){ const _ni=_elevators.nearestInfo(playerPos.x, playerPos.z);
@@ -6010,6 +6628,7 @@ function animate(){
       if(!_o){ _o = document.createElement('div'); _o.id = 'uwOverlay'; _o.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:5;background:rgba(11,76,107,0.32);mix-blend-mode:multiply;display:none;transition:opacity .4s'; document.body.appendChild(_o); }
       _o.style.display = _under ? 'block' : 'none'; } }
   if(window.__combatMusic) window.__combatMusic.update(dt);
+  if(window.__orphanTicks){ for(var _oi = 0; _oi < window.__orphanTicks.length; _oi++){ try{ window.__orphanTicks[_oi](dt); }catch(e){ console.warn('[orphans] tick failed, dropping it', e && e.message); window.__orphanTicks.splice(_oi, 1); _oi--; } } }   // ORPHANS: per-frame hooks registered by the ?weapons=1 / ?combat=1 / ?fishing=1 boots (one fn per system, dropped on error like the other systems above)
   if(window.__crowd && !(_interiors && _interiors.isInside())){ try{ window.__crowd.update(dt); }catch(e){ console.warn('[crowd] disabled after error', e && e.message); window.__crowd = null; } }   // citizens
   if(window.__skateJam){ try{ window.__skateJam.update(dt); }catch(e){ console.warn('[skatejam] disabled after error', e && e.message); window.__skateJam = null; } }   // skate jam run + hoverboard HUD (speed lines, stamina)
   if(window.__raceChallenge){ try{ window.__raceChallenge.update(dt); }catch(e){ console.warn('[racechallenge] disabled after error', e && e.message); window.__raceChallenge = null; } }   // challenge races: countdown, rivals, checkpoints, payout   // MOUNTS (world-mount-ride.js)
@@ -6098,6 +6717,17 @@ _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY(
       // Use world-collision.js as the single source of truth (fully-solid, shape-aware colliders
       // built from WORLD_LAYOUT). Entry is via door + cutscene, not walking through the wall.
       if (!_pctlOn) { if (window.WORLD_RESOLVE_POS) window.WORLD_RESOLVE_POS(playerPos); else _resolveBuildingCollision(); }
+      // VEHICLE COLLISION (P1-8): ground mounts resolve against the same collider set as
+      // on-foot movement. Flying mounts are exempt: colliders are XZ-only, and a dragon
+      // above the roofs must not be pushed around by footprints below it.
+      // ?vehcollide=0 = pre-fix behaviour.
+      if (!/[?&]vehcollide=0/.test(location.search) && window.WORLD_RESOLVE_POS) {
+        var _mounted = (typeof veh !== 'undefined' && veh && veh.mode) || (typeof hover !== 'undefined' && hover && hover.isRiding && hover.isRiding());
+        if (_mounted) {
+          var _gy = window.WORLD_HEIGHT_AT ? window.WORLD_HEIGHT_AT(playerPos.x, playerPos.z) : 0;
+          if (playerPos.y - _gy < 3) window.WORLD_RESOLVE_POS(playerPos);
+        }
+      }
       // ── ANTI-FALL EDGE CLAMP (owner: "you can fall off structures / between walls") ──
       // Elevated Sky-Nexus arrival decks, skybridges and the SHADDAI temple island are walkable floors
       // exposed only through _elevators.groundY() (deck footprint lives in world-elevators.js). They have NO
@@ -6123,7 +6753,9 @@ _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY(
       }
     }
   } else {
-    if (_pctlOn && _pctlWasOn) { _pctlOut = _pctl.step(dt, {}, Math.atan2(fwd.x, fwd.z)); playerPos.set(_pctlOut.pos.x, _pctlOut.pos.y, _pctlOut.pos.z); _vel.x = _pctlOut.vel.x; _vel.z = _pctlOut.vel.z; }
+    if (_pctlOn && _pctlWasOn) { const _cpU = _pctl.getPos();   // 2026-11-15 wave1 fix 5: this unlocked branch never resynced _pctl — its internal pos stays frozen at the mount point for the whole ride (its step is gated off while riding), so the first unlocked step after dismount stamped the mount point back into playerPos = teleport to where you got on. The same stale step hit MAP travel and every external teleport made while unlocked. Mirror the locked branch's divergence guard before stepping.
+      if (Math.abs(playerPos.x-_cpU.x) + Math.abs(playerPos.z-_cpU.z) > 1e-3) _pctl.setPos(playerPos.x, playerPos.y, playerPos.z);
+      _pctlOut = _pctl.step(dt, {}, Math.atan2(fwd.x, fwd.z)); playerPos.set(_pctlOut.pos.x, _pctlOut.pos.y, _pctlOut.pos.z); _vel.x = _pctlOut.vel.x; _vel.z = _pctlOut.vel.z; }
     _vel.x *= Math.max(0, 1 - dt*12);   // no input / not locked: coast to a stop, don't freeze mid-stride
     _vel.z *= Math.max(0, 1 - dt*12);
   }
@@ -6235,6 +6867,19 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
     _camTarget.set(playerPos.x - fwd.x*(8*_PLAYER_EYE_K), baseY - _pDip + eye + 2.2*_PLAYER_EYE_K, playerPos.z - fwd.z*(8*_PLAYER_EYE_K));
     if(camera.position.distanceToSquared(_camTarget) > 1600) camera.position.copy(_camTarget);   // >40u = teleport → snap
     else camera.position.lerp(_camTarget, 1 - Math.exp(-9*dt));
+    // CAMERA COLLISION (P1-8): walk the head→camera segment in XZ; stop at the last
+    // sample that is not inside a collider, so the follow cam never sits inside a wall.
+    // ?camcollide=0 = pre-fix behaviour.
+    if (!/[?&]camcollide=0/.test(location.search) && window.WORLD_COLLIDES) {
+      var _hx = playerPos.x, _hz = playerPos.z;
+      var _cx = camera.position.x, _cz = camera.position.z;
+      if (window.WORLD_COLLIDES(_cx, _cz)) {
+        var _t = 0.95;
+        while (_t > 0.1 && window.WORLD_COLLIDES(_hx + (_cx - _hx) * _t, _hz + (_cz - _hz) * _t)) _t -= 0.05;
+        camera.position.x = _hx + (_cx - _hx) * _t;
+        camera.position.z = _hz + (_cz - _hz) * _t;
+      }
+    }
     playerAvatar.visible=!veh.mode;
     if (_feetY !== null) playerAvatar.position.set(_pctlOut.renderPos.x, _feetY, _pctlOut.renderPos.z); else playerAvatar.position.set(playerPos.x,baseY,playerPos.z);   // FEET ON THE GROUND (was the eased camera height)
     { const _yt=(window.WorldSit && window.WorldSit.yaw()!=null) ? window.WorldSit.yaw() : (_pctlActive && (_pctlOut.state==='roll'||_pctlOut.state==='climb')) ? _pctlOut.facing : Math.atan2(fwd.x, fwd.z);   // ease facing toward the look direction (model faces -Z) — no snap-turn
@@ -6684,6 +7329,38 @@ animate();
     const ready = I && window.__worldBuilt && (!sp || sp.offsetParent===null) && window.__spawnBusy===false;
     _landed = ready ? _landed+1 : 0;                         // must stay landed ~1.2 s (sky-dive fully over) before entering
     if(_landed>=2){ clearInterval(_t); if(!I.isInside()) I.enter('COLOSSEUM'); } }, 600); }
+  // ?room=athenaeum|council|forge — the Athenaeum page's other "In the World" links
+  // (athenaeum.html). These were NOT handled at all — only colosseum + the three
+  // camera pins below were — so the Halls links silently dropped the player at the
+  // default plaza spawn (the founder's 'glitched Halls' screenshots, 2026-11-15:
+  // bazaar-entrance spawn + intro camera inside the plaza disc). Land the PLAYER
+  // (not a camera pin) at a viewpoint facing the destination, reusing the colosseum
+  // branch's landed-wait so we never teleport mid-sky-dive.
+  if(_rm==='athenaeum'||_rm==='council'||_rm==='forge'){
+    const _dest3 = function(){
+      if(_rm==='athenaeum'){
+        const mk=(window.__markers||[]).find(function(m){ return m && m.name==='CLASS_01'; });
+        return { x: mk ? mk.pos.x : 3958.8, z: mk ? mk.pos.z : -3117.6, inset: 150 };   // same CLASS_01 fallback as bootAcademyExterior
+      }
+      const _s3=(window.WORLD_LAYOUT&&window.WORLD_LAYOUT.sector&&window.WORLD_LAYOUT.sector(_rm==='council'?'SHADDAI':'NEXUS'));
+      const _p3=_s3 && _s3.pos;
+      return _p3 ? { x:_p3[0], z:_p3[1], inset: 60 } : null;
+    };
+    let _landed3=0; const _t3=setInterval(()=>{
+      const sp3=document.getElementById('spawnPicker');
+      const ready3 = window.__worldBuilt && (!sp3 || sp3.offsetParent===null) && window.__spawnBusy===false;
+      _landed3 = ready3 ? _landed3+1 : 0;                 // must stay landed ~1.2 s (sky-dive fully over), same gate as ?room=colosseum
+      if(_landed3>=2){ clearInterval(_t3);
+        const d3=_dest3(); if(!d3) return;
+        const len3=Math.hypot(d3.x, d3.z);
+        const vx = len3>1 ? d3.x - (d3.x/len3)*d3.inset : d3.x;
+        const vz = len3>1 ? d3.z - (d3.z/len3)*d3.inset : d3.z + d3.inset;
+        playerPos.x = vx; playerPos.z = vz;
+        if(_v4T && _v4T.heightAt) playerPos.y = _v4T.heightAt(vx, vz) + 1;
+        if(_pctl && _pctl.setPos) _pctl.setPos(playerPos.x, playerPos.y, playerPos.z);
+      }
+    }, 600);
+  }
   if(_rm==='observatory'||_rm==='library'||_rm==='museum'){
     const _L3=window.WORLD_LAYOUT||{};
     const _sec3=(c)=>(_L3.sector&&_L3.sector(c)&&_L3.sector(c).pos)||null;

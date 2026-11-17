@@ -5,6 +5,13 @@
 const express = require('express');
 const router = express.Router();
 
+// Deterministic revalidation for polled GETs (BACKEND_PERF §7 item 4):
+// Express already emits an ETag for these JSON responses; adding
+// Cache-Control: private, no-cache makes browsers revalidate (→ 0-byte
+// 304 when unchanged) instead of falling back to heuristic freshness.
+// Off-switch: SHADDAI_API_NOCACHE_HDR=0.
+const polledJson = (res) => { if (process.env.SHADDAI_API_NOCACHE_HDR !== '0') res.set('Cache-Control', 'private, no-cache'); };
+
 const TTL = 60 * 1000;                    // 60s cache (CoinGecko free is rate-limited)
 const cache = new Map();                  // key -> { at, data }
 const CG = 'https://api.coingecko.com/api/v3';
@@ -25,6 +32,7 @@ async function cached(key, url, ttl) {
 
 // ── candlesticks ──
 router.get('/api/markets/ohlc', async (req, res) => {
+  polledJson(res);
   const sym = String(req.query.symbol || 'btc').toLowerCase();
   const id = SYMBOLS[sym] || (Object.values(SYMBOLS).includes(sym) ? sym : 'bitcoin');
   try {
@@ -39,6 +47,7 @@ router.get('/api/markets/ohlc', async (req, res) => {
 
 // ── ticker strip ──
 router.get('/api/markets/tickers', async (req, res) => {
+  polledJson(res);
   const ids = (req.query.ids ? String(req.query.ids).split(',').map(s => SYMBOLS[s.toLowerCase()] || s) : Object.values(SYMBOLS)).slice(0, 12).join(',');
   try {
     const raw = await cached('tickers:' + ids, `${CG}/coins/markets?vs_currency=usd&ids=${ids}&price_change_percentage=24h`);
@@ -63,6 +72,7 @@ function rssItems(xml) {
   return items;
 }
 router.get('/api/news/crypto', async (req, res) => {
+  polledJson(res);
   try {
     const data = await (async () => {
       const hit = cache.get('news');

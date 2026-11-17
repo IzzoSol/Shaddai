@@ -1,10 +1,14 @@
 /* ══════════════════════════════════════════════════════════════════
    SHADDAI — THEME SWITCHER  (theme-switcher.js)
-   The 6 dashboard skins already exist in CSS as html[data-theme-skin="…"]
-   but nothing ever SET or PERSISTED the attribute — so they were never
-   actually switchable. This wires them up: a floating picker + persistence,
-   and exposes window.setThemeSkin(name) so the Command Hub / Settings can
-   drive the SAME system. Self-contained, null-safe.
+   DASHLEFT #7 — ONE skin system: this file no longer keeps its own key or
+   its own skin list. The canonical list lives in the head loader
+   (window.SHADDAI_SKIN_IDS, 16 skins, all with real CSS); the single
+   storage key is 'shaddai_skin'; the single writer is window.setShaddaiSkin
+   (head version, holo-aware via the shd-holo.js wrapper). This module's job
+   is the floating picker + the force-paint layer for hardcoded/inline
+   colours (PAL) — it delegates all state to setShaddaiSkin and only paints.
+   Skins without a PAL entry (holo) get clearForce() instead, so their own
+   CSS shows through unflattened.
    ══════════════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
@@ -16,9 +20,20 @@
     { id: 'brutalist', name: 'Brutalist', dot: '#f5c000' },
     { id: 'serif', name: 'Serif', dot: '#3a6b4a' },
     { id: 'void', name: 'Void', dot: '#e8e8e8' },
-    { id: 'amber', name: 'Amber', dot: '#ffb000' }
+    { id: 'amber', name: 'Amber', dot: '#ffb000' },
+    { id: 'dusk', name: 'Neon Dusk', dot: '#ff2fd6' },
+    { id: 'solar', name: 'Solar', dot: '#00e488' },
+    { id: 'parchment', name: 'Parchment', dot: '#dd6b3a' },
+    { id: 'holo', name: 'Holo', dot: '#5fe0ff' },
+    { id: 'ember', name: 'Ember', dot: '#ff7a2f' },
+    { id: 'royal', name: 'Royal', dot: '#b07cff' },
+    { id: 'tide', name: 'Tide', dot: '#5fe0ff' },
+    { id: 'frost', name: 'Frost', dot: '#3d5bd9' },
+    { id: 'linen', name: 'Linen', dot: '#1f7a52' },
+    { id: 'bone', name: 'Bone', dot: '#a8821f' }
   ];
-  var KEY = 'shd_theme_skin';
+  var KEY = 'shaddai_skin'; // DASHLEFT #7: the ONE key (was 'shd_theme_skin')
+  var LIGHT = (window.SHADDAI_LIGHT_SKINS || ['brutalist', 'serif', 'frost', 'linen', 'bone']);
 
   function saved() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
 
@@ -33,9 +48,43 @@
     brutalist:{ bg: '#f5f4f0', panel: '#ffffff', text: '#0a0804', muted: '#5a5248', border: 'rgba(10,8,4,.18)' },
     serif:    { bg: '#f8f6f0', panel: '#ffffff', text: '#1c1710', muted: '#6b5f4e', border: 'rgba(38,28,8,.10)' },
     void:     { bg: '#000000', panel: '#080808', text: '#f2f2f2', muted: '#8f8f8f', border: 'rgba(255,255,255,.10)' },
-    amber:    { bg: '#0a0600', panel: '#120c02', text: '#ffcf7a', muted: 'rgba(255,176,32,.65)', border: 'rgba(255,176,32,.22)' }
+    amber:    { bg: '#0a0600', panel: '#120c02', text: '#ffcf7a', muted: 'rgba(255,176,32,.65)', border: 'rgba(255,176,32,.22)' },
+    // DASHLEFT #7: PAL extended to the newly admitted skins (values = the CSS token sets).
+    // holo deliberately has NO entry — its glass CSS must not be flattened by flat paint.
+    dusk:     { bg: '#07021a', panel: '#100530', text: '#fdf0ff', muted: '#c8a8f0', border: 'rgba(255,110,225,.35)' },
+    solar:    { bg: '#0e1109', panel: '#161a0e', text: '#f4ffea', muted: '#c8d89a', border: 'rgba(0,228,136,.32)' },
+    parchment:{ bg: '#17110b', panel: '#201810', text: '#faf0da', muted: '#dcc8a4', border: 'rgba(221,107,58,.38)' },
+    ember:    { bg: '#0b0705', panel: '#18100a', text: '#f6ece4', muted: '#c2a08c', border: 'rgba(255,122,47,.20)' },
+    royal:    { bg: '#07060d', panel: '#120f1f', text: '#efeaf8', muted: '#a89bc4', border: 'rgba(176,124,255,.20)' },
+    tide:     { bg: '#04090c', panel: '#0a171f', text: '#e6f4f6', muted: '#8fb3bd', border: 'rgba(95,224,255,.20)' },
+    frost:    { bg: '#eef1f7', panel: '#fbfcfe', text: '#141a26', muted: '#4a5568', border: 'rgba(40,55,90,.18)' },
+    linen:    { bg: '#f2efe4', panel: '#fbfaf5', text: '#15201a', muted: '#4b5b51', border: 'rgba(30,60,45,.18)' },
+    bone:     { bg: '#faf9f6', panel: '#ffffff', text: '#0d0c08', muted: '#4a463c', border: 'rgba(20,18,12,.20)' }
   };
+  // DASHLEFT #7: clearForce() removes the force-paint layer entirely — the
+  // #shd-skin-force rules AND any inline paint on [data-skin-painted]
+  // surfaces. Used for glitch (shipped default, untouched by design) and
+  // for skins with no PAL entry (holo). Previously the glitch branch left
+  // the #shd-skin-force rules in place; those rules are scoped to
+  // html[data-theme-skin] with NO value, so they also applied under holo
+  // and flattened its glass with flat glitch colours on every view switch.
+  function clearForce() {
+    var st = document.getElementById('shd-skin-force');
+    if (st) st.textContent = '';
+    try {
+      document.querySelectorAll('[data-skin-painted]').forEach(function (el) {
+        ['background', 'background-color', 'background-image', 'border-color', 'color'].forEach(function (pr) { el.style.removeProperty(pr); });
+        el.removeAttribute('data-skin-painted');
+      });
+      ['background-color', 'background-image', 'color'].forEach(function (pr) { document.body.style.removeProperty(pr); });
+      document.documentElement.style.removeProperty('background-color');
+    } catch (e) {}
+  }
   function applyForce(id) {
+    // SAFETY: 'glitch' is the shipped default. For it we DON'T repaint — instead we CLEAR
+    // any inline paint we previously added, so the original design (accent cards, gradients)
+    // is 100% untouched. The aggressive repaint only runs for the other, opt-in skins.
+    if (id === 'glitch') { clearForce(); return; }
     var P = PAL[id] || PAL.glitch;
     var st = document.getElementById('shd-skin-force');
     // append to BODY (last in source order) so it beats late-linked stylesheets
@@ -51,7 +100,7 @@
     // bg) and would be unreadable on white. Those inline colors aren't !important, so force
     // readable dark text on painted surfaces (excluding buttons/links, which keep their own
     // contrast) + a faint light outline so text stays crisp.
-    if (id === 'brutalist' || id === 'serif') {
+    if (LIGHT.indexOf(id) !== -1) {
       st.textContent +=
         H + '[data-skin-painted] *:not(button):not(.pri):not(.cl):not(a):not(.mqa-btn){color:' + P.text + ' !important}' +
         H + '[data-skin-painted]{text-shadow:0 1px 0 rgba(255,255,255,.35)}';
@@ -59,20 +108,6 @@
     // The old data-theme system sets body[data-theme="glitch"]{background} which fought
     // the skin. Inline !important on <body> + <html> always wins, and we clear the stale
     // body data-theme so nothing overrides the whole-page background.
-    // SAFETY: 'glitch' is the shipped default. For it we DON'T repaint — instead we CLEAR
-    // any inline paint we previously added, so the original design (accent cards, gradients)
-    // is 100% untouched. The aggressive repaint only runs for the other, opt-in skins.
-    if (id === 'glitch') {
-      try {
-        document.querySelectorAll('[data-skin-painted]').forEach(function (el) {
-          ['background', 'background-color', 'background-image', 'border-color', 'color'].forEach(function (pr) { el.style.removeProperty(pr); });
-          el.removeAttribute('data-skin-painted');
-        });
-        ['background-color', 'background-image', 'color'].forEach(function (pr) { document.body.style.removeProperty(pr); });
-        document.documentElement.style.removeProperty('background-color');
-      } catch (e) {}
-      return;
-    }
     try {
       document.body.removeAttribute('data-theme');
       document.body.style.setProperty('background-color', P.bg, 'important');
@@ -103,12 +138,24 @@
 
   window.setThemeSkin = function (id) {
     if (!SKINS.some(function (s) { return s.id === id; })) id = 'glitch';
-    document.documentElement.setAttribute('data-theme-skin', id);
-    try { applyForce(id); } catch (e) {}
-    // Cards/panels are re-rendered after a view switch (wiping the inline paint), so
-    // re-apply a couple beats later to catch freshly-rendered surfaces.
-    [250, 800].forEach(function (t) { setTimeout(function () { try { applyForce(id); } catch (e) {} }, t); });
-    try { localStorage.setItem(KEY, id); } catch (e) {}
+    // DASHLEFT #7: single writer — state (key + attribute + .skin-opt
+    // reflection) goes through window.setShaddaiSkin; this function only
+    // adds the force-paint layer on top of it.
+    if (typeof window.setShaddaiSkin === 'function') window.setShaddaiSkin(id);
+    else {
+      document.documentElement.setAttribute('data-theme-skin', id);
+      try { localStorage.setItem(KEY, id); } catch (e) {}
+    }
+    if (PAL[id]) {
+      try { applyForce(id); } catch (e) {}
+      // Cards/panels are re-rendered after a view switch (wiping the inline paint), so
+      // re-apply a couple beats later to catch freshly-rendered surfaces.
+      [250, 800].forEach(function (t) { setTimeout(function () { try { applyForce(id); } catch (e) {} }, t); });
+    } else {
+      // No PAL entry (holo has its own glass CSS) — clear any stale
+      // force-paint so the skin's own rules show through.
+      try { clearForce(); } catch (e) {}
+    }
     // reflect selection in the picker if it's mounted
     document.querySelectorAll('.shd-skin-opt').forEach(function (b) {
       b.classList.toggle('on', b.getAttribute('data-skin') === id);
@@ -129,12 +176,25 @@
         // PERF: the default 'glitch' skin is the untouched original design — nothing to
         // repaint. Skip the querySelectorAll + repaint entirely on every view switch
         // (huge DOM), so switching views stays cheap for everyone on the default skin.
-        try { var id = window.getThemeSkin(); if (id !== 'glitch') { applyForce(id); setTimeout(function () { try { applyForce(id); } catch (e) {} }, 220); } } catch (e) {}
+        // DASHLEFT #7: repaint only for PAL skins; holo (no PAL entry) gets
+        // clearForce() so stale paint from a previous skin can't flatten it.
+        try { var id = window.getThemeSkin(); if (id !== 'glitch' && PAL[id]) { applyForce(id); setTimeout(function () { try { applyForce(id); } catch (e) {} }, 220); } else if (id !== 'glitch') { clearForce(); } } catch (e) {}
         return r;
       };
     } else if ((tries || 0) < 40) { setTimeout(function () { wrapSV((tries || 0) + 1); }, 250); }
   })(0);
 
+  // DASHLEFT #7 — ONE KEY. The old theme-switcher key 'shd_theme_skin' is
+  // retired: adopt its value once (it was the last writer on load, so it IS
+  // the effective skin today), then delete it. From here on only
+  // 'shaddai_skin' is read or written.
+  try {
+    var _legacy = localStorage.getItem('shd_theme_skin');
+    if (_legacy && SKINS.some(function (s) { return s.id === _legacy; })) {
+      try { localStorage.setItem(KEY, _legacy); } catch (e) {}
+    }
+    localStorage.removeItem('shd_theme_skin');
+  } catch (e) {}
   // Apply the saved skin immediately (script is deferred → runs after parse).
   var start = saved(); if (start) window.setThemeSkin(start);
 
@@ -146,7 +206,7 @@
       '#shdSkinDock .fab{width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(12,10,24,.85);color:#efe9ff;cursor:grab;font-size:17px;display:grid;place-items:center;box-shadow:0 6px 20px rgba(0,0,0,.4);backdrop-filter:blur(6px);touch-action:none}' +
       '#shdSkinDock .fab:hover{border-color:rgba(255,255,255,.4)}' +
       '#shdSkinDock .fab.dragging{cursor:grabbing}' +
-      '#shdSkinMenu{position:absolute;left:0;bottom:52px;display:none;flex-direction:column;gap:3px;padding:8px;min-width:172px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(12,10,24,.94);box-shadow:0 10px 34px rgba(0,0,0,.5);backdrop-filter:blur(10px)}' +
+      '#shdSkinMenu{position:absolute;left:0;bottom:52px;display:none;flex-direction:column;gap:3px;padding:8px;min-width:172px;max-height:62vh;overflow-y:auto;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(12,10,24,.94);box-shadow:0 10px 34px rgba(0,0,0,.5);backdrop-filter:blur(10px)}' +
       '#shdSkinDock.open #shdSkinMenu{display:flex}' +
       '#shdSkinMenu .hd{font-family:"IBM Plex Mono",monospace;font-size:8px;letter-spacing:.22em;text-transform:uppercase;color:#9a86c8;padding:2px 6px 6px}' +
       '.shd-skin-opt{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:8px;border:1px solid transparent;background:none;color:#e7ddff;cursor:pointer;font-family:inherit;font-size:12.5px;text-align:left}' +

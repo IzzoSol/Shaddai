@@ -2,8 +2,8 @@
    SHADDAI — RESULTS INBOX
    Renders a "📥 Results Inbox" of saved workflow/agent runs persisted via
    GET/POST/DELETE /api/results. Injects a "📥 Results" button into the
-   home hub bar (#shaddaiHome .hh-bar) and opens a modal listing results.
-   Self-contained, null-safe, never throws.
+   dash Task Receipts card head (anchored on #receiptCountBadge) and opens
+   a modal listing results. Self-contained, null-safe, never throws.
    ══════════════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
@@ -160,21 +160,28 @@
       p.setAttribute('aria-hidden', 'true');
     }
 
-    // ── inject "📥 Results" button into #shaddaiHome .hh-bar (poll up to 6s) ──
+    // ── inject "📥 Results" button into the dash Task Receipts card head ──
+    // (poll up to 6s). DASHFIX #5: the old mount, #shaddaiHome .hh-bar, exists
+    // on no page, so the poll never matched — and the button it built was
+    // never appended to the DOM either. The Task Receipts card is part of the
+    // dash view's static HTML; its #receiptCountBadge anchors the card head.
     (function injectButton(){
       var tries = 0;
       var timer = setInterval(function(){
         tries++;
         try {
-          var bar = document.querySelector('#shaddaiHome .hh-bar');
+          var badge = document.getElementById('receiptCountBadge');
+          var bar = badge ? badge.parentElement : null;
           if (bar) {
             if (!document.getElementById('shdResults-navBtn')) {
               var btn = document.createElement('button');
               btn.id = 'shdResults-navBtn';
               btn.type = 'button';
-              btn.className = 'hh-btn shdR-navbtn';
+              btn.className = 'btn btn-ghost shdR-navbtn';
+              btn.style.cssText = 'font-size:8px;padding:3px 8px';
               btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M4 13h4l2 3h4l2-3h4"/><path d="M12 3v9m0 0 3-3m-3 3-3-3"/></svg><span>Results</span>';
-              btn.addEventListener('click', open); // owner: Results removed from the hub bar
+              btn.addEventListener('click', open);
+              bar.appendChild(btn);
             }
             clearInterval(timer);
           } else if (tries >= 12) {

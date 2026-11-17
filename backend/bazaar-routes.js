@@ -1,8 +1,8 @@
 // bazaar-routes.js — The Agora: a real marketplace where users list items, trade skills/services,
-// and (hook) request external orders. Buying settles through the x402 SHAD-Credits ledger.
+// and (hook) request external orders. Buying settles in Sparks through economy-service (G-4).
 //   GET  /api/bazaar/list?kind=          → listings (kind: item|skill|service|all)
 //   POST /api/bazaar/list-item {seller,name,kind,price,desc,image}
-//   POST /api/bazaar/buy {id, buyer}     → x402 charge buyer → credit seller (5% fee)
+//   POST /api/bazaar/buy {id, buyer}     → Sparks charge buyer → credit seller (5% fee burned)
 //   DELETE /api/bazaar/:id?user=         → delist (seller or admin)
 //   POST /api/bazaar/order-external {user,store,item,note}  → external fulfillment request (queued)
 const express = require('express');
@@ -20,8 +20,40 @@ const PURCHASES_FILE = path.join(DATA_DIR, 'bazaar-purchases.json'); // pending/
 let x402 = null; try { x402 = require('./x402-routes'); } catch (e) {}
 let adminGate = null; try { adminGate = require('./admin-routes').canManage; } catch (e) {}
 
-const read = () => { try { return JSON.parse(fs.readFileSync(FILE, 'utf8')); } catch (e) { return { listings: [], orders: [] }; } };
-const write = (d) => { try { fs.mkdirSync(path.dirname(FILE), { recursive: true }); fs.writeFileSync(FILE, JSON.stringify(d, null, 2)); } catch (e) {} };
+// In-memory cache (BACKEND_PERF §7 item 3 — the chat-routes.js pattern),
+// layered on the G-5 store (INTEGRATION4 merge): the store is parsed once
+// and served from memory instead of a sync disk read on every request (the
+// list endpoint is polled every 30 s per user). Every mutation flows through
+// write() under withBazaarLock, and write() persists via G-5's
+// writeJSONAtomic AND refreshes the cache in the same tick, so served data
+// and file contents stay identical to the old read-per-request behaviour.
+// G-5's atomic write is kept verbatim — never a plain writeFileSync.
+// Off-switch: SHADDAI_BAZAAR_CACHE=0 makes read() hit the disk every time,
+// exactly the old behaviour.
+let _cache = null;
+const read = () => {
+  if (_cache && process.env.SHADDAI_BAZAAR_CACHE !== '0') return _cache;
+  try { _cache = JSON.parse(fs.readFileSync(FILE, 'utf8')); } catch (e) { if (!_cache) _cache = { listings: [], orders: [] }; }
+  return _cache;
+};
+const write = (d) => { _cache = d; writeJSONAtomic(FILE, d); };
+
+// Serialize every bazaar.json mutation: check-and-set (e.g. "is it sold?") and the
+// write that records it must be one unit, or two buyers can both win the last unit.
+let _bzLock = Promise.resolve();
+function withBazaarLock(fn) { const run = _bzLock.then(fn, fn); _bzLock = run.then(() => {}, () => {}); return run; }
+
+// Identity rule (G-5): an authenticated session IS the identity. A body/query identity
+// that disagrees with the session is a forgery attempt → { mismatch:true }.
+// Unauthenticated requests keep the legacy local/guest behaviour (realm guest mode).
+function bazaarUser(req, provided) {
+  if (req.isAuthenticated && req.userId && req.userId !== 'local') {
+    const p = provided == null ? '' : String(provided);
+    if (p && p !== req.userId) return { mismatch: true };
+    return { user: req.userId };
+  }
+  return { user: String(provided || 'guest') };
+}
 const KINDS = ['item', 'skill', 'service'];
 const FEE_RATE = 0.05; // 5% marketplace fee (mirrors x402-routes)
 
@@ -148,6 +180,10 @@ function findPurchase(reference) { return readPurchases().purchases.find(p => p.
 const API_BASE = () => process.env.RENDER_EXTERNAL_URL || ('http://localhost:' + (process.env.PORT || 8099));
 
 router.get('/api/bazaar/list', (req, res) => {
+  // Deterministic revalidation (BACKEND_PERF §7 item 4): ETag already
+  // emitted; no-cache makes browsers revalidate → 0-byte 304s on unchanged
+  // polls. Off-switch: SHADDAI_API_NOCACHE_HDR=0.
+  if (process.env.SHADDAI_API_NOCACHE_HDR !== '0') res.set('Cache-Control', 'private, no-cache');
   const kind = String(req.query.kind || 'all');
   const db = read();
   let l = db.listings.filter(x => x.status !== 'sold');
@@ -155,46 +191,76 @@ router.get('/api/bazaar/list', (req, res) => {
   res.json({ ok: true, count: l.length, listings: l.slice(0, 100) });
 });
 
-router.post('/api/bazaar/list-item', json, (req, res) => {
+router.post('/api/bazaar/list-item', json, async (req, res) => {
   const { seller, name, kind, price, desc, image } = req.body || {};
+  const _idn = bazaarUser(req, seller);
+  if (_idn.mismatch) return res.status(401).json({ ok: false, error: 'seller does not match session' });
   if (!name) return res.status(400).json({ ok: false, error: 'name required' });
-  const k = KINDS.includes(kind) ? kind : 'item';
-  const db = read();
-  const item = { id: 'bz_' + Date.now().toString(36), seller: String(seller || 'guest').slice(0, 32), name: String(name).slice(0, 80), kind: k, price: Math.max(0, Number(price) || 0), desc: String(desc || '').slice(0, 400), image: image || null, status: 'live', at: Date.now() };
-  db.listings.unshift(item); db.listings = db.listings.slice(0, 500); write(db);
-  res.json({ ok: true, listing: item, total: db.listings.length });
+  return withBazaarLock(async () => {
+    const k = KINDS.includes(kind) ? kind : 'item';
+    const db = read();
+    const item = { id: 'bz_' + Date.now().toString(36), seller: _idn.user.slice(0, 32), name: String(name).slice(0, 80), kind: k, price: Math.max(0, Number(price) || 0), desc: String(desc || '').slice(0, 400), image: image || null, status: 'live', at: Date.now() };
+    db.listings.unshift(item); db.listings = db.listings.slice(0, 500); write(db);
+    res.json({ ok: true, listing: item, total: db.listings.length });
+  });
 });
 
 // settle a purchase through the x402 ledger (reuses the charge logic via internal HTTP-free call)
 router.post('/api/bazaar/buy', json, async (req, res) => {
   const { id, buyer } = req.body || {};
-  const db = read(); const item = db.listings.find(x => x.id === id);
-  if (!item) return res.status(404).json({ ok: false, error: 'listing not found' });
-  if (item.status === 'sold') return res.status(409).json({ ok: false, error: 'already sold' });
-  const user = String(buyer || 'guest');
-  if (user === item.seller) return res.status(400).json({ ok: false, error: "you can't buy your own listing" });
-  // settle via x402 charge: debit buyer, net to seller, 5% fee to treasury (x402-routes does the math)
-  try {
-    const base = process.env.RENDER_EXTERNAL_URL || ('http://localhost:' + (process.env.PORT || 8099));
-    const r = await fetch(base + '/api/x402/charge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user, amount: item.price, reason: 'bazaar: ' + item.name, payee: item.seller }) });
-    const d = await r.json().catch(() => ({}));
-    if (r.status === 402) return res.status(402).json({ ok: false, error: 'Insufficient SHAD-Credits', x402: d.x402 });
-    if (!d.ok) return res.status(502).json({ ok: false, error: 'payment failed' });
-    // items become sold; skills/services stay listed (repeatable)
-    if (item.kind === 'item') { item.status = 'sold'; item.buyer = user; item.soldAt = Date.now(); }
-    write(db);
-    res.json({ ok: true, bought: { id: item.id, name: item.name, price: item.price }, payment: { charged: d.charged, fee: d.fee, balance: d.balance } });
-  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+  const _idn = bazaarUser(req, buyer);
+  if (_idn.mismatch) return res.status(401).json({ ok: false, error: 'buyer does not match session' });
+  return withBazaarLock(async () => {
+    const db = read(); const item = db.listings.find(x => x.id === id);
+    if (!item) return res.status(404).json({ ok: false, error: 'listing not found' });
+    if (item.status === 'sold') return res.status(409).json({ ok: false, error: 'already sold' });
+    const user = _idn.user;
+    if (user === item.seller) return res.status(400).json({ ok: false, error: "you can't buy your own listing" });
+    // settle in Sparks (G-4): debit buyer, net to seller, 5% fee burned (not granted).
+    // Idempotency key ties the spend to this listing+buyer, so a retried buy never
+    // double-charges. Response shape is unchanged from the x402 era.
+    try {
+      const eco = require('./economy-service').getDefault();
+      const price = Number(item.price) || 0;
+      const fee = Math.round(price * FEE_RATE * 100) / 100;
+      const net = Math.round((price - fee) * 100) / 100;
+      const idem = 'bazaar-buy:' + item.id + ':' + user;
+      let bal;
+      if (price > 0) {
+        try {
+          const spent = await eco.spendSparks(user, price, 'bazaar: ' + item.name, idem, { refId: item.id });
+          bal = spent && spent.balance != null ? spent.balance : null;
+        } catch (e) {
+          if (e && (e.name === 'InsufficientFundsError' || /insufficient/i.test(e.message || ''))) {
+            return res.status(402).json({ ok: false, error: 'insufficient_sparks' });
+          }
+          throw e;
+        }
+        if (item.seller && item.seller !== user && net > 0) {
+          await eco.grantSparks(item.seller, net, 'bazaar sale: ' + item.name, idem + ':seller', { refId: item.id });
+        }
+      }
+      if (bal == null) { const b = await eco.getBalance(user); bal = b; }
+      // items become sold; skills/services stay listed (repeatable)
+      if (item.kind === 'item') { item.status = 'sold'; item.buyer = user; item.soldAt = Date.now(); }
+      write(db);
+      res.json({ ok: true, bought: { id: item.id, name: item.name, price: item.price }, payment: { charged: price, fee: fee, balance: bal } });
+    } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+  });
 });
 
-router.delete('/api/bazaar/:id', (req, res) => {
-  const db = read(); const item = db.listings.find(x => x.id === req.params.id);
-  if (!item) return res.status(404).json({ ok: false, error: 'not found' });
-  const user = String(req.query.user || '');
-  const ok = (user && user === item.seller) || (adminGate && adminGate(req.query.world || 'shaddai', user, req.headers['x-admin-token']));
-  if (!ok) return res.status(403).json({ ok: false, error: 'only the seller or an admin can delist' });
-  db.listings = db.listings.filter(x => x.id !== req.params.id); write(db);
-  res.json({ ok: true, delisted: req.params.id });
+router.delete('/api/bazaar/:id', async (req, res) => {
+  return withBazaarLock(async () => {
+    const db = read(); const item = db.listings.find(x => x.id === req.params.id);
+    if (!item) return res.status(404).json({ ok: false, error: 'not found' });
+    const _idn = bazaarUser(req, req.query.user);
+    if (_idn.mismatch) return res.status(401).json({ ok: false, error: 'user does not match session' });
+    const user = _idn.user;
+    const ok = (user && user === item.seller) || (adminGate && adminGate(req.query.world || 'shaddai', user, req.headers['x-admin-token']));
+    if (!ok) return res.status(403).json({ ok: false, error: 'only the seller or an admin can delist' });
+    db.listings = db.listings.filter(x => x.id !== req.params.id); write(db);
+    res.json({ ok: true, delisted: req.params.id });
+  });
 });
 
 // external ordering hook — queues a fulfillment request (groceries / other sites later)
@@ -210,7 +276,7 @@ router.post('/api/bazaar/order-external', json, (req, res) => {
 // ═══════════════════════════════════════════════════════════════════════════
 // UNIFIED PURCHASE FLOW — buy collectibles & forged agents (credits or Solana)
 //   POST /api/bazaar/purchase { itemId, method, buyer }
-//     method:'credits' → settle now via x402 ledger, transfer ownership, done.
+//     method:'credits' → settle now via the Sparks ledger, transfer ownership, done.
 //     method:'sol'     → create a Solana Pay charge, return {url, reference};
 //                        ownership is NOT granted until payment confirms.
 //   GET  /api/bazaar/purchase/:reference → poll Solana Pay status; on 'paid',
@@ -219,25 +285,39 @@ router.post('/api/bazaar/order-external', json, (req, res) => {
 router.post('/api/bazaar/purchase', json, async (req, res) => {
   try {
     const { itemId, method = 'credits', buyer } = req.body || {};
-    const user = String(buyer || 'guest').slice(0, 64);
+    const _idn = bazaarUser(req, buyer);
+    if (_idn.mismatch) return res.status(401).json({ ok: false, error: 'buyer does not match session' });
+    const user = _idn.user.slice(0, 64);
     const desc = resolveItem(itemId);
     if (!desc.sellable) return res.status(desc.reason === 'itemId required' ? 400 : 404).json({ ok: false, error: desc.reason || 'item not available', item: desc.name || null });
     if (user === desc.seller) return res.status(400).json({ ok: false, error: "you can't buy your own item" });
     const price = Math.round((Number(desc.priceCredits) || 0) * 100) / 100;
     if (!(price > 0)) return res.status(400).json({ ok: false, error: 'item has no valid price' });
 
-    // ── Off-chain SHAD-Credits path ──────────────────────────────────────
+    // ── Off-chain Sparks path (G-4: was the x402 SHAD-Credits self-call) ──
     if (method === 'credits') {
       let d = {};
       try {
-        const r = await fetch(API_BASE() + '/api/x402/charge', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user, amount: price, reason: 'bazaar buy: ' + desc.name, payee: desc.seller })
-        });
-        d = await r.json().catch(() => ({}));
-        if (r.status === 402) return res.status(402).json({ ok: false, error: 'Insufficient SHAD-Credits', x402: d.x402 || null });
-        if (!r.ok || !d.ok) return res.status(502).json({ ok: false, error: (d && d.error) || 'payment failed' });
-      } catch (e) { return res.status(502).json({ ok: false, error: 'credit ledger unreachable: ' + e.message }); }
+        const eco = require('./economy-service').getDefault();
+        const fee = Math.round(price * FEE_RATE * 100) / 100;
+        const net = Math.round((price - fee) * 100) / 100;
+        const idem = 'bazaar-purchase:' + desc.id + ':' + user;
+        let bal = null;
+        try {
+          const spent = await eco.spendSparks(user, price, 'bazaar buy: ' + desc.name, idem, { refId: desc.id });
+          bal = spent && spent.balance != null ? spent.balance : null;
+        } catch (e) {
+          if (e && (e.name === 'InsufficientFundsError' || /insufficient/i.test(e.message || ''))) {
+            return res.status(402).json({ ok: false, error: 'insufficient_sparks' });
+          }
+          throw e;
+        }
+        if (desc.seller && desc.seller !== user && net > 0) {
+          await eco.grantSparks(desc.seller, net, 'bazaar sale: ' + desc.name, idem + ':seller', { refId: desc.id });
+        }
+        if (bal == null) { bal = await eco.getBalance(user); }
+        d = { charged: price, fee: fee, balance: bal };
+      } catch (e) { return res.status(502).json({ ok: false, error: 'sparks ledger unreachable: ' + e.message }); }
 
       if (!commitOwnership(desc, user)) {
         // payment went through but transfer failed — surface honestly (do not claim success)

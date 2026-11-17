@@ -117,7 +117,6 @@
       '<button class="cl" onclick="window.open(\'/game.html?embed=office&walk=1' + (o.ownerUserId ? '&uid=' + encodeURIComponent(o.ownerUserId) : '') + '\',\'_blank\')">◈ Enter &amp; walk your office →</button>' +
       '<button class="cl" onclick="window.open(\'/game.html?embed=office' + (o.ownerUserId ? '&uid=' + encodeURIComponent(o.ownerUserId) : '') + '\',\'_blank\')">◇ View from the city</button>' +
       '<button class="cl" onclick="window.open(\'/game.html\',\'_blank\')">🚪 Rooms · 2D World</button>' +
-      '<button class="cl" onclick="window.open(\'/pixel-forge.html\',\'_blank\')">⬡ Forge · Pixel Forge</button>' +
       '</div>' +
       '<div style="font-family:\'IBM Plex Mono\';font-size:10px;color:#9a86c8;margin-top:12px;line-height:1.5">Your office is persistent — the same lot shows up in the shared 2D game. Others visit by permission.</div></div>' +
       '<div class="rsec">Your lot <span class="c">Founders\' Row · pick an open lot to set up / switch</span></div>' +

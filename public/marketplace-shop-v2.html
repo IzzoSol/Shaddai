@@ -195,8 +195,8 @@ body::after{content:"";position:fixed;inset:0;z-index:80;pointer-events:none;opa
 <script src="/sw-heal.js"></script>
 </head>
 <body>
-<script src="/nav.js" data-active="shop" defer></script>
-<style>body{padding-top:56px}</style>
+<!-- surfaces 2026-11-15: the shared /nav.js main-site header was removed from this page —
+     the Bazaar keeps only its own chrome (status bar + bazaar header + back button below). -->
 <div class="stars" id="stars"></div>
 <div class="wrap">
 
@@ -210,7 +210,7 @@ body::after{content:"";position:fixed;inset:0;z-index:80;pointer-events:none;opa
     <div class="hactions">
       <div class="wallet">⚡ <div><span class="amt" id="credN">2,450</span> <span class="lb">credits</span></div></div>
       <div class="row">
-        <a class="btn btn-ghost" href="/" onclick="if(window.self!==window.top){history.back();return false}">← SHADDAI</a>
+        <a class="btn btn-ghost" href="/dashboard" title="Back to the dashboard" onclick="if(history.length>1){history.back();return false}">← Back</a>
         <div class="wchip" id="walletChip" onclick="walletExplain()" title="Optional · non-custodial · Solana devnet (test SOL). Click to see exactly what connecting does."><span class="dot"></span> Connect Wallet <span style="font-size:9px;opacity:.6">ⓘ</span></div>
         <button class="btn btn-cta" onclick="openShop()">▣ Build a Pack</button>
       </div>

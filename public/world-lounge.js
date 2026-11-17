@@ -25,8 +25,8 @@
    * COMMUNITY_TRACKS  ← PLUG-IN POINT FOR REAL COMMUNITY SUBMISSIONS
    * ---------------------------------------------------------------------------
    * These are free, no-key, CORS-friendly seed tracks (SoundHelix). Later this
-   * array will be replaced/augmented by community-submitted tracks fetched from
-   * a backend endpoint (e.g. GET /api/lounge/tracks -> [{title, artist, url}]).
+   * array is replaced at open by GET /api/lounge/tracks (radio catalogue) when
+   * it returns a non-empty list; the seed array below is the offline fallback.
    * Each entry MUST keep the shape: { title, artist, url }.
    *
    * To wire real submissions later: replace `COMMUNITY_TRACKS` with the fetched
@@ -347,6 +347,19 @@
         listEl.appendChild(li);
       });
     }
+    var _tracksLoaded = false;
+    function refreshTracks() {
+      if (_tracksLoaded) return; _tracksLoaded = true;
+      if (/[?&]loungetracks=local/.test(location.search)) return;
+      try {
+        fetch('/api/lounge/tracks').then(function (r) { return r.json(); }).then(function (list) {
+          if (Array.isArray(list) && list.length) {
+            COMMUNITY_TRACKS = list.map(function (t) { return { title: t.title, artist: t.artist, url: t.url }; });
+            renderTrackList();
+          }
+        }).catch(function () { /* offline: seed list stays */ });
+      } catch (e) { /* seed list stays */ }
+    }
     function esc(s) { return String(s).replace(/[&<>"]/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
@@ -654,6 +667,7 @@
       if (openState) return;
       openState = true;
       root.classList.add('zx-on');
+      refreshTracks();
       if (!listEl.children.length) renderTrackList();
       loadCoins(false);
       startViz();

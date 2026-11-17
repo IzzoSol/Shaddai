@@ -19,12 +19,18 @@ function save(db) {
 }
 
 // Stats are computed (read-only) from rarity + equipped tools → feeds Games (Pillar F).
-// Valid 3D architect models (real GLBs at /assets/agents/<KEY>.glb). A forged
-// operative wears one of these in the 3D World; anything else falls back to SHADDAI.
-const VALID_MODELS = ['SHADDAI', 'NEXUS', 'ZEROX', 'ORACLE', 'TURTLE', 'QUILL', 'PIKADON'];
+// Body picks are decided by lib/body-catalog.js (the one catalogue): the 7
+// council GLBs (/assets/agents/<KEY>.glb), the 8 Forge archetype GLBs
+// (model key 'FORGE-<ID>' → /assets/forge-models/<id>-final.glb) and 'PIXEL'.
+// User-facing routes validate with resolveModel() FIRST and answer unknown
+// bodies with an explicit error — a pick is never silently substituted.
+// normModel() below is only the defensive default for internal writers
+// that never carried a user pick (forge-state sync, portrait forge).
+const bodyCatalog = require('./body-catalog');
+const VALID_MODELS = bodyCatalog.COUNCIL_MODELS;
 function normModel(m) {
-  const s = String(m || '').trim().toUpperCase();
-  return (s && /^[A-Z]{2,16}$/.test(s) && VALID_MODELS.includes(s)) ? s : 'SHADDAI';
+  const r = bodyCatalog.resolveModel(m);
+  return (r.ok && r.model) ? r.model : 'SHADDAI';
 }
 
 const RARITY_BASE = { legendary: 90, epic: 70, rare: 55, common: 40 };
@@ -73,6 +79,11 @@ function create(rec = {}) {
     portrait: rec.portrait || null,
     brain: rec.brain || { tier: 'free', brainId: 'ollama-local', persona: '' },
     tools: rec.tools || [],
+    // Forge-time skill selection (academy catalogue ids chosen in the Forge;
+    // distinct from `skills`, which holds academy-EXAM-installed skills as
+    // {skillId, version, hash, receiptId} — see lib/academy/install.js).
+    academySkills: Array.isArray(rec.academySkills) ? rec.academySkills.filter((s) => typeof s === 'string').slice(0, 64) : [],
+    workflows: Array.isArray(rec.workflows) ? rec.workflows.filter((s) => typeof s === 'string').slice(0, 64) : [],
     room: rec.room || { theme: 'neon-loft', scene: null, wearablesLook: rec.look || null },
     inventory: rec.inventory || { files: [], collectables: [], cosmetics: [] },
     economy: rec.economy || { auraEarned: 0, creditsSpent: 0, jobsDone: 0, earnings: 0 },
@@ -114,4 +125,4 @@ function remove(id) {
   return op;
 }
 
-module.exports = { create, get, all, listByOwner, update, remove, computeStats };
+module.exports = { create, get, all, listByOwner, update, remove, computeStats, VALID_MODELS, resolveModel: bodyCatalog.resolveModel, bodyCatalog };

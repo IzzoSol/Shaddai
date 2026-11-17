@@ -58,6 +58,11 @@
   function lazyFrame(host, src, title, tall) {
     if (host.querySelector('iframe')) return;
     host.textContent = '';
+    // surfaces 2026-11-15: every lazy frame gets a visible Close — before this the
+    // Halls / Colosseum / spectate frames replaced their box content with a bare
+    // iframe and there was no way back short of switching tabs.
+    var close = h('button', { type: 'button', class: 'sw-frameclose', text: '✕ Close', title: 'Close this view', onclick: function () { host.textContent = ''; host.appendChild(msg('Closed.', 'dim')); } });
+    host.appendChild(close);
     host.appendChild(h('iframe', { src: src, title: title, class: 'sw-frame' + (tall ? ' tall' : ''), allow: 'fullscreen; pointer-lock', loading: 'lazy' }));
   }
 

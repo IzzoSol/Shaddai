@@ -3,10 +3,20 @@
    Theme: pure black, neon green #00ff88, cyan. Orbitron / Share Tech Mono.
    ══════════════════════════════════════════════════════════════════ */
 
-/* Nav button injected into #shaddaiHome .hh-bar */
-#shaddaiHome .hh-bar .shdR-navbtn {
+/* Nav button injected into the dash Task Receipts card head (DASHFIX #5 —
+   the old #shaddaiHome .hh-bar scope existed on no page, so this never applied) */
+.shdR-navbtn {
   font-family: 'Orbitron', system-ui, sans-serif;
   letter-spacing: .04em;
+}
+.shdR-navbtn svg {
+  width: 11px;
+  height: 11px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  vertical-align: -1px;
+  margin-right: 4px;
 }
 
 /* Overlay */

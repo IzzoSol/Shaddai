@@ -15,6 +15,7 @@
 
 const express = require('express');
 const forge = require('./agent-forge');
+const bodyCatalog = require('./body-catalog');
 
 const router = express.Router();
 
@@ -48,16 +49,21 @@ function ownerOf(req) {
 // never be stationed in the world. Best-effort + non-fatal (same rule as backend/forge/forge-routes.js): a store hiccup never fails
 // the forge. create() upserts by owner+codename, so re-forging the same name updates in place instead of making a ghost duplicate.
 let opStore = null; try { opStore = require('./operatives'); } catch (e) { console.warn('[agent-forge] operatives store unavailable:', e && e.message); }
-const WORLD_MODELS = ['SHADDAI', 'NEXUS', 'ZEROX', 'ORACLE', 'TURTLE', 'QUILL', 'PIKADON'];
-function linkOperative({ owner, agentId, name, archetype, tools, model, source }) {
+function linkOperative({ owner, agentId, name, archetype, tools, model, source, academySkills, workflows }) {
   if (!opStore || typeof opStore.create !== 'function' || !owner || !agentId) return null;
   try {
     const codename = String(name || agentId).toUpperCase().replace(/[^A-Z0-9 _-]/g, '').trim().slice(0, 32) || String(agentId).toUpperCase();
-    const m = String(model || '').toUpperCase();
+    // FORGE REPAIR 2026-11-15: the body pick is canonicalised by the body
+    // catalogue and persists AS PICKED (council, FORGE-<archetype>, PIXEL).
+    // The POST route validates before forging, so an unresolvable pick
+    // never reaches here; with no pick at all the store default applies.
+    const resolved = bodyCatalog.resolveModel(model);
     const op = opStore.create({
       owner, codename, archetype: archetype || source || 'forged', rarity: 'common',
-      model: WORLD_MODELS.includes(m) ? m : 'SHADDAI',
+      ...(resolved.ok && resolved.model ? { model: resolved.model } : {}),
       tools: Array.isArray(tools) ? tools.filter((t) => typeof t === 'string').slice(0, 24) : [],
+      academySkills: Array.isArray(academySkills) ? academySkills.filter((t) => typeof t === 'string').slice(0, 64) : [],
+      workflows: Array.isArray(workflows) ? workflows.filter((t) => typeof t === 'string').slice(0, 64) : [],
       brain: { tier: 'free', brainId: 'agent:' + agentId, persona: '' },   // the brain IS the forged agent (no persona copy, no keys)
     });
     if (op && (op.agentId !== agentId || op.source !== (source || 'forge'))) opStore.update(op.id, { agentId, source: source || 'forge' });
@@ -81,10 +87,49 @@ router.get('/traits', (_req, res) => {
   });
 });
 
+/* The body catalogue for the Forge's body step: the free glow office body,
+   the 7 council GLBs, the 8 Forge archetype GLBs and the pixel body — with
+   the 3D-body entitlement read from the plans table and the CALLER's own
+   entitled flag, so a picker can badge locked bodies honestly instead of
+   discovering the gate at save time. Public like /kits and /traits. */
+router.get('/bodies', (req, res) => {
+  res.json({ ok: true, ...bodyCatalog.catalogue(ownerOf(req)) });
+});
+
+/* The REAL academy catalogue — the same skills the Athenaeum teaches
+   (curriculum seed merged with the live registry, deduped by id). This is
+   what the Forge's skill selection reads; the old static bridge lists are
+   not the catalogue. Public like /kits and /traits. */
+router.get('/skills', (_req, res) => {
+  try {
+    const byId = new Map();
+    const { ENTRIES } = require('./academy/curriculum/entries');
+    for (const e of ENTRIES || []) {
+      const sk = (e && e.skill) || e;   // curriculum entries wrap the skill: { skill, bench, fixtures }
+      if (sk && sk.id) byId.set(sk.id, {
+        id: sk.id, name: sk.name, track: sk.track, tier: sk.tier, teacher: sk.teacher,
+        summary: sk.summary, price_sparks: typeof sk.price_sparks === 'number' ? sk.price_sparks : (sk.tier === 'spark' ? 20 : 60), source: 'academy',
+      });
+    }
+    try {
+      const store = require('./academy/store');
+      const registry = require('./academy/registry');
+      const { publicSkill } = require('../academy-school-routes');
+      for (const s of registry.listSkills(store) || []) {
+        if (s && s.id && !byId.has(s.id)) byId.set(s.id, { ...publicSkill(s), source: 'academy' });
+      }
+    } catch (_) { /* registry unavailable — the curriculum is the catalogue */ }
+    res.json({ ok: true, skills: [...byId.values()] });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: 'academy catalogue unavailable: ' + ((e && e.message) || e) });
+  }
+});
+
 router.get('/mine', requireSignedIn, (req, res) => {
   const mine = forge.listByOwner(ownerOf(req)).map((a) => ({
     id: a.id, name: a.name, emoji: a.emoji, role: a.role, color: a.color,
     kits: a.kits || [], skills: a.skills || [], walletKey: a.walletKey || null,
+    academySkills: a.academySkills || [], workflows: a.workflows || [],
     personaMode: a.personaMode, createdAt: a.createdAt,
   }));
   res.json({ ok: true, agents: mine, count: mine.length });
@@ -92,16 +137,24 @@ router.get('/mine', requireSignedIn, (req, res) => {
 
 router.post('/', requireSignedIn, express.json({ limit: '64kb' }), (req, res) => {
   const spec = Object.assign({}, req.body || {}, { owner: ownerOf(req) });
+  // A body pick is validated BEFORE anything is forged: an unknown body is
+  // an explicit 400 and nothing is created — never a silent substitution.
+  if (spec.model !== undefined && spec.model !== null && String(spec.model).trim() !== '') {
+    const r = bodyCatalog.resolveModel(spec.model);
+    if (!r.ok) return res.status(400).json({ ok: false, error: r.error, validBodies: r.valid });
+    spec.model = r.model;
+  }
   const result = forge.forgeAgent(spec);
   if (!result.ok) return res.status(400).json(result);
 
   const a = result.agent;
-  const operative = linkOperative({ owner: ownerOf(req), agentId: a.id, name: a.name, archetype: a.role, tools: a.skills, model: spec.model, source: 'forge' });
+  const operative = linkOperative({ owner: ownerOf(req), agentId: a.id, name: a.name, archetype: a.role, tools: a.skills, model: spec.model, source: 'forge', academySkills: a.academySkills, workflows: a.workflows });
   res.json({
     ok: true, operative,
     agent: {
       id: a.id, name: a.name, emoji: a.emoji, role: a.role, color: a.color,
       kits: a.kits, skills: a.skills, walletKey: a.walletKey,
+      academySkills: a.academySkills || [], workflows: a.workflows || [],
       personaFile: a.personaFile, personaMode: a.personaMode, createdAt: a.createdAt,
     },
     // What the person can do with it right now, so the UI never has to guess.

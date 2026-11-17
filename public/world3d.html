@@ -266,7 +266,7 @@ function buildTerrain() {
   const pad = new THREE.Mesh(new THREE.CircleGeometry(30, 64), new THREE.MeshStandardMaterial({ map: tex('obsidian-plaza', 16), roughness: 0.3, metalness: 0.4 })); pad.rotation.x = -Math.PI / 2; pad.position.set(420, 0.05, 0); world.add(pad);
   const lava = new THREE.Mesh(new THREE.CircleGeometry(38, 64), new THREE.MeshStandardMaterial({ map: tex('lava-crust', 8), emissive: 0xff2a8a, emissiveMap: tex('lava-crust', 8), emissiveIntensity: 0.6, roughness: 0.6 }));
   lava.rotation.x = -Math.PI / 2; lava.position.set(-190, 0.03, -160); world.add(lava);
-  const dunes = new THREE.Mesh(new THREE.RingGeometry(82, 150, 96), new THREE.MeshStandardMaterial({ map: tex('dunes.png', 26), roughness: 1 })); dunes.rotation.x = -Math.PI / 2; dunes.position.set(420, 0.022, 0); dunes.receiveShadow = true; world.add(dunes);
+  const dunes = new THREE.Mesh(new THREE.RingGeometry(82, 150, 96), new THREE.MeshStandardMaterial({ map: tex('dunes.webp', 26), roughness: 1 })); dunes.rotation.x = -Math.PI / 2; dunes.position.set(420, 0.022, 0); dunes.receiveShadow = true; world.add(dunes);
   const snow = new THREE.Mesh(new THREE.PlaneGeometry(1200, 470), new THREE.MeshStandardMaterial({ map: tex('snow.png', 60), roughness: 0.95 })); snow.rotation.x = -Math.PI / 2; snow.position.set(0, 0.012, -635); snow.receiveShadow = true; world.add(snow);
   [[-300, -500, 26], [120, -560, 34], [-80, -700, 30], [330, -650, 24], [-520, -580, 42]].forEach(([x, z, r]) => { const rk = new THREE.Mesh(new THREE.CircleGeometry(r, 40), new THREE.MeshStandardMaterial({ map: tex('mountain-rock.png', Math.round(r / 6)), roughness: 1 })); rk.rotation.x = -Math.PI / 2; rk.position.set(x, 0.018, z); rk.receiveShadow = true; world.add(rk); });
 }

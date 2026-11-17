@@ -170,8 +170,19 @@
   function loadColor(THREE, base) {
     var loader = new THREE.TextureLoader();
     function load(url) { return new Promise(function (res, rej) { loader.load(url, res, undefined, function () { rej(new Error('404 ' + url)); }); }); }
-    return load(base + 'color.jpg').catch(function () { return load(base + 'color.png'); }).catch(function (e) {
-      console.warn('[terrain-v4] no colour map (' + e.message + ') — flat grey ground'); return null;
+    // LOADING STAGE 7b: bind the 512² placeholder (34,508 B) immediately; swap the full
+    // 2048² map's image into the SAME Texture object when it lands — every material
+    // already holding the texture picks it up on needsUpdate. ?colorlow=0 = the old chain.
+    return load(base + 'color-low.jpg').catch(function () { return null; }).then(function (lowTex) {
+      if (!lowTex || /[?&]colorlow=0/.test(location.search)) {
+        return load(base + 'color.jpg').catch(function () { return load(base + 'color.png'); }).catch(function (e) {
+          console.warn('[terrain-v4] no colour map (' + e.message + ') — flat grey ground'); return null;
+        });
+      }
+      load(base + 'color.jpg').then(function (fullTex) {
+        lowTex.image = fullTex.image; lowTex.needsUpdate = true;
+      }).catch(function () { /* keep the low-res map; it is a valid colour map */ });
+      return lowTex;
     });
   }
 
@@ -229,12 +240,18 @@
     while (MAX_LEVEL < 12 && ROOT / Math.pow(2, MAX_LEVEL) / G > LEAF_SPACING * 1.001) MAX_LEVEL++;
     var DETAIL_TILE = opts.detailTile || 5 * PM;   // 8 m per detail repeat
 
+    // C-9 per-tier anisotropy (FPS_RESEARCH_2.md): AF is the live terrain anisotropy (default 8 =
+    // current behaviour). The host quality tier drives it via api.setAnisotropy() (?af=N pins one
+    // value — see world-main _applyTerrainAF). Layer textures load async, so their callbacks read
+    // AF at load time rather than a hardcoded 8. Detail normal map stays at 4 (out of scope).
+    var AF = 8;
+
     // ── shared material ──────────────────────────────────────────────────────────────────────────────────────
     var colorTex = hm.colorTex;
     if (colorTex) {
       colorTex.colorSpace = THREE.SRGBColorSpace;
       colorTex.wrapS = colorTex.wrapT = THREE.ClampToEdgeWrapping;
-      colorTex.anisotropy = 8; colorTex.needsUpdate = true;
+      colorTex.anisotropy = AF; colorTex.needsUpdate = true;
     }
     var detail = makeDetailNormal(THREE, 256);
     detail.channel = 1;   // WHY channel 1: normal map tiles on the 'uv1' attribute (world/DETAIL_TILE); colour on 'uv' (0..1 footprint)
@@ -270,15 +287,15 @@
         while (RA.length < 10) { RA.push(new THREE.Vector4(0, 0, 0, 0)); RB.push(0); }
         SU.uRA = { value: RA.slice(0, 10) }; SU.uRB = { value: RB.slice(0, 10) }; SU.uTime = { value: 0 };
         var white = new THREE.DataTexture(new Uint8Array([200, 200, 200, 255]), 1, 1); white.needsUpdate = true;
-        var LTEX = { tLava: 'lava-crust.webp', tDune: 'dunes.png', tMoss: 'root-moss-floor.webp', tFrost: 'frost-plates.webp', tRego: 'red-regolith.webp', tObs: 'obsidian-plaza.webp', tHarv: 'harvest-field.webp', tGrass: 'emerald-grass.webp' };
+        var LTEX = { tLava: 'lava-crust.webp', tDune: 'dunes.webp', tMoss: 'root-moss-floor.webp', tFrost: 'frost-plates.webp', tRego: 'red-regolith.webp', tObs: 'obsidian-plaza.webp', tHarv: 'harvest-field.webp', tGrass: 'emerald-grass.webp' };
         var tl = new THREE.TextureLoader(), lbase = opts.base || '/assets/terrain/';
         ['tRipN', 'tRipH'].forEach(function (k) {   // K23 sand ripples (Blender-previewed, kits/_src/k23_sand_ripples.py): 6 m tile, linear data
           SU[k] = { value: white };
-          tl.load(lbase + (k === 'tRipN' ? 'sand_ripple_n.webp' : 'sand_ripple_h.webp'), function (tx) { tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.anisotropy = 8; SU[k].value = tx; }, undefined, function () { console.warn('[terrain-v4] ripple map missing', k); });
+          tl.load(lbase + (k === 'tRipN' ? 'sand_ripple_n.webp' : 'sand_ripple_h.webp'), function (tx) { tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.anisotropy = AF; SU[k].value = tx; }, undefined, function () { console.warn('[terrain-v4] ripple map missing', k); });
         });
         Object.keys(LTEX).forEach(function (k) {
           SU[k] = { value: white };
-          tl.load(lbase + LTEX[k], function (tx) { tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 8; SU[k].value = tx; }, undefined, function () { console.warn('[terrain-v4] layer texture missing', LTEX[k]); });
+          tl.load(lbase + LTEX[k], function (tx) { tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = AF; SU[k].value = tx; }, undefined, function () { console.warn('[terrain-v4] layer texture missing', LTEX[k]); });
         });
       }
       material.customProgramCacheKey = function () { return LAYERS ? 'tv4-splat-layers' : 'tv4-splat'; };
@@ -565,8 +582,22 @@
       stats_.updateMs = t3 - t0; stats_.phaseMs = [t1 - t0, t2 - t1, t3 - t2];   // [select, build+reselect, evict]
     }
 
+    // C-9: set the live terrain anisotropy (colour map + splat layer textures, incl. ones that
+    // load later — their callbacks read AF). Idempotent: a repeat call with the same value is a
+    // no-op, so per-resize tier re-applies never re-upload textures. Returns the applied value.
+    function setAnisotropy(n) {
+      n = Math.max(1, Math.min(16, +n || 8));
+      if (n === AF) return AF;
+      AF = n;
+      var apply = function (tx) { if (tx && tx.isTexture) { tx.anisotropy = n; tx.needsUpdate = true; } };
+      apply(colorTex);
+      if (typeof SU !== 'undefined' && SU) for (var k in SU) apply(SU[k] && SU[k].value);
+      return AF;
+    }
+
     var api = {
       ready: false, mesh: group, material: material, meta: meta, seaLevel: SEA_U, half: HALF, source: hm.src,
+      setAnisotropy: setAnisotropy,   // C-9: per-tier anisotropy, driven by the host quality tier
       setHole: function (x, z, r) { if (!HOLES) return; HOLES.forEach(function (v, i) { if (i === 0) v.set(x, z, r || 0, r ? 1 : 0); else v.set(0, 0, 0, 0); }); },   // one opening (world units); r = 0 closes all
       setHoles: function (list) { if (!HOLES) return; HOLES.forEach(function (v, i) { var h = list && list[i]; if (h && h[2] > 0) v.set(h[0], h[1], h[2], 1); else v.set(0, 0, 0, 0); }); },   // up to 8 [x, z, r]
       heightAt: heightAt, setHeightExtra: function (f) { EXTRA.fn = typeof f === 'function' ? f : null; },
@@ -575,7 +606,7 @@
       addRideExtra: function (f) { if (typeof f === 'function') RIDE.push(f); return function () { var i = RIDE.indexOf(f); if (i >= 0) RIDE.splice(i, 1); }; },
       normalAt: function (x, z, out) { return normalAt(x, z, out); },
       update: update,
-      stats: function () { var s = {}; for (var k in stats_) s[k] = stats_[k]; s.lodCounts = JSON.parse(JSON.stringify(stats_.lodCounts)); return s; },
+      stats: function () { var s = {}; for (var k in stats_) s[k] = stats_[k]; s.lodCounts = JSON.parse(JSON.stringify(stats_.lodCounts)); s.anisotropy = AF; return s; },
       dispose: function () {
         api.ready = false;
         if (group.parent) group.parent.remove(group);

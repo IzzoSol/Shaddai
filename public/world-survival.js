@@ -25,6 +25,7 @@
   try { var j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (j && j.list) saved = j; } catch (e) { }
   function persist() { try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) { } }
   function pp() { return window.__w3dDebug && window.__w3dDebug.playerPos; }
+  function groundY(x, z) { var d = window.__w3dDebug, t = d && (d.terrain || d.terrainV4), h = null; try { if (t && t.heightAt) h = t.heightAt(x, z); } catch (e) { } return (h != null && isFinite(h)) ? h : null; }   // host terrain sampler, via the same __w3dDebug hook pp() uses (world-main sets __w3dDebug.terrain / .terrainV4)
   function toast(m) { if (window.Navi && window.Navi.toast) window.Navi.toast(m); else if (window.__toast) window.__toast(m); }
 
   function bazaar() {
@@ -69,7 +70,8 @@
     return fadeEl;
   }
   function respawn() {
-    var s = active(), p = pp(); if (!p) return; p.x = s.x; p.z = s.z; if (s.y != null) p.y = s.y;
+    var s = active(), p = pp(); if (!p) return; p.x = s.x; p.z = s.z;
+    if (s.y != null) p.y = s.y; else { var gy = groundY(s.x, s.z); if (gy != null) p.y = gy + 0.1; }   // 2026-11-15 wave1 fix 6: respawn was a 2D teleport — spots never carry y (spots()/addSpot()/saveHere() store x/z only), so p.y kept the death-fall height and the player respawned in the sky. Sample the terrain at the spot when it has no y of its own; no sampler -> old behaviour (y untouched).
     state.hp = 100; window.__playerHP = 100; state.breath = 1; state.dive = 0; state.diving = false; state.underwater = false;
     var D = window.__dragons; if (D && D.clearStatus) try { D.clearStatus(); } catch (e) { }
     toast('Respawned at ' + s.name);

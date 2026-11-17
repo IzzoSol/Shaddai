@@ -24,7 +24,6 @@
   // Permanent functional rooms — property modules every office has (cohesion spec).
   var FIXED = [
     { key: 'sanctum', icon: '☰', title: 'Command Sanctum', type: 'sanctum', desc: 'HQ · the 7 core agents', act: function () { go('office'); } },
-    { key: 'pixelforge', icon: '⬡', title: 'Pixel Forge', type: 'forge-room', desc: 'Forge world-facing 2D agents', act: function () { window.location.href = '/pixel-forge.html'; } },
     { key: 'bazaar', icon: '◈', title: 'Bazaar', type: 'shop', desc: 'Showcase & sell — public storefront', act: function () { go('marketplace'); } },
     { key: 'treasury', icon: '◆', title: 'Treasury', type: 'treasury', desc: 'Sparks · reputation · referrals', act: function () { go('settings'); } },
     { key: 'achievements', icon: '🏆', title: 'Achievements', type: 'gallery', desc: 'Wall of wins & impact', act: function () { window.location.href = '/achievements.html'; } }
@@ -146,9 +145,9 @@
 
   function addRoom() {
     // Cohesion: agent rooms come from forging; functional rooms are the fixed modules.
-    var msg = 'Add a room:\n\n1 — Forge a new agent (Pixel Forge → it claims a room)\n2 — Jump to a property module (Bazaar / Treasury / Achievements)\n\nEnter 1 or 2:';
+    var msg = 'Add a room:\n\n1 — Forge a new agent (dashboard Forge → it claims a room)\n2 — Jump to a property module (Bazaar / Treasury / Achievements)\n\nEnter 1 or 2:';
     var v; try { v = window.prompt(msg, '1'); } catch (e) { v = '1'; }
-    if (v === '1') { window.location.href = '/pixel-forge.html'; }
+    if (v === '1') { closePanel(); if (window.showView) showView('forge'); }
     else if (v === '2') { go('marketplace'); }
   }
 

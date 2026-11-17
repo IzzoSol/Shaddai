@@ -374,7 +374,6 @@
       items: [
         { id: 'agent',   name: 'AGENT CREATION', accent: C.gold,    art: '/assets/nav/forge.jpg',  href: '/agent-forge.html',
           blurb: 'Four questions and it is hireable — abilities, a personality or none, a wallet.' },
-        { id: 'pixel',   name: '2D PIXEL',       accent: C.emerald, art: '/assets/nav/forge.jpg',  href: '/pixel-forge.html', blurb: 'Sprites and objects.' },
         { id: 'forge3d', name: '3D SCULPTOR',    accent: C.emerald, art: '/assets/nav/worlds.jpg', href: '/forge-3d.html',    blurb: 'Objects for the 3D realm.' },
       ],
     },

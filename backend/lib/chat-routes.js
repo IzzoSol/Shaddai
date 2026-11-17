@@ -23,6 +23,12 @@ const path    = require('path');
 const crypto  = require('crypto');
 
 const router   = express.Router();
+
+// Deterministic revalidation for the polled chat GET (BACKEND_PERF §7
+// item 4): ETag is already emitted; Cache-Control: private, no-cache makes
+// browsers revalidate (→ 0-byte 304 when unchanged) instead of heuristic
+// freshness. Off-switch: SHADDAI_API_NOCACHE_HDR=0.
+const polledJson = (res) => { if (process.env.SHADDAI_API_NOCACHE_HDR !== '0') res.set('Cache-Control', 'private, no-cache'); };
 const CHAT_FILE = path.join(__dirname, '../data/chat.json');
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -115,6 +121,7 @@ function ts2epoch(s) {
 
 // ── GET /:channel ─────────────────────────────────────────────────────────
 router.get('/:channel', (req, res) => {
+  polledJson(res);
   const { channel } = req.params;
   if (!CHANNEL_RE.test(channel)) {
     return res.status(400).json({ error: 'Invalid channel id' });

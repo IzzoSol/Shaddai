@@ -21,6 +21,13 @@ const axios = require('axios');
 // Shared response/error contract + secret-redaction helpers.
 const { redactUrl, redactObject } = require('./lib/respond');
 
+// BACKEND PERF #6 (2026-11-15) — boot diet. The RAG mastery rebuild (~1.4 s of
+// synchronous index reads) and the media/clipper sidecar spawns used to run before /
+// during the listen callback, delaying the first health-200. With the diet ON
+// (default) they run after first-listen instead. SHADDAI_BOOT_DIET=0 restores the
+// old boot order exactly.
+const BOOT_DIET = process.env.SHADDAI_BOOT_DIET !== '0';
+
 // Lightweight request-body validation (graceful if unavailable).
 let validate = null; try { validate = require('./lib/validate'); } catch (e) {}
 
@@ -520,12 +527,17 @@ app.use(express.static(path.join(__dirname, '../public'), {
     } else if (/[\\/]dist[\\/]boot-\d+\.[0-9a-f]+\.js$/.test(filePath)) {
       // world boot bundles carry a content hash in the name (tools/build-dist.cjs), so they never go stale
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-    } else if (/[\\/]assets[\\/].*\.(glb|webp|png|jpg|jpeg|avif)$/i.test(filePath)) {
-      // P2-4: asset filenames are NOT content-hashed (bld-*.glb, *.webp, …),
-      // so `immutable` would serve stale models after a re-export. 1-day
-      // cache + ETag revalidation instead (Express sends a weak ETag by
-      // default; no app.set('etag') override exists in this file).
-      res.setHeader('Cache-Control', 'public, max-age=86400');
+    } else if (/[\\/]assets[\\/]/i.test(filePath)) {
+      // P2-4 / wave3 job 1: asset filenames are NOT content-hashed and the
+      // client references them by plain path (only a handful carry a manual
+      // ?v=), so `immutable` would serve stale models after a re-export.
+      // 7-day cache + ETag revalidation instead (Express sends a weak ETag
+      // by default; no app.set('etag') override exists in this file).
+      // Covers every asset type under /assets/ — previously only
+      // glb/webp/png/jpg got a header at max-age=86400, and the terrain
+      // height16.bin files (8 MB each) got NO Cache-Control at all, so
+      // browsers fell back to heuristic caching on every repeat visit.
+      res.setHeader('Cache-Control', 'public, max-age=604800');
     }
   }
 }));
@@ -1892,7 +1904,7 @@ console.log('[prod] AURA BRAIN mounted (/api/aura-brain ingest|boxes|search) —
 app.use('/api/media', require('./media-routes'));
 console.log('[prod] SHADDAI media gateway mounted (/api/media status|fetch|dl)');
 const mediaEngine = require('./media-engine-runner');
-mediaEngine.ensure();
+if (!BOOT_DIET) mediaEngine.ensure(); // diet ON: ensured after first-listen (see listen callback)
 // SHADDAI capture rail — one gateway for media + web scrape + the video clipper.
 // /api/capture status|run|audit — media delegates to /api/media, scrape is the
 // bundled SSRF-guarded scraper, clip forwards to the clipper origin.
@@ -1901,7 +1913,7 @@ console.log('[prod] SHADDAI capture rail mounted (/api/capture status|run|audit 
 // SHADDAI clipper — our own FFmpeg/Whisper clip backend (backend/clipper-engine),
 // proxied at /api/clipper -> CLIPPER_ORIGIN (default http://127.0.0.1:8787).
 const clipperEngine = require('./clipper-engine-runner');
-clipperEngine.ensure();
+if (!BOOT_DIET) clipperEngine.ensure(); // diet ON: ensured after first-listen (see listen callback)
 console.log('[prod] SHADDAI clipper engine ensured (:8787 sidecar — FFmpeg clips, optional Whisper subs)');
 // MoonPay Agents (ZEROX non-custodial trading coordination + PIKADON kill-switch)
 app.use('/api/telegram', require('./telegram-routes'));   // dashboard control for the TG bot/signals
@@ -2157,6 +2169,7 @@ try {
   app.use('/api/mmo/jobs', softAuth, _mmoId, _ext.jobs);
 } catch (e) { console.warn('[mmo-agents] not mounted:', e && e.message); }
 app.use('/api/radio', require('./lib/radio-routes'));                 // Shaddai Radio: community tracks + city bulletin
+app.use('/api/lounge', require('./lounge-routes').makeRouter());                // Lounge track list (adapter over the radio catalogue)
 app.use('/api/portal-plots', require('./lib/portal-plots-routes'));   // rentable/buyable portal-world plots
 app.use('/api/security', require('./lib/security-routes'));           // PIKADON security scan engine + review queue
 app.use('/api/tufish', require('./lib/tufish-routes'));               // TuFish / MiroFish — free-API market data proxy (Polymarket + CoinGecko)
@@ -2178,6 +2191,8 @@ app.use('/api/chat', require('./lib/chat-routes'));                   // realm +
 app.use('/api/mp', require('./multiplayer'));                         // multiplayer presence + chat relay (poll-based, in-memory)
 app.use('/api/navi', softAuth, require('./navi-routes').makeRouter());
 app.use('/api/home-deeds', softAuth, require('./home-deed-routes').makeRouter());   // buy a realm-town home with Sparks (server-side deed; no NFT, no cash)   // Navi backend: tiered ZEROX signals, server-side name / event signup / class enrolment (2026-10-16)
+app.use('/api/home', softAuth, require('./home-routes')());   // HUB_HOME_A..F homes (status/inhabit/rent/checkin/vacate/stall-sale) — module existed + tested but was never mounted, so every /api/home/* call 404'd (BACKEND_CONNECTION_MAP G-3)
+app.use('/api/city-deeds', softAuth, require('./city-deed-routes').makeRouter());   // buy a city plot (plots-v4) with Sparks (server-side deed)
 app.use('/api/economy', softAuth, require('./economy-routes')());     // Sparks ledger (append-only, idempotent; Postgres or atomic dev store) — economy-routes exports a factory; must be CALLED; softAuth sets req.userId so resolveUserId() stops trusting caller-supplied body/query userId once authenticated
 // /sparks is the SAME ledger (economy-service) behind the MMO routes' API shape, so the game client reads the same balance as the dashboard header and City panel. NOT a mount of server/sparksRoutes.js — that file is the standalone MMO server's route, pinned by server/tests/* to characters.json + sparksCore; mounting it here would create a second live balance store. See backend/sparks-adapter-routes.js.
 try { app.use('/sparks', require('./sparks-adapter-routes')()); console.log('[prod] sparks adapter mounted (/sparks -> economy-service)'); }
@@ -2991,7 +3006,15 @@ app.get('/api/generated-files', (req, res) => {
 });
 
 app.get('/api/generated-files/:name', (req, res) => {
-  const filePath = path.join(__dirname, '../generated-output', req.params.name);
+  const genDir = path.resolve(__dirname, '../generated-output');
+  const filePath = path.resolve(genDir, req.params.name);
+
+  // Traversal containment: a crafted :name must never escape the
+  // generated-output sandbox. (Verified 2026-11-15: the plain ../ form 404'd,
+  // but resolve+prefix makes the guarantee explicit rather than incidental.)
+  if (!filePath.startsWith(genDir + path.sep)) {
+    return res.status(404).json({ error: 'File not found' });
+  }
 
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({ error: 'File not found' });
@@ -3355,7 +3378,7 @@ try { app.use(require('./markets-routes')); console.log('[prod] markets mounted'
 catch (e) { console.warn('[prod] markets failed:', e.message); }
 try { app.use(require('./admin-routes')); console.log('[prod] admin privileges mounted'); }
 catch (e) { console.warn('[prod] admin failed:', e.message); }
-try { app.use(require('./games-routes')); console.log('[prod] games leaderboard mounted'); }
+try { app.use(softAuth, require('./games-routes')); console.log('[prod] games leaderboard mounted'); }   // softAuth so /api/games/score derives its user from the verified session, not the body (G-12)
 catch (e) { console.warn('[prod] games failed:', e.message); }
 try { app.use('/api/arcade', require('./arcade-routes')); console.log('[prod] agent arcade mounted'); }
 catch (e) { console.warn('[prod] arcade failed:', e.message); }
@@ -3370,7 +3393,7 @@ try { app.use(require('./hall/routes')()); console.log('[prod] casino (blackjack
 catch (e) { console.warn('[prod] casino platform failed:', e.message); }
 try { app.use('/api/realms', require('./realms-routes')); console.log('[prod] shaddai realms mounted'); }
 catch (e) { console.warn('[prod] realms failed:', e.message); }
-try { app.use(require('./bazaar-routes')); console.log('[prod] bazaar marketplace mounted'); }
+try { app.use(softAuth, require('./bazaar-routes')); console.log('[prod] bazaar marketplace mounted'); }
 catch (e) { console.warn('[prod] bazaar failed:', e.message); }
 try { app.use(require('./results-routes')); console.log('[prod] results inbox mounted'); }
 catch (e) { console.warn('[prod] results-routes failed:', e.message); }
@@ -3562,18 +3585,38 @@ if (!process.env.VERCEL_ENV) {
     try {
       const selfUrl = process.env.RENDER_EXTERNAL_URL || process.env.SELF_PING_URL;
       if (selfUrl && ops.enabled('keep-alive')) {
-        const ping = () => { fetch(selfUrl.replace(/\/$/, '') + '/api/model/health').then(() => {}).catch(() => {}); };
+        let firstPing = true;
+        const ping = () => {
+          fetch(selfUrl.replace(/\/$/, '') + '/api/model/health')
+            .then((r) => { if (firstPing) { firstPing = false; console.log('[keep-alive] first self-ping answered HTTP', r.status, '— keep-alive verified live'); } })
+            .catch((e) => { if (firstPing) { firstPing = false; console.warn('[keep-alive] ⚠ first self-ping FAILED:', e && e.message, '— check SELF_PING_URL/RENDER_EXTERNAL_URL, spin-down protection is NOT working'); } });
+        };
         const ka = setInterval(ping, 10 * 60 * 1000);   // every 10 min (< Render's ~15 min idle window)
         if (ka.unref) ka.unref();
         setTimeout(ping, 30000);
         ops.boot('keep-alive', () => () => clearInterval(ka));
         console.log('[keep-alive] self-ping armed →', selfUrl, '(prevents free-plan spin-down so signals run 24/7)');
+      } else if (selfUrl) {
+        // URL is configured but the ops flag is off — say so explicitly;
+        // the old message wrongly blamed a missing RENDER_EXTERNAL_URL.
+        console.warn('[keep-alive] ⚠ NOT armed: a self URL is set but ops flag "keep-alive" is disabled — spin-down protection is OFF while a URL exists. Enable the flag or use an external uptime pinger.');
       } else {
-        console.log('[keep-alive] not armed (no RENDER_EXTERNAL_URL) — set SELF_PING_URL or use an external uptime pinger to keep signals running 24/7.');
+        // No URL at all. On Render (RENDER env is set by the platform) or in
+        // production this is the audit's silent-failure mode (BACKEND_PERF
+        // §7 item 8): log it loudly, not as a routine boot line.
+        const onPlatform = !!(process.env.RENDER || process.env.NODE_ENV === 'production');
+        const msg = '[keep-alive] NOT armed (no RENDER_EXTERNAL_URL / SELF_PING_URL) — set SELF_PING_URL or use an external uptime pinger to keep signals running 24/7.';
+        if (onPlatform) console.warn('[keep-alive] ⚠⚠ SPIN-DOWN PROTECTION OFF on a production/platform boot:', msg);
+        else console.log(msg);
       }
     } catch (e) { console.warn('[keep-alive] init skipped:', e && e.message); }
 
     // ── RAG rebuild: populate agent knowledge from mastery cards on startup ────
+    // BACKEND PERF #6 — boot diet: ~1.4 s of synchronous index reads (30×
+    // rag.listUserDocs). With the diet ON it runs on the next tick AFTER the listen
+    // callback returns, so the first health-200 is answered before the rebuild
+    // blocks the event loop. SHADDAI_BOOT_DIET=0 runs it inline here, as before.
+    const ragRebuild = () => {
     try {
       const rag = require('./rag-index');
       const masteryRoot = path.join(__dirname, 'knowledge', 'mastery');
@@ -3599,6 +3642,9 @@ if (!process.env.VERCEL_ENV) {
         if (loaded) console.log(`[RAG] loaded ${loaded} mastery cards into agent knowledge`);
       }
     } catch (e) { console.warn('[RAG] rebuild skipped:', e && e.message); }
+    };
+    if (BOOT_DIET) { setImmediate(ragRebuild); console.log('[boot-diet] RAG rebuild deferred until after first-listen (SHADDAI_BOOT_DIET=0 to disable)'); }
+    else ragRebuild();
 
     console.log(`
 ╔════════════════════════════════════════════════════════╗
@@ -3642,6 +3688,14 @@ if (!process.env.VERCEL_ENV) {
     console.log('  • job_awarded');
 
     logger.info('SERVER', 'All services ready');
+
+    // BACKEND PERF #6 — boot diet: sidecar supervisors start after first-listen so
+    // their spawn + health-poll churn no longer competes with the require phase.
+    // (MCP auto-connect below was already after-listen and async — unchanged.)
+    if (BOOT_DIET) {
+      try { mediaEngine.ensure(); } catch (e) { console.warn('[media-engine] ensure skipped:', e && e.message); }
+      try { clipperEngine.ensure(); } catch (e) { console.warn('[clipper-engine] ensure skipped:', e && e.message); }
+    }
 
     // Boot auto-connect for enabled MCP servers (non-blocking) so agents
     // see their tools immediately. Failures are logged, never crash boot.

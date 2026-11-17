@@ -19,8 +19,30 @@ const START_CREDITS = 100;        // every new wallet starts with demo credits
 const FEE_RATE = 0.05;            // 5% marketplace fee
 const TREASURY = 'SHADDAI_TREASURY';
 
-const read = () => { try { return JSON.parse(fs.readFileSync(LEDGER, 'utf8')); } catch (e) { return { balances: {}, txns: [] }; } };
-const write = (d) => { try { fs.writeFileSync(LEDGER, JSON.stringify(d, null, 2)); } catch (e) {} };
+// In-memory cache + no-change write skip (BACKEND_PERF §7 item 5 — cache
+// only, NO store-semantics change): read() serves the parsed ledger from
+// memory (the chat-routes.js pattern) instead of a sync disk read per call.
+// write() still persists every real mutation, but skips the disk write when
+// the serialized ledger is byte-identical to the last persisted one — the
+// /balance handler calls write() after every read (to persist first-visit
+// account creation), which today rewrites the file even when nothing
+// changed. File contents after any effective write are exactly as before.
+// Off-switch: SHADDAI_X402_CACHE=0 restores read-from-disk + always-write.
+// NOTE: lib/x402-ledger.js is a second, separate implementation of this
+// file (used by x402-ledger-routes / zerox-paid) — the two-writer question
+// is the G-4/G-5 decision, deliberately untouched here.
+let _cache = null, _persisted = null;
+const read = () => {
+  if (_cache && process.env.SHADDAI_X402_CACHE !== '0') return _cache;
+  try { _cache = JSON.parse(fs.readFileSync(LEDGER, 'utf8')); _persisted = JSON.stringify(_cache, null, 2); } catch (e) { if (!_cache) _cache = { balances: {}, txns: [] }; }
+  return _cache;
+};
+const write = (d) => {
+  _cache = d;
+  const s = JSON.stringify(d, null, 2);
+  if (process.env.SHADDAI_X402_CACHE !== '0' && s === _persisted) return; // unchanged — skip the rewrite
+  try { fs.writeFileSync(LEDGER, s); _persisted = s; } catch (e) {}
+};
 const bal = (db, u) => (u in db.balances ? db.balances[u] : (db.balances[u] = START_CREDITS));
 
 router.get('/api/x402/balance', (req, res) => {

@@ -155,7 +155,7 @@
   var QUALITY = {   // per host quality tier (SHADDAI-WORLD-3D.html _Q.tiers names)
     POTATO: { map: 1024, every: 3, oct: 2, stars2: 0 },
     LOW: { map: 1024, every: 2, oct: 3, stars2: 0 },
-    MEDIUM: { map: 2048, every: 1, oct: 4, stars2: 1 },
+    MEDIUM: { map: 2048, every: 2, oct: 4, stars2: 1 },   // C-8 (FPS_RESEARCH_2.md): MEDIUM shadow cadence 1 → 2 — halves the opt-in shadow-pass cost; the 60 m texel-snapped follow frustum moves slowly, and the moved-override in apply() still forces an update on big moves. ?shadowevery=1 restores every-frame.
     HIGH: { map: 2048, every: 1, oct: 4, stars2: 1 },
     ULTRA: { map: 2048, every: 1, oct: 5, stars2: 1 }
   };
@@ -286,6 +286,42 @@
     var water = opts.water || null;
     var respectTheme = opts.respectThemeLock !== false;
 
+    // ── WAVE2 (issue #5): theme palette channel — sky-v4 is the SINGLE owner of scene.background and
+    // the sun/hemi/ambient rig. A theme no longer writes those directly; the host forwards the theme's
+    // palette (world-themes.js skyPalette()) here, and apply() drives background + sun + hemi + ambient
+    // from that one palette, eased with the theme engine's own time constant (TAU 0.20 s), so background
+    // and lighting can never disagree (the split-brain freeze this replaces). Fog DENSITY is untouched:
+    // it stays 0 unless ?fog=1, exactly as before — only the fog colour follows the palette background.
+    var frameDt = 1 / 60;
+    var palTgt = null;   // { bg, sunC, hemiC, hemiG, ambC: THREE.Color targets, sunI, hemiI, ambI: numbers }
+    var palCur = null;   // same shape, the eased current values actually written to the scene
+    function _palFrom(p) {
+      if (!p) return null;
+      var o = { bg: new THREE.Color(p.background != null ? p.background : 0x000000),
+        sunC: new THREE.Color(p.sun && p.sun.color != null ? p.sun.color : 0xffffff), sunI: p.sun && p.sun.intensity != null ? p.sun.intensity : T.sunMax,
+        hemiC: new THREE.Color(p.hemi && p.hemi.color != null ? p.hemi.color : 0xffffff), hemiG: new THREE.Color(p.hemi && p.hemi.groundColor != null ? p.hemi.groundColor : 0x000000), hemiI: p.hemi && p.hemi.intensity != null ? p.hemi.intensity : T.hemiDay,
+        ambC: new THREE.Color(p.ambient && p.ambient.color != null ? p.ambient.color : 0x000000), ambI: p.ambient && p.ambient.intensity != null ? p.ambient.intensity : T.ambDay };
+      return o;
+    }
+    function _palSnap(dst, src) {
+      dst.bg.copy(src.bg); dst.sunC.copy(src.sunC); dst.hemiC.copy(src.hemiC); dst.hemiG.copy(src.hemiG); dst.ambC.copy(src.ambC);
+      dst.sunI = src.sunI; dst.hemiI = src.hemiI; dst.ambI = src.ambI;
+    }
+    function _palClose(a, b) {   // close enough that one more lerp is invisible → snap exactly (harness-verifiable equality)
+      var d = 0.004;
+      return Math.abs(a.bg.r - b.bg.r) < d && Math.abs(a.bg.g - b.bg.g) < d && Math.abs(a.bg.b - b.bg.b) < d
+        && Math.abs(a.sunC.r - b.sunC.r) < d && Math.abs(a.sunC.g - b.sunC.g) < d && Math.abs(a.sunC.b - b.sunC.b) < d
+        && Math.abs(a.hemiC.r - b.hemiC.r) < d && Math.abs(a.hemiC.g - b.hemiC.g) < d && Math.abs(a.hemiC.b - b.hemiC.b) < d
+        && Math.abs(a.hemiG.r - b.hemiG.r) < d && Math.abs(a.hemiG.g - b.hemiG.g) < d && Math.abs(a.hemiG.b - b.hemiG.b) < d
+        && Math.abs(a.ambC.r - b.ambC.r) < d && Math.abs(a.ambC.g - b.ambC.g) < d && Math.abs(a.ambC.b - b.ambC.b) < d
+        && Math.abs(a.sunI - b.sunI) < 0.005 && Math.abs(a.hemiI - b.hemiI) < 0.005 && Math.abs(a.ambI - b.ambI) < 0.005;
+    }
+    function setThemePalette(p, o) {
+      if (!p) { palTgt = null; palCur = null; return; }
+      palTgt = _palFrom(p);
+      if (!palCur || (o && o.snap)) { palCur = _palFrom(p); }
+    }
+
     // lights
     var ownSun = !opts.sunLight, sunLight = opts.sunLight || new THREE.DirectionalLight(0xffffff, 1);
     if (ownSun) scene.add(sunLight);
@@ -367,14 +403,32 @@
       sunLight.color.setRGB(ls.color[0], ls.color[1], ls.color[2]);
       sunLight.intensity = ls.intensity;
       var themed = respectTheme && root && root._themeLocked;
-      if (!themed) {
+      if (palTgt) {
+        // WAVE2 (issue #5): a theme palette is active — ease the applied values toward it (theme
+        // engine TAU 0.20 s, snap when within epsilon) and write the WHOLE rig from the one palette:
+        // background, fog colour, sun, hemi and ambient can never disagree again.
+        var lf = 1 - Math.exp(-frameDt / 0.20); if (lf > 1) lf = 1;
+        palCur.bg.lerp(palTgt.bg, lf); palCur.sunC.lerp(palTgt.sunC, lf); palCur.hemiC.lerp(palTgt.hemiC, lf); palCur.hemiG.lerp(palTgt.hemiG, lf); palCur.ambC.lerp(palTgt.ambC, lf);
+        palCur.sunI += (palTgt.sunI - palCur.sunI) * lf; palCur.hemiI += (palTgt.hemiI - palCur.hemiI) * lf; palCur.ambI += (palTgt.ambI - palCur.ambI) * lf;
+        if (_palClose(palCur, palTgt)) _palSnap(palCur, palTgt);
+        if (scene.background && scene.background.isColor) scene.background.copy(palCur.bg);
+        if (fog) { fog.color.copy(palCur.bg); if (fog.density != null) fog.density = window.__SHD_FOG_ON ? baseFogDensity * Math.min(pal.fog, 1.5) : 0; }
+        sunLight.color.copy(palCur.sunC); sunLight.intensity = palCur.sunI;
+        hemi.color.copy(palCur.hemiC); hemi.groundColor.copy(palCur.hemiG); hemi.intensity = palCur.hemiI;
+        if (ambient) { ambient.color.copy(palCur.ambC); ambient.intensity = palCur.ambI; }
+      } else if (!themed) {
         hemi.color.setRGB(pal.hSky[0], pal.hSky[1], pal.hSky[2]);
         hemi.groundColor.setRGB(pal.hGnd[0], pal.hGnd[1], pal.hGnd[2]);
         if (fog) { fog.color.setRGB(pal.hor[0], pal.hor[1], pal.hor[2]); if (fog.density != null) fog.density = window.__SHD_FOG_ON ? baseFogDensity * Math.min(pal.fog, 1.5) : 0; }
         if (scene.background && scene.background.isColor) scene.background.setRGB(pal.hor[0], pal.hor[1], pal.hor[2]);
+        hemi.intensity = ls.hemi;
+        if (ambient) ambient.intensity = ls.ambient;
+      } else {
+        // Legacy theme lock with no palette forwarded (pre-wave2 host): the theme engine owns the
+        // colours/background; the intensities it does not drive keep following the sky, as before.
+        hemi.intensity = ls.hemi;
+        if (ambient) ambient.intensity = ls.ambient;
       }
-      hemi.intensity = ls.hemi;
-      if (ambient) ambient.intensity = ls.ambient;
       if (renderer) renderer.toneMappingExposure = baseExposure * ls.exposureMul;
       if (shadowsOn && sunLight.shadow && 'intensity' in sunLight.shadow) sunLight.shadow.intensity = ls.moon ? 0.55 : 1;
 
@@ -415,6 +469,7 @@
       sunDir: sunDir, lightDir: lightDir, moonDir: moonDir,
       update: function (dt, playerPos) {
         dt = Math.min(Math.max(dt || 0, 0), 1);
+        frameDt = dt > 0 ? dt : 1 / 60;   // WAVE2: drives the theme-palette easing in apply()
         if (!isFinite(time)) time = 0.35;   // 2026-10-11: a NaN clock turns the palette NaN -> flat white sky + black (unlit) characters
         if (!isFinite(clock)) clock = 0;
         clock += dt; frameNo++;
@@ -428,6 +483,11 @@
         waterAcc += dt; syncWater(false);
       },
       setTime: function (t) { t = +t; if (!isFinite(t)) return; time = ((t % 1) + 1) % 1; apply(null); syncWater(true); },
+      // WAVE2 (issue #5): hand sky-v4 a theme palette (see world-themes.js skyPalette()). Pass
+      // { snap: true } to apply instantly (boot), otherwise apply() eases toward it. null clears it
+      // and returns background + rig to the sky's own day/night palette.
+      setThemePalette: setThemePalette,
+      get themePaletteActive() { return !!palTgt; },
       getTime: function () { return time; },
       isNight: function () { return ls.night >= 0.5; },
       setPaused: function (b) { paused = !!b; },
@@ -451,6 +511,7 @@
       setQuality: function (name) {
         var q = QUALITY[name] || QUALITY.MEDIUM;
         uniforms.uCloudOct.value = q.oct; uniforms.uStars2.value = q.stars2; shadowEvery = q.every;
+        if (typeof location !== 'undefined' && /[?&]shadowevery=1\b/.test(location.search)) shadowEvery = 1;   // C-8 off-switch: ?shadowevery=1 restores every-frame shadow updates at any tier
         api.setShadowMapSize(Math.min(q.map, opts.shadowMapSize || 2048));
       },
       setShadowMapSize: function (n) {
@@ -484,6 +545,7 @@
     };
     uniforms.uMoonPhase.value = TWO_PI * frac(moonStart + time / moonDays);
     api.setQuality(opts.quality || (root && root.__quality) || 'MEDIUM');
+    if (opts.themePalette) setThemePalette(opts.themePalette, { snap: true });   // WAVE2: a theme applied before the sky finished loading still owns the palette from frame one
     apply(null);
     syncWater(true);
     console.info('[sky-v4] ready · t', time.toFixed(3), '· day', dayLenMin, 'min · phase', phase, '· shadow', shadowsOn ? mapSize : 'off');

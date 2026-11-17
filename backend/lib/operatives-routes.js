@@ -5,8 +5,32 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const store = require('./operatives');
+const bodyCatalog = require('./body-catalog');
 const { softAuth } = require('../auth-guard');
 const router = express.Router();
+
+/* Body picks (FORGE REPAIR 2026-11-15): a `model` in a create/patch is a
+   user's body pick. It is resolved through the body catalogue and either
+   persists exactly as picked or the request fails with an explicit error —
+   never a silent SHADDAI substitution. 3D bodies are the paid step: the
+   gate reads its plan from the plans table (lib/body-catalog.js).
+   Returns {model} on success, or sends the error response and returns null. */
+function checkedModel(req, res, raw) {
+  const r = bodyCatalog.resolveModel(raw);
+  if (!r.ok) {
+    res.status(400).json({ ok: false, error: r.error, validBodies: r.valid });
+    return null;
+  }
+  if (r.model) {
+    const g = bodyCatalog.checkGate(r, req.userId || 'local');
+    if (!g.ok) {
+      res.status(g.status || 402).json({ ok: false, error: g.error, requires: g.requires, validBodies: bodyCatalog.validKeys() });
+      return null;
+    }
+  }
+  return r;
+}
+const cleanStrList = (v) => (Array.isArray(v) ? v.filter((s) => typeof s === 'string' && s.length <= 120).slice(0, 64) : undefined);
 
 // ── SELF-HEAL: forged operatives created via POST /api/forge are recorded in forge-state.json.
 //    If they're missing from the unified store (e.g. the brain step failed, or stores diverged),
@@ -49,9 +73,16 @@ router.post('/', softAuth, express.json({ limit: '256kb' }), (req, res) => {
     // `id` (create() writes db.operatives[id] = op, so a known id overwrote someone else's record) or self-set economy/stats/
     // inventory/tokenId/timestamps. Those stay server-owned. NOTE: rarity is still client-sent because forge.html relays the
     // value /api/forge returned; moving that server-side is an open item.
-    const ALLOWED = ['codename', 'archetype', 'model', 'rarity', 'look', 'portrait', 'brain', 'tools', 'buildHash', 'room'];
+    const ALLOWED = ['codename', 'archetype', 'model', 'rarity', 'look', 'portrait', 'brain', 'tools', 'buildHash', 'room', 'academySkills', 'workflows'];
     const clean = {};
     for (const k of ALLOWED) if (b[k] !== undefined) clean[k] = b[k];
+    if (clean.academySkills !== undefined) clean.academySkills = cleanStrList(clean.academySkills) || [];
+    if (clean.workflows !== undefined) clean.workflows = cleanStrList(clean.workflows) || [];
+    if (clean.model !== undefined) {
+      const r = checkedModel(req, res, clean.model);
+      if (!r) return;   // explicit 400/402 already sent — no record is created
+      if (r.model) clean.model = r.model; else delete clean.model;
+    }
     const op = store.create({ ...clean, owner: req.userId || 'local' });
 
     // Forge → Character: full-body FLUX portrait (fire-and-forget)
@@ -146,6 +177,13 @@ router.patch('/:id', softAuth, express.json({ limit: '256kb' }), (req, res) => {
   if (!isOwner && !isAdmin) return res.status(403).json({ ok: false, error: 'only the agent owner or a world admin can modify this agent' });
   const patch = { ...(req.body || {}) };
   if (!isAdmin) delete patch.owner;
+  if (patch.model !== undefined) {
+    const r = checkedModel(req, res, patch.model);
+    if (!r) return;   // explicit 400/402 already sent — the record is untouched
+    if (r.model) patch.model = r.model; else delete patch.model;
+  }
+  if (patch.academySkills !== undefined) patch.academySkills = cleanStrList(patch.academySkills) || [];
+  if (patch.workflows !== undefined) patch.workflows = cleanStrList(patch.workflows) || [];
   const updated = store.update(req.params.id, patch);
   if (!updated) return res.status(404).json({ ok: false, error: 'not found' });
   res.json({ ok: true, operative: updated });

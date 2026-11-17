@@ -12,7 +12,12 @@
     return e;
   }
   function hdr(json) { var o = {}; if (json) o['Content-Type'] = 'application/json'; var t = LS.get('shd_token'); if (t) o.Authorization = 'Bearer ' + t; return o; }
-  function api(method, path, body) { return fetch(path, { method: method, headers: hdr(!!body), credentials: 'same-origin', body: body ? JSON.stringify(body) : undefined }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { d._s = r.status; return d; }); }).catch(function () { return { _s: 0, _offline: true }; }); }
+  function safeTimeout(ms) { try { return AbortSignal.timeout(ms); } catch (e) { return undefined; } }
+  function apiOnce(method, path, body) { return fetch(path, { method: method, headers: hdr(!!body), credentials: 'same-origin', body: body ? JSON.stringify(body) : undefined, signal: safeTimeout(8000) }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { d._s = r.status; return d; }); }).catch(function () { return { _s: 0, _offline: true }; }); }
+  /* Every call is time-boxed (8s, same pattern as shop-client.js) so a hung request can never leave a panel
+     sitting on its loading note forever — it settles as _offline and the panels show their honest error state.
+     GETs (catalog, balance — safe to repeat) get one automatic retry; POSTs are never silently repeated. */
+  function api(method, path, body) { return apiOnce(method, path, body).then(function (d) { if (method === 'GET' && d._offline) return apiOnce(method, path, body); return d; }); }
   function toast(m) { try { if (typeof window.notify === 'function') window.notify(m); } catch (e) { /* ignore */ } }
   function uid() { return LS.get('shd_userid') || ''; }
   var openMenu = null;

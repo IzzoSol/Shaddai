@@ -630,7 +630,7 @@
         if (!post || kit.agentObjs[name]) return next();
         loadFit({ url: '/assets/agents/' + name + '.glb', span: 1.8, axis: 'y' }, function (err, w) {
           if (!err) {
-            w.position.set(post.x, post.y, post.z); w.rotation.y = post.face; w.name = 'agent-' + name; w.traverse(function (o) { if (o.isMesh) { o.frustumCulled = false; if (o.material && o.material.isMeshStandardMaterial) o.material = lam(o.material); } });
+            w.position.set(post.x, post.y, post.z); w.rotation.y = post.face; w.name = 'agent-' + name; w.traverse(function (o) { if (o.isMesh) { o.frustumCulled = false; if (o.material && o.material.isMeshStandardMaterial) { o.material = lam(o.material); if ('emissiveIntensity' in o.material) o.material.emissiveIntensity = Math.min(o.material.emissiveIntensity, 0.3); } } });   // wave1 fix 3: lam() carries emissiveIntensity through verbatim — agent GLBs arrive at 3.0 (world-main agentBodyFix parse force) and the resident council displays blew out to pale ghosts; clamp to the plaza path's 0.3
             kit.group.add(w); kit.agentObjs[name] = w;
             var clips = w.userData.animations, idle = null; for (var c = 0; c < clips.length; c++) if (/idle/i.test(clips[c].name)) idle = clips[c];
             if (idle) { var mx = new THREE.AnimationMixer(w); mx.clipAction(idle).play(); mx.update(Math.random() * 2); kit.mixers.push(mx); }

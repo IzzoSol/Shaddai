@@ -15,6 +15,10 @@
  *   • lod1/lod2 = public/assets/models/lod/<key>-lod{1,2}.glb (gltf-transform simplify, generated from the same source model);
  *     sc-* keys: public/assets/models/shaddai-city/<key>.glb + shaddai-city/lod/<key>-lod{1,2}.glb
  *   • missing lod1 → full model covers the lod1 band; missing lod2 → lod1 (or full) covers the lod2 band.
+ *   • C-2 (2026-11-16, FPS research #2): tier-flip rebuilds are AMORTIZED — a flip marks keys dirty and a
+ *     round-robin pump refills at most 4 keys per update() call (was: every key x every cell in one tick,
+ *     O(keys x cells) with a fresh Object.keys(cells) per key per set). Cell + per-key cell lists are
+ *     precomputed once at build. ?clustersync=1 restores the synchronous rebuild; ?clusterbatch=N tunes it.
  *   • lod2 is only requested when hide_m > far_m (realm defaults: hide_m == far_m → identical to rev 2, no extra fetches).
  *
  *   window.buildWorldClustersV4({ THREE, scene, loader, heightAt (units),
@@ -247,8 +251,15 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
               if (window.WorldRealmInteriors) try { window.WorldRealmInteriors.sync(); } catch (e) { } }
           }).catch(function (e) { console.warn(TAG + 'landmark ' + id, e && e.message); });
         });
-        Object.keys(cells).forEach(function (ck) { var c = cells[ck]; c.centre.x /= c.n; c.centre.z /= c.n; });
-        st.cells = Object.keys(cells).length;
+        // C-2 (FPS research #2): precompute the cell list ONCE. The old update() allocated Object.keys(cells)
+        // in the state pass every tick AND once per key per set in every rebuild. cellList is that one list;
+        // each cell also learns its own key (c.ck) here.
+        var cellList = [];
+        Object.keys(cells).forEach(function (ck) { var c = cells[ck]; c.ck = ck; c.centre.x /= c.n; c.centre.z /= c.n; cellList.push(c); });
+        st.cells = cellList.length;
+        // C-2: per-key cell lists ONCE (the keys of K.cellMats) — rebuilding key K scans only cells that
+        // actually contain K, not every cell in the world. K._rb is the amortized-rebuild dirty flag.
+        allK.forEach(function (K) { K.cellList = Object.keys(K.cellMats); K._rb = false; });
         if (pushed && window.buildWorldCollision && window.WORLD_LAYOUT) window.buildWorldCollision(window.WORLD_LAYOUT);   // full rebuild — skip when nothing new
         console.info(TAG + st.items + ' pieces · ' + st.types + ' model types · ' + st.cells + ' cells · ' + st.meshes + ' chunk meshes · ' + Math.round(CELL / U) + ' m cells · ' + pushed + ' colliders (LOD: full < ' + Math.round(NEAR / U) + ' m, lod1 < ' + Math.round(FAR / U) + ' m' + (WANT2 ? ', lod2 < ' + Math.round(HIDE / U) + ' m' : '') + ')' + (st.failed.length ? ' · failed ' + st.failed.join(',') : '') + (st.noLod2.length ? ' · no lod2: ' + st.noLod2.join(',') : ''));
         var acc = 1, lastYaw = 9, lastX = 1e9, lastZ = 1e9;
@@ -257,9 +268,49 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
         // radius margin so cells coming into view on a turn are already on; near cells always stay. ?fcull=0 = old behaviour.
         var FCULL = !(typeof location !== 'undefined' && /[?&]fcull=0\b/.test(location.search)), _frus = new THREE.Frustum(), _fm = new THREE.Matrix4(), _sph = new THREE.Sphere(new THREE.Vector3(), 1);
         var CELL_R = Math.hypot(CELL * 0.75, 170 * U) * 1.6;
+        // C-2 (FPS research #2): AMORTIZED REBUILD. The old path refilled EVERY key's sets in the one tick a
+        // cell flipped tier — O(keys x sets x cells) with a fresh Object.keys(cells) per key per set — a
+        // multi-ms main-thread spike when crossing cell boundaries at driving speed. Now a flip (or a camera
+        // turn) only MARKS every key dirty; a round-robin pump refills at most RB_BATCH keys per update()
+        // call, and update() runs every frame, so the identical total work drains over ~100 ms of frames
+        // instead of one spike. Final buffers are identical: same cells, same matrices, same counts — only
+        // the schedule changes (a cell can show its previous LOD for a few extra frames; hysteresis already
+        // masks this class of pop). ?clustersync=1 restores the old synchronous full rebuild in the state
+        // tick; ?clusterbatch=N tunes the batch (default 4).
+        var SYNC_REBUILD = typeof location !== 'undefined' && /[?&]clustersync=1/.test(location.search);
+        var RB_BATCH = 4; try { var _cbm = /[?&]clusterbatch=(\d+)/.exec(location.search); if (_cbm) RB_BATCH = Math.max(1, +_cbm[1]); } catch (e) { }
+        var rbCursor = 0;
+        function rebuildK(K) {   // refill one key's unique sets from the cells currently in each LOD band
+          var seen = [], si;
+          for (si = 0; si < 3; si++) { if (seen.indexOf(K.sets[si]) < 0) seen.push(K.sets[si]); }
+          seen.forEach(function (set) {
+            var n = 0, arr0 = set[0].instanceMatrix.array;
+            for (var i = 0; i < K.cellList.length; i++) {
+              var ck = K.cellList[i], c = cells[ck]; if (!c || c.state < 0 || c.state > 2 || K.sets[c.state] !== set) continue;
+              var src = K.cellMats[ck]; if (!src) continue; arr0.set(src, n * 16); n += src.length / 16;
+            }
+            for (var j = 0; j < set.length; j++) {
+              var im = set[j]; if (j > 0) im.instanceMatrix.array.set(arr0.subarray(0, n * 16));
+              im.count = n; im.visible = n > 0; im.instanceMatrix.needsUpdate = true;
+            }
+          });
+          st.keysRebuilt = (st.keysRebuilt || 0) + 1;
+        }
+        function markAllDirty() { for (var i = 0; i < allK.length; i++) allK[i]._rb = true; st.keysPending = allK.length; }
+        function pumpRebuild() {   // one full lap of the ring; refills at most RB_BATCH dirty keys
+          var done = 0, pending = 0;
+          for (var s = 0; s < allK.length; s++) {
+            var K = allK[rbCursor]; rbCursor = (rbCursor + 1) % allK.length;
+            if (!K._rb) continue;
+            if (done < RB_BATCH) { K._rb = false; rebuildK(K); done++; } else pending++;
+          }
+          st.keysPending = pending;
+          return done;
+        }
         return {
           group: group,
           update: function (t, dt, cam) {       // re-pick LODs 4×/s — cells are 1 km, so that's plenty
+            if (!SYNC_REBUILD) pumpRebuild();   // C-2: drain pending key rebuilds a batch per frame (the state pass below is throttled; the pump is not)
             acc += dt || 0; if (acc < (FCULL ? 0.15 : 0.25) || !cam) return; acc = 0; st.near = st.mid = st.far = st.hidden = 0; st.frustumHidden = 0;
             // QUALITY-GOVERNOR LOD: scale the tier bands by the FPS governor's quality tier — a weak GPU
             // tightens the bands (less full-detail inventory, fewer cells → fewer draw calls), a fast machine
@@ -276,8 +327,8 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
             if (camObj) { var me = camObj.matrixWorld.elements; fx = -me[8]; fz = -me[10]; var fl = Math.hypot(fx, fz) || 1; fx /= fl; fz /= fl; }
             var useF = FCULL && camObj; if (useF) { camObj.updateMatrixWorld(); _fm.multiplyMatrices(camObj.projectionMatrix, camObj.matrixWorldInverse); _frus.setFromProjectionMatrix(_fm); _sph.radius = CELL_R; }
             var yawNow = Math.atan2(fx, fz), turned = Math.abs(Math.atan2(Math.sin(yawNow - lastYaw), Math.cos(yawNow - lastYaw))) > 0.26 || Math.hypot(cx - lastX, cz - lastZ) > 40 * U;   // >15 deg or 40 m
-            Object.keys(cells).forEach(function (ck) {
-              var c = cells[ck], dx = c.centre.x - cx, dz = c.centre.z - cz, d = Math.hypot(dx, dz) - CELL * 0.7;
+            for (var ci = 0; ci < cellList.length; ci++) {   // C-2: precomputed list — no Object.keys(cells) per tick
+              var c = cellList[ci], dx = c.centre.x - cx, dz = c.centre.z - cz, d = Math.hypot(dx, dz) - CELL * 0.7;
               // HYSTERESIS: keep the cell's CURRENT tier unless d is clearly outside its band edge ± HYST —
               // stops the popping/flicker when the camera sits right on a boundary, and cuts dirty flips,
               // which each drive a full O(cells×keys) instance-buffer rebuild. HYST = 0.15×cell ≈ 37 m.
@@ -292,24 +343,13 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
               else if (useF && s < 3 && d > CELL * 0.5) { _sph.center.set(c.centre.x, 85 * U, c.centre.z); if (!_frus.intersectsSphere(_sph)) { s = 3; st.frustumHidden++; } }
               if (s === 0) st.near++; else if (s === 1) st.mid++; else if (s === 2) st.far++; else st.hidden++;
               if (s !== c.state) { c.state = s; dirty = true; }
-            });
+            }
             if (!dirty && !turned) return;
             lastYaw = yawNow; lastX = cx; lastZ = cz;
-            allK.forEach(function (K) {
-              var seen = [], si;
-              for (si = 0; si < 3; si++) { if (seen.indexOf(K.sets[si]) < 0) seen.push(K.sets[si]); }
-              seen.forEach(function (set) {
-                var n = 0, arr0 = set[0].instanceMatrix.array;
-                Object.keys(cells).forEach(function (ck) {
-                  var c = cells[ck]; if (c.state < 0 || c.state > 2 || K.sets[c.state] !== set) return;
-                  var src = K.cellMats[ck]; if (!src) return; arr0.set(src, n * 16); n += src.length / 16;
-                });
-                for (var j = 0; j < set.length; j++) {
-                  var im = set[j]; if (j > 0) im.instanceMatrix.array.set(arr0.subarray(0, n * 16));
-                  im.count = n; im.visible = n > 0; im.instanceMatrix.needsUpdate = true;
-                }
-              });
-            });
+            // C-2: sync mode = the old behaviour (every key refilled in this tick); amortized mode = mark
+            // all keys dirty and let the per-frame pump drain them RB_BATCH at a time (first batch now).
+            if (SYNC_REBUILD) { for (var ri = 0; ri < allK.length; ri++) rebuildK(allK[ri]); st.keysPending = 0; }
+            else { markAllDirty(); pumpRebuild(); }
           },
           stats: function () { return st; },
           dispose: function () { scene.remove(group); }

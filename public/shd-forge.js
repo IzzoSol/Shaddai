@@ -49,7 +49,7 @@
   /* ── the Forge as its own full-screen window ──────────────────────────
      It opens over the dashboard (close button, pop-out, other forges in a menu), instead of living inside a dashboard tab. */
   var app = null, appFrame = null, appPrev = null;
-  var FORGES = { '3d': ['/forge-demo.html', 'Forge an agent'], '2d': ['/forge.html', '2D Forge'], market: ['/pixel-forge.html', 'Marketplace'] };
+  var FORGES = { '3d': ['/forge-demo.html', 'Forge an agent'] };   // surfaces 2026-11-15: '2d' (/forge.html) + 'market' (/pixel-forge.html) modes disconnected per founder — files kept, modes removed
   function closeApp() { if (!app) return; app.remove(); app = null; appFrame = null; document.body.style.overflow = ''; document.removeEventListener('keydown', onAppKey, true); if (appPrev && appPrev.focus) { try { appPrev.focus(); } catch (e) { /* ignore */ } } }
   function onAppKey(e) { if (e.key === 'Escape') { e.stopPropagation(); closeApp(); } }
   function openApp(which) {
@@ -57,9 +57,7 @@
     if (app) { appFrame.src = def[0]; app.querySelector('.fg-apptitle').textContent = def[1]; return; }
     appPrev = document.activeElement;
     var menu = h('div', { class: 'fg-menu', role: 'menu', style: 'display:none' }, [
-      h('button', { type: 'button', role: 'menuitem', text: 'Forge an agent (3D)', onclick: function () { openApp('3d'); menu.style.display = 'none'; } }),
-      h('button', { type: 'button', role: 'menuitem', text: '2D Forge', onclick: function () { openApp('2d'); menu.style.display = 'none'; } }),
-      h('button', { type: 'button', role: 'menuitem', text: 'Marketplace', onclick: function () { openApp('market'); menu.style.display = 'none'; } })]);
+      h('button', { type: 'button', role: 'menuitem', text: 'Forge an agent (3D)', onclick: function () { openApp('3d'); menu.style.display = 'none'; } })]);
     var more = h('button', { type: 'button', class: 'fg-btn ghost', text: 'Other forges', 'aria-haspopup': 'menu', onclick: function (e) { e.stopPropagation(); menu.style.display = menu.style.display === 'none' ? 'block' : 'none'; } });
     appFrame = h('iframe', { class: 'fg-appframe', src: def[0], title: 'Forge', allow: 'fullscreen' });
     app = h('div', { class: 'fg-app', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Forge' }, [
@@ -74,13 +72,12 @@
   }
   /* the Forge tab: one clean screen (the old four-tab bar is hidden), with the other forges, full screen and pop out in the header */
   var tabBuilt = false, curTab = '3d';
-  function showTab(which) { curTab = which; if (typeof window.switchForgeTab === 'function') window.switchForgeTab(which); var b = document.querySelector('#forgeView .fg-back'); if (b) b.style.display = which === '3d' ? 'none' : ''; }
+  function showTab(which) { if (!FORGES[which]) which = '3d'; curTab = which; if (typeof window.switchForgeTab === 'function') window.switchForgeTab(which); var b = document.querySelector('#forgeView .fg-back'); if (b) b.style.display = which === '3d' ? 'none' : ''; }
   function buildTab() {
     var v = document.getElementById('forgeView'); if (!v || tabBuilt) return; tabBuilt = true;
     var tabs = v.querySelector('.forge-tabs'); if (tabs) tabs.style.display = 'none';
     var menu = h('div', { class: 'fg-menu', role: 'menu', style: 'display:none' }, [
-      h('button', { type: 'button', role: 'menuitem', text: '2D Forge', onclick: function () { showTab('2d'); menu.style.display = 'none'; } }),
-      h('button', { type: 'button', role: 'menuitem', text: 'Marketplace', onclick: function () { showTab('market'); menu.style.display = 'none'; } })]);
+      h('button', { type: 'button', role: 'menuitem', text: 'Forge an agent (3D)', onclick: function () { showTab('3d'); menu.style.display = 'none'; } })]);
     var more = h('button', { type: 'button', class: 'fg-btn ghost', text: 'Other forges', 'aria-haspopup': 'menu', onclick: function (e) { e.stopPropagation(); menu.style.display = menu.style.display === 'none' ? 'block' : 'none'; } });
     var head = h('div', { class: 'fg-head' }, [
       h('div', { class: 'fg-title' }, [h('b', { text: 'Forge an agent' }), h('span', { text: 'Name it, give it a glow body and real skills, run its first job. It lives in your office and you can connect Grok or an API to it.' })]),

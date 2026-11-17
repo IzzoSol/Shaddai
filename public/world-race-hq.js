@@ -70,7 +70,9 @@
     // FPS: the HQ (shell + showroom ships, ~74 draws) only draws within 1.2 km
     setInterval(function () { var p = H.getPlayer && H.getPlayer(); if (p && grp) grp.visible = Math.hypot(p.x - center.x, p.z - center.z) < 1200 * U; }, 500);
     var last = false; setInterval(function () { var n = !!nearInside(); if (n && !last) toast('Race HQ - press E for the race desk'); if (!n && panel) close(); last = n; }, 600);
-    (function spin() { requestAnimationFrame(spin); for (var i = 0; i < tables.length; i++) tables[i].rotation.y += 0.004; if (beacon) beacon.rotation.y += 0.01; })();
+    var bgForce = typeof location !== 'undefined' && /[?&]bgloops=on\b/.test(location.search);   // WAVE4 C-3: ?bgloops=on = secondary loops run unconditionally
+    (function spin() { requestAnimationFrame(spin); if (!bgForce && grp && !grp.visible) return;   // WAVE4 C-3: the 500 ms interval above already hides the HQ beyond 1.2 km — don't spin what isn't drawn (the rotations are cosmetic fixed increments; they resume from the same angle, and nothing reads them)
+      for (var i = 0; i < tables.length; i++) tables[i].rotation.y += 0.004; if (beacon) beacon.rotation.y += 0.01; })();
     // ORGANIZED FLOW (owner 2026-10-23: "click the mode and go to the track lobby then start from there ... when you're on the track you're
     // in a car, no walking around"): every race entry goes through this lobby; the race select (car pick) opens here; on-foot players on a
     // race deck are walked back to the lobby.

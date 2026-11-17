@@ -236,7 +236,13 @@
     var btn = document.createElement('div'); btn.id = 'naviBtn'; btn.textContent = 'NAVI [Y]'; btn.onclick = toggle; document.body.appendChild(btn);
     var wp = document.createElement('div'); wp.id = 'naviWp'; document.body.appendChild(wp);
     var ts = document.createElement('div'); ts.id = 'naviToasts'; document.body.appendChild(ts);
-    root.addEventListener('wheel', function (e) { if (e.target.closest && e.target.closest('.plate')) return; setModule(step(e.deltaY > 0 ? 1 : -1)); e.preventDefault(); }, { passive: false });
+    // WAVE2 (issue #4): one physical scroll gesture fires dozens of wheel events; each used to run a full
+    // setModule -> render. Coalesce to at most one module step + render per animation frame.
+    var wheelRaf = 0, wheelDir = 0;
+    root.addEventListener('wheel', function (e) { if (e.target.closest && e.target.closest('.plate')) return; wheelDir = e.deltaY > 0 ? 1 : -1; e.preventDefault();
+      if (wheelRaf) return;
+      wheelRaf = requestAnimationFrame(function () { wheelRaf = 0; setModule(step(wheelDir)); });
+    }, { passive: false });
     var tx = null; root.addEventListener('touchstart', function (e) { tx = e.touches[0].clientX; }, { passive: true });
     root.addEventListener('touchend', function (e) { if (tx == null) return; var d = e.changedTouches[0].clientX - tx; if (Math.abs(d) > 60 && !(e.target.closest && e.target.closest('.plate'))) setModule(step(d < 0 ? 1 : -1)); tx = null; }, { passive: true });
   }
@@ -408,7 +414,7 @@
     if (SIG.state === 'loading' || (SIG.state === 'ready' && Date.now() - SIG.at < 30000)) return; SIG.state = 'loading';
     var h = {}; try { var tk = localStorage.getItem('shd_token'); if (tk) h.Authorization = 'Bearer ' + tk; } catch (e) { }
     var base = (window.SHADDAI_API_BASE || '').replace(/\/$/, '');
-    fetch(base + '/api/navi/signals', { headers: h, cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) { SIG.data = j && j.ok ? j : null; SIG.state = j && j.ok ? 'ready' : 'error'; SIG.at = Date.now(); render(); }).catch(function () { SIG.state = 'error'; SIG.at = Date.now(); render(); });
+    fetch(base + '/api/navi/signals', { headers: h, cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) { SIG.data = j && j.ok ? j : null; SIG.state = j && j.ok ? 'ready' : 'error'; SIG.at = Date.now(); invalidateView(); render(); }).catch(function () { SIG.state = 'error'; SIG.at = Date.now(); invalidateView(); render(); });
   }
   M.signals = function () {
     sigLoad(); var d = SIG.data, list = [];
@@ -425,7 +431,7 @@
   /* MARKETS + NEWS (2026-10-23): live free feeds through world-live-feeds.js (server-cached CoinGecko / alternative.me / Cointelegraph).
    * Offline = says so; nothing is invented. Information only, not advice. */
   function feed(k) { var F = window.WorldFeeds; return F ? F.get(k) : { state: 'offline', data: null }; }
-  if (window.WorldFeeds) window.WorldFeeds.on(function () { if (typeof render === 'function') try { render(); } catch (e) { } });
+  if (window.WorldFeeds) window.WorldFeeds.on(function () { if (typeof render === 'function') try { invalidateView(); render(); } catch (e) { } });
   function fmt(n) { return n == null ? '-' : (n >= 1000 ? '$' + Math.round(n).toLocaleString() : '$' + (+n).toPrecision(4)); }
   /* SETTINGS (2026-10-23): clean-screen toggles + camera feel + the full controls list (world-hud-clean.js owns the prefs). */
   M.settings = function () {
@@ -518,7 +524,7 @@
     modalEl.querySelector('#nvNo').onclick = closeModal;
     modalEl.querySelector('#nvOk').onclick = function () {
       var toHome = !!(modalEl.querySelector('#nvHome') || {}).checked;
-      function done() { S.inventory.push({ id: 'i' + Date.now(), cat: l.cat, name: l.t.split(' · ')[0], rarity: 'New', power: 1, tradable: true, equipped: false }); persist(); closeModal(); toast('Added to ' + (toHome ? 'home delivery' : 'inventory')); render(); }
+      function done() { S.inventory.push({ id: 'i' + Date.now(), cat: l.cat, name: l.t.split(' · ')[0], rarity: 'New', power: 1, tradable: true, equipped: false }); persist(); closeModal(); toast('Added to ' + (toHome ? 'home delivery' : 'inventory')); invalidateView(); render(); }
       if (l.cur === 'PBC') {
         if (!pb) { toast('PayBox not connected'); return; }
         Promise.resolve(window.shaddaiPayBox.authorize({ sku: l.id, price: l.price, memo: l.t })).then(function (r) { if (r && r.ok) done(); else toast('PayBox declined'); }, function () { toast('PayBox declined'); });
@@ -716,13 +722,21 @@
   }
 
   /* ---------------- render ---------------- */
+  // WAVE2 (issue #4): the module factories re-scan live world state (inventory, pins, roster, showcase) on every
+  // call, and render() used to call the factory on EVERY click — a full rescan + DOM rebuild per interaction.
+  // The factory result (the module view-model) is now cached per module: it is built once per open (open()
+  // invalidates), reused across selection clicks, and invalidated only when something may have changed the
+  // underlying state — an action button ran, chat got new messages, or the dashboard link pushed an update.
+  var _vcache = { id: null, mod: null };
+  function view() { if (_vcache.id !== S.module || !_vcache.mod) { _vcache = { id: S.module, mod: M[S.module]() }; } return _vcache.mod; }
+  function invalidateView() { _vcache.id = null; _vcache.mod = null; }
   function render() {
     if (!root) return;
-    var mod = M[S.module](), sel = selected && mod.list.some(function (i) { return i.id === selected; }) ? selected : (mod.selId || null);
+    var mod = view(), sel = selected && mod.list.some(function (i) { return i.id === selected; }) ? selected : (mod.selId || null);
     elL.innerHTML = '<h3>' + mod.title + '</h3>' + (mod.list.length ? mod.list.map(function (i) { return i.head ? '<div style="margin:8px 0 2px;color:' + THEME.gold + ';font-size:12px;letter-spacing:.14em">' + esc(i.head) + '</div>' : '<div class="row' + (i.id === sel ? ' sel' : '') + '" data-id="' + esc(i.id) + '"><span>' + esc(i.t) + '<br><em>' + esc(i.s || '') + '</em></span><em>' + esc(i.tag || '') + '</em></div>'; }).join('') : '<div class="empty">' + esc(mod.empty) + '</div>');
     elR.innerHTML = mod.detail(sel);
     elL.onclick = function (e) { var r = e.target.closest('.row'); if (!r) return; selected = r.dataset.id; if (mod.act && S.module === 'chat') mod.act(selected); render(); };
-    elR.onclick = function (e) { var b = e.target.closest('button[data-a]'); if (!b || b.disabled) return; if (mod.act) mod.act(sel, b.dataset.a); persist(); render(); };
+    elR.onclick = function (e) { var b = e.target.closest('button[data-a]'); if (!b || b.disabled) return; if (mod.act) mod.act(sel, b.dataset.a); persist(); invalidateView(); render(); };
     // swivel
     var i = idx(), h = '';
     for (var d = -3; d <= 3; d++) { var NM = MODULES.length, m = MODULES[((i + d) % NM + NM) % NM], c = d === 0 ? 'c' : (Math.abs(d) === 1 ? 'n1' : (Math.abs(d) === 2 ? 'n2' : 'n2')); h += '<button class="hx ' + c + '" data-m="' + m.id + '" aria-label="' + m.label + '">' + icon(m.id) + '<small>' + m.label + '</small></button>'; }
@@ -736,18 +750,20 @@
 
   /* ---------------- open / close ---------------- */
   var wasLocked = false;
-  var capped = null;
   function open() {
     if (!root) build(); if (S.open) return;
     var ti = window.__getQualityTier ? window.__getQualityTier() : 0, bg = root.querySelector('.bg');
     var hq = ti >= 3 && !low(); bg.style.backdropFilter = bg.style.webkitBackdropFilter = hq ? 'blur(3px)' : 'none'; root.classList.toggle('hq', hq);   // full-screen + plate blur only on HIGH+ (a fill-rate tax)
-    if (ti > 2 && window.__setQualityTier) { capped = ti; window.__setQualityTier(2, 1e6); }              // Navi open: cap at MEDIUM; the world keeps running behind it
+    // WAVE2 (issue #4): Navi must NOT change the quality tier. The old open-cap/close-restore round-trip ran
+    // __setQualityTier twice per use, and _applyQualityTier reallocates every composer/bloom render target and
+    // disposes/recreates the shadow map each time — the multi-hundred-ms hitch on every Navi open/close. A UI
+    // overlay does not get to tear down the render pipeline; the FPS governor owns the tier on its own schedule.
     wasLocked = !!document.pointerLockElement; if (wasLocked && document.exitPointerLock) try { document.exitPointerLock(); } catch (e) { }
+    invalidateView();   // live state is re-scanned at most once per open (see view() cache below)
     S.open = true; root.classList.add('on'); document.body.classList.add('navi-open'); render(); requestAnimationFrame(function () { root.classList.add('show'); }); emit('open');
   }
   function close() {
     if (!S.open) return; closeModal(); S.open = false; document.body.classList.remove('navi-open'); root.classList.remove('show');
-    if (capped != null && window.__setQualityTier) { window.__setQualityTier(capped, 6); capped = null; }   // give the tier back (the governor may re-drop it if the machine cannot hold it)
     setTimeout(function () { if (!S.open) root.classList.remove('on'); }, 280);
     var r = window.__w3dDebug && window.__w3dDebug.renderer; if (wasLocked && r && r.domElement.requestPointerLock) try { r.domElement.requestPointerLock(); } catch (e) { }
     persist(); emit('close');
@@ -757,7 +773,7 @@
   setInterval(function () {   // ACADEMY code countdown ticks while it is on screen; re-render only when the code changes
     if (!S.open || S.module !== 'academy' || !root) return;
     var AC = window.ShdAcademyCode, el = root.querySelector('#nvCodeLeft'); if (!AC) return;
-    var code = AC.current(); if (lastCode && code !== lastCode) { lastCode = code; render(); return; } lastCode = code;
+    var code = AC.current(); if (lastCode && code !== lastCode) { lastCode = code; invalidateView(); render(); return; } lastCode = code;
     if (el) { var left = AC.secondsLeft(); el.textContent = Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0'); }
   }, 1000);
 
@@ -787,6 +803,7 @@
   function chatRerender(ch) {   // keep what the player is typing (and focus) across a re-render
     if (!root || S.module !== 'chat' || S.chat.channel !== ch) return;
     var el = root.querySelector('#nvChatIn'), v = el ? el.value : '', f = el && document.activeElement === el;
+    invalidateView();   // the chat log changed — the cached view-model is stale
     render();
     var n = root.querySelector('#nvChatIn'); if (n) { n.value = v; if (f) { n.focus(); n.setSelectionRange(v.length, v.length); } }
   }
@@ -805,6 +822,6 @@
     chatName: myName
   };
   toast = function (m) { window.Navi.toast(m); };
-  (function hookLink(n) { var L = window.WorldLink; if (L) L.on(function () { if (S.open && (S.module === 'bots' || S.module === 'academy')) render(); }); else if (n < 40) setTimeout(function () { hookLink(n + 1); }, 500); })(0);
+  (function hookLink(n) { var L = window.WorldLink; if (L) L.on(function () { if (S.open && (S.module === 'bots' || S.module === 'academy')) { invalidateView(); render(); } }); else if (n < 40) setTimeout(function () { hookLink(n + 1); }, 500); })(0);
   if (document.body) build(); else addEventListener('DOMContentLoaded', build);
 })();

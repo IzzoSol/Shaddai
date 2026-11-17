@@ -9,12 +9,20 @@
   'use strict';
 
   var MODELS = { SHADDAI:1, NEXUS:1, ZEROX:1, ORACLE:1, TURTLE:1, QUILL:1, PIKADON:1 };
+  /* The 8 Forge archetype bodies (FORGE REPAIR 2026-11-15): a FORGE-<ID> pick
+     previews its real archetype GLB instead of being forced to SHADDAI. */
+  var ARCH = { VANGUARD:1, GHOST:1, ARTISAN:1, ORACLE:1, 'STREET-DEITY':1, 'GAIA-LINK':1, PSIONIC:1, HARVESTER:1 };
 
   function curModel() {
     var m = String(window.SHADDAI_FORGE_MODEL || 'SHADDAI').toUpperCase();
-    return MODELS[m] ? m : 'SHADDAI';
+    if (MODELS[m]) return m;
+    if (m.indexOf('FORGE-') === 0 && ARCH[m.slice(6)]) return m;
+    return 'SHADDAI';
   }
-  function srcFor(m) { return '/assets/agents/' + m + '.glb?v=14'; }
+  function srcFor(m) {
+    if (m.indexOf('FORGE-') === 0) return '/assets/forge-models/' + m.slice(6).toLowerCase() + '-final.glb?v=4';
+    return '/assets/agents/' + m + '.glb?v=14';
+  }
 
   // Load the <model-viewer> web component once (unpkg is already CSP-allowed — forge.html uses it).
   function ensureMV() {

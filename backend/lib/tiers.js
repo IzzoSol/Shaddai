@@ -49,6 +49,15 @@
    are what a live Payment Link's client_reference_id encodes. Renaming one
    silently breaks grants for anybody mid-checkout, so the DISPLAY name is
    separate from the id and only the display name may change.
+
+   ── AMENDMENT 2026-11-15 (founder pricing canonicalisation) ─────────────
+   Retail plans are $9 / $19 / $49, full stop: Build $9 (new id `build`),
+   Builder $19 (id `builder`, back on sale as its own tier), Pro $49.
+   There is NO $199 plan: the `alpha`/"Max" tier is retired from sale and
+   lives on only in LEGACY_TIERS below, so existing elite members keep
+   their entitlements and the still-live alpha Payment Link still grants
+   what it charged for. Nothing in TIERS may carry a $199 (or any other
+   unlisted) price again. Sparks stay $1 each (CREDIT_PACKS, 1 per $1).
    ══════════════════════════════════════════════════════════════════════════ */
 'use strict';
 
@@ -69,6 +78,30 @@ const TIERS = [
     ],
   },
   {
+    id: 'build', tier: 'build', name: 'Build', price: 9, interval: 'month',
+    blurb: 'Your agent, embodied.',
+    monthlyCredits: 1500, rateLimit: 60, maxAgents: 7, modelTiers: ['cheap'],
+    features: { scheduling: false, batching: false, byok: true, advancedWorkflows: false, prioritySupport: false, mcp: false },
+    unlocks: [
+      'Everything in Free',
+      'A 3D body for your agent in the world',
+      'Forge more agents and keep them all',
+      'A bigger monthly budget for produced work — images, voice, 3D',
+    ],
+  },
+  {
+    id: 'builder', tier: 'builder', name: 'Builder', price: 19, interval: 'month',
+    blurb: 'For someone building every week.',
+    monthlyCredits: 2500, rateLimit: 120, maxAgents: 7, modelTiers: ['cheap', 'standard'],
+    features: { scheduling: false, batching: false, byok: true, advancedWorkflows: true, prioritySupport: false, mcp: false },
+    unlocks: [
+      'Everything in Build',
+      'Standard models, not just the cheap tier',
+      'Advanced workflow tools',
+      'Higher rate limits for busy days',
+    ],
+  },
+  {
     id: 'pro', tier: 'pro', name: 'Pro', price: 49, interval: 'month', highlight: true,
     blurb: 'For someone running a real workflow.',
     monthlyCredits: 5000, rateLimit: 200, maxAgents: 7, modelTiers: ['cheap', 'standard'],
@@ -86,6 +119,15 @@ const TIERS = [
       // owner. Advertising it would be selling something that cannot happen.
     ],
   },
+];
+
+/* LEGACY — no longer sold, never advertised, kept ONLY so nobody who already
+   paid loses what they bought. `alpha` was the $199 "Max" plan: its Payment
+   Link is still live in payment-config.json, so the webhook must keep
+   granting the `elite` entitlement for it, and billing-service must keep
+   resolving `elite` in tierConfig(). stripe-routes builds the sale list
+   from TIERS only, so nothing here can reappear in the plans modal. */
+const LEGACY_TIERS = [
   {
     id: 'alpha', tier: 'elite', name: 'Max', price: 199, interval: 'month',
     blurb: 'For power sellers and teams.',
@@ -137,13 +179,14 @@ const CREDIT_PACKS = [
   { id: 'credits_100', label: '$100 in Sparks', usd: 100, sparks: 100 },
 ];
 
-const byId = (id) => TIERS.find((t) => t.id === id) || (FOUNDER.id === id ? FOUNDER : null);
-const byTier = (tier) => TIERS.find((t) => t.tier === tier) || null;
+const byId = (id) => TIERS.find((t) => t.id === id) || LEGACY_TIERS.find((t) => t.id === id) || (FOUNDER.id === id ? FOUNDER : null);
+const byTier = (tier) => TIERS.find((t) => t.tier === tier) || LEGACY_TIERS.find((t) => t.tier === tier) || null;
 
-/** The shape billing-service wants: keyed by entitlement, not by item id. */
+/** The shape billing-service wants: keyed by entitlement, not by item id.
+    Legacy tiers are included: existing members keep their entitlements. */
 function tierConfig() {
   const out = {};
-  for (const t of TIERS) {
+  for (const t of TIERS.concat(LEGACY_TIERS)) {
     out[t.tier] = {
       name: t.name, price: t.price, currency: 'usd', interval: t.interval,
       monthlyCredits: t.monthlyCredits, modelTiers: t.modelTiers,
@@ -158,7 +201,12 @@ function tierConfig() {
 function grants() {
   const g = {};
   for (const t of TIERS) if (t.tier !== 'free') g[t.id] = { tier: t.tier };
-  g.builder = { tier: 'pro' };            // retired plan; existing links still honour Pro
+  // Legacy: the still-live alpha link keeps granting elite to anyone who
+  // already bought it. (Until 2026-11-15 `builder` also appeared here,
+  // mapped to Pro from its retired-plan days; Builder is a real $19 tier
+  // again, so it now grants its own tier via the TIERS loop above. No live
+  // builder link existed in payment-config.json at the time of the change.)
+  for (const t of LEGACY_TIERS) g[t.id] = { tier: t.tier };
   g.founder = { tier: FOUNDER.tier, founder: true };
   /* The billing-credit bonus per pack lives in credit-costs.json, which owns
      credit numbers. Sparks are separate and always 1 per $1. */
@@ -199,4 +247,4 @@ async function checkAgainst(links, fetchAmount) {
   return rows;
 }
 
-module.exports = { TIERS, FOUNDER, CREDIT_PACKS, byId, byTier, tierConfig, grants, checkAgainst };
+module.exports = { TIERS, LEGACY_TIERS, FOUNDER, CREDIT_PACKS, byId, byTier, tierConfig, grants, checkAgainst };

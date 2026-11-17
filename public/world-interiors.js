@@ -2653,6 +2653,18 @@
       rimLight.position.set(-ROOM_W * 0.35, ROOM_H * 0.55, -ROOM_D * 0.10);
       group.add(rimLight);
 
+      /* BLACK-VOID FIX (2026-11-16, diagnosis in INTERIORS_RECEIPT.md): the 3 point
+         lights above are the room's ONLY lights in 6 of 7 council rooms, and under
+         three r180's physical decay-2 falloff across an 80 m room they deliver
+         ~0.018 irradiance at spawn / ~0.003 at centre — every lit surface renders
+         black. The museum room (TURTLE) never had the bug: its builder adds this
+         same distance-independent ambient+hemisphere lift (values verbatim from
+         the gallery rig in propBuilders.museum). Room-local: both lights are
+         children of the room group and dispose with it. No global/scene ambient
+         is touched, so the outdoor world is unchanged. */
+      group.add(new THREE.AmbientLight(0xdfeee9, 0.30));
+      group.add(new THREE.HemisphereLight(0xfff4e0, 0x0a1614, 0.35));
+
       /* themed props */
       var fn = propBuilders[theme.propFn] || propBuilders.genericRoom;
       var _p0 = group.children.length;

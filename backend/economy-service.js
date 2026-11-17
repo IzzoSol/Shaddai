@@ -178,23 +178,47 @@ class DevFileStore {
   }
 
   // Run `fn(db)` under the serialization lock. fn may mutate db and return a
-  // value; the db is written atomically after fn returns. Errors thrown by fn
-  // abort the write (no partial state persisted).
+  // value; the db is written atomically after fn returns — but ONLY when fn
+  // actually mutated it (BACKEND_PERF §7 item 1, dirty check): idempotent
+  // replays (duplicate grant/spend/inventory keys) previously still rewrote
+  // + fsynced the whole ledger despite changing nothing. Errors thrown by
+  // fn abort the write (no partial state persisted). Off-switch:
+  // SHADDAI_ECON_WRITE_ON_READ=1 restores always-persist.
   _withLock(fn) {
     const run = async () => {
       const db = this._read();
+      const before = JSON.stringify(db);
       const result = await fn(db);
-      return { db, result };
+      return { db, result, before };
     };
     // Chain onto the lock; capture next so callers await THIS op specifically.
     const next = this._lock.then(run, run); // run even if a prior op rejected
     // Keep the lock chain alive but swallow rejection so it doesn't poison the chain.
     this._lock = next.then(() => undefined, () => undefined);
-    return next.then(({ db, result }) => {
-      // Only persist on success.
-      this._writeAtomic(db);
+    return next.then(({ db, result, before }) => {
+      // Only persist on success, and only when the op mutated the db.
+      if (process.env.SHADDAI_ECON_WRITE_ON_READ === '1' || JSON.stringify(db) !== before) {
+        this._writeAtomic(db);
+      }
       return result;
     });
+  }
+
+  // Read-only variant (BACKEND_PERF §7 item 1): runs on the SAME lock chain,
+  // so a read observes every previously queued write, but it never persists.
+  // The old path rewrote + fsynced the entire ledger file after every read —
+  // including the 30 s balance poll every client makes. Only methods whose
+  // fn provably does not mutate db may use this. Off-switch:
+  // SHADDAI_ECON_WRITE_ON_READ=1 restores the old write-through reads.
+  _withLockRead(fn) {
+    if (process.env.SHADDAI_ECON_WRITE_ON_READ === '1') return this._withLock(fn);
+    const run = async () => {
+      const db = this._read();
+      return fn(db);
+    };
+    const next = this._lock.then(run, run); // run even if a prior op rejected
+    this._lock = next.then(() => undefined, () => undefined);
+    return next;
   }
 
   _nextId(db) {
@@ -216,15 +240,16 @@ class DevFileStore {
   // --- Interface methods ---
 
   async getBalance(userId) {
-    // Read-only; still go through lock for a consistent snapshot.
-    return this._withLock(async (db) => {
+    // Read-only; still go through the lock chain for a consistent snapshot,
+    // but never rewrite the ledger file (see _withLockRead).
+    return this._withLockRead(async (db) => {
       const acct = db.economy_accounts[userId];
       return acct ? acct.sparks_balance : 0;
     });
   }
 
   async getInventory(userId) {
-    return this._withLock(async (db) => {
+    return this._withLockRead(async (db) => {
       return db.inventory_items
         .filter((it) => it.user_id === userId)
         .map((it) => ({ ...it }));
@@ -233,7 +258,7 @@ class DevFileStore {
 
   // Read-only: a user's ledger entries, newest first (for /sparks/ledger).
   async getTransactions(userId, limit) {
-    return this._withLock(async (db) => {
+    return this._withLockRead(async (db) => {
       const n = Number.isInteger(limit) && limit > 0 ? limit : 50;
       return db.spark_transactions
         .filter((t) => t.user_id === userId)
@@ -245,7 +270,7 @@ class DevFileStore {
 
   // Read-only: minted / burned totals across all users (governance view).
   async getSummary() {
-    return this._withLock(async (db) => {
+    return this._withLockRead(async (db) => {
       const out = { entries: 0, minted: 0, burned: 0, net: 0, byKind: {} };
       for (const t of db.spark_transactions) {
         out.entries++;
@@ -318,7 +343,7 @@ class DevFileStore {
   }
 
   async getCatalogItem(catalogId) {
-    return this._withLock(async (db) => {
+    return this._withLockRead(async (db) => {
       const item = db.catalog_items[catalogId];
       return item ? { ...item } : null;
     });
@@ -326,7 +351,7 @@ class DevFileStore {
 
   // Read-only: list ACTIVE catalog items. No money mutation.
   async listCatalog() {
-    return this._withLock(async (db) => {
+    return this._withLockRead(async (db) => {
       return Object.keys(db.catalog_items)
         .map((k) => db.catalog_items[k])
         .filter((it) => it && it.active !== false)

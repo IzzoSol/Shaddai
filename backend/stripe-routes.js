@@ -33,6 +33,27 @@ const TIERS = _tiers.TIERS.filter((t) => t.price > 0).map((t) => ({
 }));
 const CREDIT_PACKS = _tiers.CREDIT_PACKS.map((c) => ({ id: c.id, label: c.label, usd: c.usd }));
 
+/* Items a buyer may actually purchase right now: paid tiers from the
+   canonical table, credit packs, and the one-time founder item. Legacy
+   items (alpha) are deliberately NOT saleable — a stale hosted link in
+   payment-config.json must not keep selling a retired $199 plan. */
+const SALEABLE = new Set(
+  _tiers.TIERS.filter((t) => t.price > 0).map((t) => t.id)
+    .concat(_tiers.CREDIT_PACKS.map((c) => c.id), [_tiers.FOUNDER.id])
+);
+
+/* Bound every Stripe API await. stripe-node's own default timeout is 80s,
+   which reads as a frozen "Opening checkout…" to the buyer (and the
+   dashboard modal had no timeout of its own either — the pair of them is
+   what hung the Pro button). Fail fast and honestly instead. */
+function stripeCall(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(
+      () => reject(new Error('Stripe did not respond in time — please try again.')), ms || 15000)),
+  ]);
+}
+
 
 function paymentMode() {
   const cfg = loadConfig();
@@ -118,6 +139,7 @@ router.post('/create-checkout', express.json(), async (req, res) => {
   try {
     const item = String((req.body && (req.body.item || req.body.tier || req.body.product)) || '').trim();
     if (!item) return res.status(400).json({ ok: false, error: 'item required (tier or credit pack id)' });
+    if (!SALEABLE.has(item)) return res.status(400).json({ ok: false, error: 'That item is not available.' });
     const { mode, cfg } = paymentMode();
     const links = cfg.links || {};
 
@@ -134,10 +156,14 @@ router.post('/create-checkout', express.json(), async (req, res) => {
     // 2) Full Stripe session (subscription tiers only) if secret key is configured
     if (mode === 'stripe' && billingService) {
       const stripe = billingService.getStripe();
-      const priceId = (billingService.STRIPE_PRICES || {})[item];
+      // STRIPE_PRICES is keyed by entitlement tier, not item id — resolve
+      // through the canonical table (item 'pro' -> tier 'pro'; packs have
+      // no subscription price and fall through to the tidy response).
+      const _t = _tiers.byId(item);
+      const priceId = (billingService.STRIPE_PRICES || {})[_t ? _t.tier : item];
       if (stripe && priceId) {
         const isCredit = item.startsWith('credits_');
-        const session = await stripe.checkout.sessions.create({
+        const session = await stripeCall(stripe.checkout.sessions.create({
           payment_method_types: ['card'],
           line_items: [{ price: priceId, quantity: 1 }],
           mode: isCredit ? 'payment' : 'subscription',
@@ -145,7 +171,7 @@ router.post('/create-checkout', express.json(), async (req, res) => {
           cancel_url:  (req.body.cancelUrl)  || `${req.protocol}://${req.get('host')}/pricing.html?billing=cancel`,
           client_reference_id: (req.body && req.body.userId) || 'guest',
           metadata: { item, userId: (req.body && req.body.userId) || 'guest' },
-        });
+        }));
         return res.json({ ok: true, url: session.url, mode: 'stripe' });
       }
     }
@@ -186,6 +212,7 @@ router.post('/subscribe', express.json(), async (req, res) => {
     const userId = (req.body && req.body.userId) || 'guest';
     // Reuse the exact session-building logic from create-checkout (links OR stripe).
     const item = priceId;
+    if (!SALEABLE.has(item)) return res.status(400).json({ ok: false, error: 'That item is not available.' });
     const { mode, cfg } = paymentMode();
     const links = cfg.links || {};
     if (links[item]) {
@@ -195,9 +222,10 @@ router.post('/subscribe', express.json(), async (req, res) => {
     }
     if (mode === 'stripe' && billingService && billingService.getStripe && billingService.getStripe()) {
       const stripe = billingService.getStripe();
-      const price = (billingService.STRIPE_PRICES || {})[item];
+      const _t = _tiers.byId(item);
+      const price = (billingService.STRIPE_PRICES || {})[_t ? _t.tier : item];
       if (stripe && price) {
-        const session = await stripe.checkout.sessions.create({
+        const session = await stripeCall(stripe.checkout.sessions.create({
           payment_method_types: ['card'],
           line_items: [{ price, quantity: 1 }],
           mode: 'subscription',
@@ -205,7 +233,7 @@ router.post('/subscribe', express.json(), async (req, res) => {
           cancel_url:  (req.body.cancelUrl)  || `${req.protocol}://${req.get('host')}/pricing.html?billing=cancel`,
           client_reference_id: userId,
           metadata: { item, userId },
-        });
+        }));
         return res.json({ ok: true, url: session.url, mode: 'stripe' });
       }
     }

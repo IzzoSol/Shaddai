@@ -9,6 +9,9 @@
   root.ShdInv = {
     get: function (k) { return S.items[k] || 0; }, add: function (k, n) { n = Math.round(n) || 0; if (!n) return S.items[k] || 0; S.items[k] = Math.max(0, (S.items[k] || 0) + n); if (!S.items[k]) delete S.items[k]; save(); return S.items[k] || 0; },
     take: function (k, n) { n = Math.round(n) || 1; if ((S.items[k] || 0) < n) return false; S.items[k] -= n; if (!S.items[k]) delete S.items[k]; save(); return true; },
-    all: function () { return JSON.parse(JSON.stringify(S.items)); }, perk: function (k) { return S.perks[k]; }, setPerk: function (k, v) { S.perks[k] = v; save(); }, onChange: function (f) { cbs.push(f); }, _reset: function () { S = { items: {}, perks: {} }; save(); }
+    all: function () { return JSON.parse(JSON.stringify(S.items)); }, perk: function (k) { return S.perks[k]; }, setPerk: function (k, v) { S.perks[k] = v; save(); }, onChange: function (f) { cbs.push(f); }, _reset: function () { S = { items: {}, perks: {} }; save(); },
+    // G-1: re-read localStorage into memory (world-saves.js calls this after hydrating
+    // 'shd_inv_v1' from the cloud save, which lands after this module's init parse).
+    _reload: function () { try { var j = JSON.parse(root.localStorage.getItem(KEY) || 'null'); if (j && j.items) { S = j; cbs.forEach(function (f) { try { f(); } catch (e) { } }); } } catch (e) { } }
   };
 })(typeof window !== 'undefined' ? window : globalThis);

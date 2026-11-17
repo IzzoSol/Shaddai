@@ -11,6 +11,21 @@
     return e;
   }
   function getJSON(path, opts) { return fetch(path, opts).then(function (r) { return r.json().catch(function () { return {}; }); }).catch(function () { return { ok: false, _offline: true }; }); }
+  /* Checkout POST with a hard timeout. buy() used to ride on getJSON, whose
+     fetch has no deadline: if the server (or Stripe behind it) never
+     answered, the promise never settled and the button sat on
+     "Opening checkout…" forever — the hang in the founder's screenshot.
+     15s, then the button comes back with an honest error. */
+  var CHECKOUT_TIMEOUT_MS = 15000;
+  function postJSON(path, body, timeoutMs) {
+    var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, timeoutMs || CHECKOUT_TIMEOUT_MS) : null;
+    var opts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+    if (ctrl) opts.signal = ctrl.signal;
+    function done(d) { if (timer) clearTimeout(timer); return d; }
+    return fetch(path, opts).then(function (r) { return r.json().catch(function () { return {}; }); })
+      .then(done, function () { return done({ ok: false, _failed: true }); });
+  }
   function money(n, interval) { var v = Number(n); if (!isFinite(v)) return ''; return '$' + (v % 1 ? v.toFixed(2) : v) + (interval ? ' / ' + (interval === 'month' ? 'mo' : interval === 'year' ? 'yr' : interval) : ''); }
   var root = null, prevFocus = null;
 
@@ -20,10 +35,10 @@
   function buy(item, btn, note) {
     var uid = ''; try { uid = localStorage.getItem('shd_userid') || ''; } catch (e) { /* ignore */ }
     btn.disabled = true; var was = btn.textContent; btn.textContent = 'Opening checkout…'; note.textContent = '';
-    getJSON('/api/stripe/create-checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ item: item, userId: uid || undefined }) }).then(function (d) {
+    postJSON('/api/stripe/create-checkout', { item: item, userId: uid || undefined }, CHECKOUT_TIMEOUT_MS).then(function (d) {
       if (d && d.url) { location.href = d.url; return; }
       btn.disabled = false; btn.textContent = was;
-      note.textContent = (d && (d.message || d.error)) || "Checkout isn't available yet. Please check back soon.";
+      note.textContent = (d && d._failed) ? "Checkout didn't respond — please try again." : ((d && (d.message || d.error)) || "Checkout isn't available yet. Please check back soon.");
     });
   }
 

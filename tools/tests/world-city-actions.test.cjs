@@ -38,6 +38,7 @@ const doc = { head: fakeEl('head'), body: fakeEl('body'), activeElement: null, p
   createElement: fakeEl, exitPointerLock() { this.exitCalls++; this.pointerLockElement = null; } };
 const winListeners = {};
 const window = {
+  location: { search: '' },
   addEventListener(t, f) { (winListeners[t] = winListeners[t] || []).push(f); },
   removeEventListener(t, f) { winListeners[t] = (winListeners[t] || []).filter(x => x !== f); }
 };
@@ -311,17 +312,52 @@ const ECON = {
     assert.ok(!fetchImpl.api().some(c => /open_tab|\/spend/.test(c.url)));
   });
 
-  await test('plots: counts from city.stats (plots-v4.json), claim is disabled, no API', async () => {
+  await test('plots: counts from city.stats (plots-v4.json), deeds merge, claim names a real plot', async () => {
     const city = { stats: () => ({ loaded: true, plots: 1275, plotsByState: { empty: 1270, claimed: 5, built: 0, listed: 0, lapsed: 0 } }) };
-    const { a, fetchImpl } = mk({}, { city });
-    await a.open(MK.DEED_OFFICE); await flush();
+    const routes = { 'GET /api/city-deeds': () => ({ body: { ok: true, deeds: {} } }) };
+    const { a, fetchImpl } = mk(routes, { city });
+    await a.open(MK.DEED_OFFICE); await flush(20);
     assert.ok(allText().indexOf('1275 plots') >= 0, allText());
-    assert.ok(byAct('claim').disabled);
-    assert.strictEqual(fetchImpl.api().length, 0);
-    const r2 = mk({});            // no city → reads plots-v4.json
-    await r2.a.open(MK.BUILDER_YARD); await flush(20);
+    assert.ok(fetchImpl.api().some(c => c.url === '/api/city-deeds'), 'deeds GET fired');
+    const claim = byAct('claim');
+    assert.ok(claim && !claim.disabled, 'claim enabled with an empty plot available');
+    assert.ok(allText().indexOf('Claim PLOT-SW-0001') >= 0, allText());
+    // one deed merges empty -> claimed and the next plot becomes claimable
+    const r2 = mk({ 'GET /api/city-deeds': () => ({ body: { ok: true, deeds: { 'PLOT-SW-0001': { owner: 'u9', price: 4.37, at: '2026-11-15T00:00:00.000Z' } } } }) }, { city });
+    await r2.a.open(MK.DEED_OFFICE); await flush(20);
+    assert.ok(allText().indexOf('Claim PLOT-SW-0002') >= 0, allText());
+    const r3 = mk({});            // no city → reads plots-v4.json
+    await r3.a.open(MK.BUILDER_YARD); await flush(20);
     assert.ok(/\d+ plots/.test(allText()), allText());
     assert.ok(allText().indexOf('Civic Tower') >= 0);
+    assert.ok(byAct('claim').disabled, 'BUILDER_YARD keeps the disabled stub');
+  });
+
+  await test('plots: ?citydeeds=0 restores the old stub, no deeds fetch', async () => {
+    const city = { stats: () => ({ loaded: true, plots: 1275, plotsByState: { empty: 1270, claimed: 5, built: 0, listed: 0, lapsed: 0 } }) };
+    window.location.search = '?citydeeds=0';
+    try {
+      const { a, fetchImpl } = mk({ 'GET /api/city-deeds': () => ({ body: { ok: true, deeds: {} } }) }, { city });
+      await a.open(MK.DEED_OFFICE); await flush(20);
+      assert.ok(allText().indexOf('1275 plots') >= 0, allText());
+      assert.ok(byAct('claim').disabled, 'stub disabled under ?citydeeds=0');
+      assert.ok(!fetchImpl.api().some(c => c.url === '/api/city-deeds'), 'no deeds fetch under flag');
+    } finally { window.location.search = ''; }
+  });
+
+  await test('plots: claim button buys the named plot, re-renders claimed', async () => {
+    const city = { stats: () => ({ loaded: true, plots: 1275, plotsByState: { empty: 1270, claimed: 5, built: 0, listed: 0, lapsed: 0 } }) };
+    let deeds = {};
+    const routes = {
+      'GET /api/city-deeds': () => ({ body: { ok: true, deeds } }),
+      'POST /api/city-deeds/buy': (u, i, b) => { deeds[b.plotId] = { owner: 'u1', price: 4.37, at: '2026-11-15T00:00:00.000Z' }; return { body: { ok: true, plotId: b.plotId, owner: 'u1', price: 4.37, balance: 563 } }; }
+    };
+    const { a, fetchImpl } = mk(routes, { city });
+    await a.open(MK.DEED_OFFICE); await flush(20);
+    byAct('claim').click(); await flush(20);
+    assert.ok(fetchImpl.api().some(c => c.url === '/api/city-deeds/buy' && c.body && c.body.plotId === 'PLOT-SW-0001'), 'buy posted for PLOT-SW-0001');
+    assert.ok(allText().indexOf('Plot claimed: PLOT-SW-0001') >= 0, allText());
+    assert.ok(allText().indexOf('Claim PLOT-SW-0002') >= 0, allText());
   });
 
   await test('locked skill → copy.locked, no requests', async () => {

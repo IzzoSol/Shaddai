@@ -149,13 +149,15 @@ var PAL={grid:{n:'The Grid',a:0x2FD6FF,t:0xE6B84A,bg:0x04101C,css:['#2FD6FF','#E
          void:{n:'Deep Void',a:0x8B6BFF,t:0xC9B6FF,bg:0x0A0716,css:['#8B6BFF','#C9B6FF','#0A0716','#16102E','#33285E','#E6DCFF','#A99BD6']}};
 var STEPS=[{k:'bind',t:'Bind',s:'Seal the oath'},{k:'body',t:'Body',s:'Shape the form'},{k:'license',t:'License',s:'Grant the right'},{k:'labor',t:'Labor',s:'Perform the work'},{k:'vault',t:'PayBox',s:'Open the vault'}];
 var STATUS=['AWAITING OATH','FORM UNSHAPED','LICENSE PENDING','NO JOB RUN','VAULT SEALED'];
-var S={i:0,max:0,name:'',purpose:'Research and summaries',oath:false,kind:'SHADDAI',look:'glow',glow:'figure',acc:'none',finish:'auto',skills:{'research.topic':true},job:'research.topic',topic:'',jobOut:'',jobErr:false,labor:0,vault:0,sparks:0,pal:'grid'};
+var S={i:0,max:0,name:'',purpose:'Research and summaries',oath:false,kind:'SHADDAI',worldBody:'',look:'glow',glow:'figure',acc:'none',finish:'auto',skills:{'research.topic':true},job:'research.topic',topic:'',jobOut:'',jobErr:false,labor:0,vault:0,sparks:0,pal:'grid'};
 /* Real skills: every one is a workflow the dashboard can run (platform bridge). The four core ones always exist; the library adds more once you are signed in. */
 var CORE=[['research.topic','Research a topic','Look into any subject and summarise it'],['news.digest','News digest','Today\'s headlines in one read'],['market.snapshot','Market snapshot','Live prices and the fear and greed index'],['dashboard.report','Daily report','A summary of what happened in your dashboard']],LIB=[];
 var PACKS=[['Researcher',['research.topic','news.digest']],['Market watcher',['market.snapshot','news.digest']],['Reporter',['dashboard.report','news.digest','market.snapshot']]];
 function nice(id){return String(id).replace(/^lib\./,'').replace(/[-_.]/g,' ').replace(/^./,function(c){return c.toUpperCase()})}
 var SK=[];   /* dashboard skills from /api/bridge/skills: [id, name, description, kind, needs] */
-function skillList(){var seen={},core=CORE.map(function(k){return [k[0],k[1],k[2],'core',k[0]==='research.topic'?['query']:[]]});return core.concat(SK).concat(LIB).filter(function(k){if(seen[k[0]])return false;seen[k[0]]=1;return true})}
+var ACAD=[]; /* the REAL academy catalogue from /api/agent-forge/skills — ids saved as 'academy:<id>' */
+var WBODIES=null; /* the body catalogue from /api/agent-forge/bodies: glow + council + archetypes + gate info */
+function skillList(){var seen={},core=CORE.map(function(k){return [k[0],k[1],k[2],'core',k[0]==='research.topic'?['query']:[]]});return core.concat(SK).concat(LIB).concat(ACAD).filter(function(k){if(seen[k[0]])return false;seen[k[0]]=1;return true})}
 function skillMeta(id){return skillList().filter(function(k){return k[0]===id})[0]}
 function skillName(id){var f=skillMeta(id);return f?f[1]:nice(String(id).replace(/^skill:/,''))}
 function canRunAlone(id){var m=skillMeta(id);return !!m&&(m[3]==='core'||(m[3]==='lib'&&!(m[4]&&m[4].length)))}
@@ -168,7 +170,14 @@ function loadLib(){
     fetch('/api/bridge/skills',{credentials:'same-origin'}).then(function(r){return r.ok?r.json():null}).then(function(d){
       if(!d||!d.skills)return;
       SK=d.skills.map(function(k){return ['skill:'+k.skill,nice(k.skill),(k.description||'A dashboard skill')+(k.agent?' ('+k.agent+')':''),'skill',k.required_input||[]]});
-      if(S.i===2&&typeof refreshSkills==='function')refreshSkills()}).catch(function(){})
+      if(S.i===2&&typeof refreshSkills==='function')refreshSkills()}).catch(function(){});
+    fetch('/api/agent-forge/skills',{credentials:'same-origin'}).then(function(r){return r.ok?r.json():null}).then(function(d){
+      if(!d||!d.skills)return;
+      ACAD=d.skills.map(function(k){return ['academy:'+k.id,(k.name||k.id)+' 🎓',((k.track||'Academy')+' — '+(k.summary||'An academy course'))+(k.price_sparks?' · '+k.price_sparks+' Sparks at the Athenaeum':''),'academy',[]]});
+      if(S.i===2&&typeof refreshSkills==='function')refreshSkills()}).catch(function(){});
+    fetch('/api/agent-forge/bodies',{credentials:'same-origin'}).then(function(r){return r.ok?r.json():null}).then(function(d){
+      if(!d||!d.bodies)return;WBODIES=d;
+      if(S.i===1)render()}).catch(function(){})
   }catch(e){}}
 function brief(outs){if(!outs)return '';var k=Object.keys(outs)[0],v=String(outs[k]||'');try{var j=JSON.parse(v);v=typeof j==='object'?(j.price?(j.symbol||k)+' '+j.price:j.title||j.summary||(Array.isArray(j)?(j[0]&&(j[0].title||j[0].name)):'')||JSON.stringify(j)):String(j)}catch(e){}return String(v).slice(0,300)}
 function realJob(){
@@ -551,10 +560,15 @@ function render(){
     (S.look==='glow'?('<div class="opts" role="radiogroup" aria-label="Accessory">'+['none','halo','ring','hat','antenna','crown'].map(function(k){return '<label class="opt"><input type="radio" name="acc" value="'+k+'"'+(S.acc===k?' checked':'')+'><span>'+title(k)+'</span></label>'}).join('')+'</div>'):'')+
     '<p class="fine">'+('Role (what it is good at):')+'</p>'+
     '<div class="opts" role="radiogroup" aria-label="Body">'+BODIES.map(function(k){return '<label class="opt"><input type="radio" name="kind" value="'+k+'"'+(S.kind===k?' checked':'')+'><span>'+title(k)+' <small class="fine">'+BODY_ROLE[k]+'</small></span></label>'}).join('')+'</div>'+
+    '<p class="fine">3D world body — the glow bot above is your free office body. A 3D body is the paid step; the pick is saved exactly as picked, never swapped:</p>'+
+    '<div class="opts" role="radiogroup" aria-label="World body" id="wbody">'+
+    '<label class="opt"><input type="radio" name="wbody" value=""'+(S.worldBody===''?' checked':'')+'><span>Same as role <small class="fine">the council body for the role above</small></span></label>'+
+    (WBODIES?WBODIES.bodies.filter(function(b){return b.assignable&&(b.kind==='council'||b.kind==='archetype')}).map(function(b){var lock=b.gate&&b.gate.required&&!b.gate.entitled;return '<label class="opt"><input type="radio" name="wbody" value="'+b.key+'"'+(S.worldBody===b.key?' checked':'')+'><span>'+esc(b.name)+' <small class="fine">'+(b.kind==='archetype'?'Forge archetype':'Council')+(lock?' · 🔒 '+esc(b.gate.required.name)+' $'+b.gate.required.price+'/'+esc(b.gate.required.interval||'mo'):'')+'</small></span></label>'}).join(''):'<span class="fine">Loading the body catalogue…</span>')+
+    '</div>'+
     '<p class="fine" id="bodyNote" aria-live="polite">'+esc(bodyNoteText)+'</p>'+
     '<div class="row" role="group" aria-label="Hologram tint"><span class="fine">Hologram tint</span>'+[['auto','Theme'],['gold','#E6B84A'],['violet','#8B6BFF'],['green','#4CC96A'],['cyan','#2FD6FF']].map(function(f){return '<button type="button" class="sw" data-fin="'+f[0]+'" aria-label="'+f[0]+'" aria-pressed="'+(S.finish===f[0])+'" style="background:'+(f[0]==='auto'?'conic-gradient(var(--accent),var(--trim),var(--accent))':f[1])+'"></button>'}).join('')+'</div>'+
     navRow('Lock the form')}
-  else if(S.i===2){var n=Object.keys(S.skills).length;h='<h2>Skills</h2><p>Pick what your agent can do. Every one is a real workflow or skill in your dashboard, and PIKADON checks it before it runs. Start from a pack, or search everything.</p>'+
+  else if(S.i===2){var n=Object.keys(S.skills).length;h='<h2>Skills</h2><p>Pick what your agent can do. Every one is a real workflow or skill in your dashboard, and PIKADON checks it before it runs. Entries marked 🎓 are from the academy catalogue — the selection is saved on the agent, and the course itself is taken at the Athenaeum, where passing the exam installs the skill for real. Start from a pack, or search everything.</p>'+
     '<div class="row" role="group" aria-label="Starter packs">'+PACKS.map(function(pk,i){return '<button type="button" class="ghost" data-pack="'+i+'">'+pk[0]+'</button>'}).join('')+'</div>'+
     '<label class="f">Search skills and workflows<input type="search" id="sk-q" placeholder="e.g. price, news, research, report" autocomplete="off"></label>'+
     '<div class="row" id="sk-sel" aria-live="polite"></div>'+
@@ -591,6 +605,7 @@ function wire(){var q=function(s){return panel.querySelector(s)},qa=function(s){
   if(q('#f-name')){var nm=q('#f-name'),oa=q('#f-oath'),pu=q('#f-purpose');var chk=function(){S.name=nm.value.trim();S.oath=oa.checked;S.purpose=pu.value;nx.disabled=!(S.name.length>=2&&S.oath)};chk();
     nm.oninput=chk;oa.onchange=chk;pu.onchange=chk;nx.onclick=function(){chk();if(!nx.disabled)UI.next()};nm.onkeydown=function(e){if(e.key==='Enter'&&!nx.disabled)UI.next()}}
   qa('input[name=kind]').forEach(function(r){r.onchange=function(){S.kind=r.value;W&&W.sync()}});
+  qa('input[name=wbody]').forEach(function(r){r.onchange=function(){S.worldBody=r.value;bodyNote(r.value?('World body: '+r.value+' — saved as picked when you create the agent.'):('World body: the role body above.'))}});
   ['look','glow','acc'].forEach(function(n){qa('input[name='+n+']').forEach(function(r){r.onchange=function(){S[n]=r.value;W&&W.sync();if(n==='look')render()}})});
   qa('[data-fin]').forEach(function(b){b.onclick=function(){S.finish=b.dataset.fin;W&&W.finish(S.finish);qa('[data-fin]').forEach(function(x){x.setAttribute('aria-pressed',x===b)})}});
   qa('[data-pack]').forEach(function(b){b.onclick=function(){var pk=PACKS[+b.dataset.pack];S.skills={};pk[1].forEach(function(id){S.skills[id]=true});render()}});
@@ -611,6 +626,7 @@ function wire(){var q=function(s){return panel.querySelector(s)},qa=function(s){
       note.textContent=who+' is created and joined your office.';announceForged(d);setTimeout(goOffice,900)})
     .catch(function(e){en.disabled=false;en.classList.remove('loading');
       if(e&&e.code==='AUTH'){askSignIn(note,en,who);return}
+      if(e&&e.code==='SERVER'){en.firstChild.textContent='Create my agent';note.textContent='Not saved: '+e.message+' — adjust the pick and try again. Nothing was substituted.';return}
       en.dataset.go='world';en.firstChild.textContent='Enter the world anyway';
       note.textContent='The server did not answer ('+e.message+'), so '+who+' is saved on this device only. Try again in a moment.'})}
   /* after the dashboard finishes a sign-in it tells this page, so the same button just works */
@@ -627,14 +643,18 @@ function announceForged(d){try{if(embedded())window.parent.postMessage({type:'sh
 function goWorld(){if(embedded())window.parent.postMessage({type:'shd:goto',view:'world'},location.origin);else location.href='/SHADDAI-WORLD-3D.html'}
 function goOffice(){if(embedded())window.parent.postMessage({type:'shd:goto',view:'office'},location.origin);else location.href='/?view=office'}
 /* FINISH: register the operative with the same endpoint forge.html uses. The server sets the owner from the session (never the client)
-   and validates `model` against the 7 council bodies, so this record is what makes the agent appear in Shaddai World. */
+   and validates `model` against the body catalogue (7 council + 8 Forge archetype bodies + PIXEL): the pick persists exactly as
+   picked, and an unavailable or unentitled body comes back as an explicit error the user sees — never a silent substitution. */
 function enterWorld(){
-  var rec={codename:(S.name||'Unnamed').slice(0,24),archetype:S.kind.toLowerCase(),model:S.kind,look:Object.assign({archetype:S.kind.toLowerCase(),model:S.kind},S.look==='glow'?{orb:(function(){var G={auto:['#00e5a0','#00b4ff'],gold:['#f0b429','#fb923c'],violet:['#a78bfa','#f43f5e'],green:['#34d399','#fde047'],cyan:['#00f0ff','#7c3aed']}[S.finish]||['#00e5a0','#00b4ff'];return {form:S.glow,c1:G[0],c2:G[1],acc:S.acc,glow:1}})()}:{}),
-    brain:{tier:'free',persona:'You are '+(S.name||'an operative')+', a SHADDAI operative. Purpose: '+S.purpose+'.'},tools:Object.keys(S.skills)};
-  rec.look.bodyType='glow';   // made for the office; an agent body for the 3D realm is added later by importing it from the office
+  var picked=Object.keys(S.skills);
+  var rec={codename:(S.name||'Unnamed').slice(0,24),archetype:S.kind.toLowerCase(),model:S.worldBody||S.kind,look:Object.assign({archetype:S.kind.toLowerCase(),model:S.kind},S.look==='glow'?{orb:(function(){var G={auto:['#00e5a0','#00b4ff'],gold:['#f0b429','#fb923c'],violet:['#a78bfa','#f43f5e'],green:['#34d399','#fde047'],cyan:['#00f0ff','#7c3aed']}[S.finish]||['#00e5a0','#00b4ff'];return {form:S.glow,c1:G[0],c2:G[1],acc:S.acc,glow:1}})()}:{}),
+    brain:{tier:'free',persona:'You are '+(S.name||'an operative')+', a SHADDAI operative. Purpose: '+S.purpose+'.'},tools:picked,
+    academySkills:picked.filter(function(id){return id.indexOf('academy:')===0}).map(function(id){return id.slice(8)}),
+    workflows:picked.filter(function(id){var m=skillMeta(id);return m&&m[3]==='lib'})};
+  rec.look.bodyType='glow';   // the office body is the glow bot; the 3D world body rides in `model`, picked in the Body step
   try{localStorage.setItem('shd_forge_demo_agent_v1',JSON.stringify(Object.assign({savedAt:Date.now(),firstJob:S.job},rec)))}catch(e){}
   return fetch('/api/operatives',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(rec)})
-    .then(function(r){return r.json().catch(function(){return {}}).then(function(d){if(r.status===401||r.status===403){var er=new Error('sign in required');er.code='AUTH';throw er}if(!r.ok||d.ok===false)throw new Error((d&&d.error)||('HTTP '+r.status));return d})})}
+    .then(function(r){return r.json().catch(function(){return {}}).then(function(d){if(r.status===401){var er=new Error('sign in required');er.code='AUTH';throw er}if(!r.ok||d.ok===false){var er2=new Error((d&&d.error)||('HTTP '+r.status));er2.code='SERVER';throw er2}return d})})}
 
 function mount(){loadLib();
   var pal=$('pal');Object.keys(PAL).forEach(function(k){var b=document.createElement('button');b.type='button';b.textContent=PAL[k].n;b.setAttribute('aria-pressed',k===S.pal);b.onclick=function(){S.pal=k;W?W.setPal(k):0;[].forEach.call(pal.children,function(x){x.setAttribute('aria-pressed',x===b)})};pal.appendChild(b)});

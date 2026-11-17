@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
-const LEDGER_FILE = path.join(DATA_DIR, 'x402-ledger.json');
+const LEDGER_FILE = path.join(DATA_DIR, 'x402-agent-ledger.json');
 
 // ---- helpers -------------------------------------------------------------
 

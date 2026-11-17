@@ -53,6 +53,15 @@ window.buildWorldThemes = function buildWorldThemes(_ref) {
   var THREE   = _ref.THREE;
   var scene   = _ref.scene;
   var refs    = _ref.refs;
+  // WAVE2 (issue #5): when the host sets skyOwnsRig (MAP v4), world-sky-v4 is the SINGLE owner of
+  // scene.background and the sun/hemi/ambient rig. The theme engine then never writes those directly
+  // (no snap, no easing) — it only supplies a palette via skyPalette() and the host forwards it to
+  // sky-v4, which applies background + lights from the same palette every frame, so they can never
+  // disagree (the old split-brain: theme froze the background at its flat fog colour while sky-v4
+  // kept running a fixed day rig). Key/gold point lights, the legacy dome uniforms, grids, ground
+  // and particles are NOT sky-v4's and are still written here exactly as before.
+  var _skyOwnsRig = !!_ref.skyOwnsRig;
+  var _rigOwned = function (n) { return _skyOwnsRig && (n === 'sun' || n === 'hemi' || n === 'ambient'); };
 
   // ── 1. PURE DATA THEMES ─────────────────────────────────────────────────────
   // Adding a new theme = adding one object here. No engine edits.
@@ -389,12 +398,12 @@ window.buildWorldThemes = function buildWorldThemes(_ref) {
     }
     var f = _themeFog() ? refs.fog : null;   // 2026-10-04: theme fog was tuned for the old small map and buried every realm (black / white wall); the sky module owns fog now (?themefx=1 = old)
     if (f) { f.color.copy(_T.fog); f.density = _T.fogDensity; }
-    if (scene && scene.background && scene.background.copy) scene.background.copy(_T.bg);
+    if (!_skyOwnsRig && scene && scene.background && scene.background.copy) scene.background.copy(_T.bg);
     var L = refs.lights;
     if (L) {
       for (var i = 0; i < _lightNames.length; i++) {
         var n = _lightNames[i], lit = L[n], tgt = _T.lights[n];
-        if (!lit) continue;
+        if (!lit || _rigOwned(n)) continue;   // WAVE2: sky-v4 owns sun/hemi/ambient when skyOwnsRig
         lit.color.copy(tgt.color);
         lit.intensity = tgt.intensity;
         if (n === 'hemi' && lit.groundColor) lit.groundColor.copy(tgt.ground);
@@ -486,12 +495,12 @@ window.buildWorldThemes = function buildWorldThemes(_ref) {
         f.color.lerp(_T.fog, a);
         f.density += (_T.fogDensity - f.density) * a;
       }
-      if (scene && scene.background && scene.background.lerp) scene.background.lerp(_T.bg, a);
+      if (!_skyOwnsRig && scene && scene.background && scene.background.lerp) scene.background.lerp(_T.bg, a);
       var L = refs.lights;
       if (L) {
         for (var li = 0; li < _lightNames.length; li++) {
           var n = _lightNames[li], lit = L[n], tgt = _T.lights[n];
-          if (!lit) continue;
+          if (!lit || _rigOwned(n)) continue;   // WAVE2: sky-v4 eases the shared rig from the palette instead
           lit.color.lerp(tgt.color, a);
           lit.intensity += (tgt.intensity - lit.intensity) * a;
           if (n === 'hemi' && lit.groundColor) lit.groundColor.lerp(tgt.ground, a);
@@ -546,6 +555,19 @@ window.buildWorldThemes = function buildWorldThemes(_ref) {
   return {
     THEMES:       THEMES,
     applyTheme:   applyTheme,
+    // WAVE2 (issue #5): the palette sky-v4 applies for a theme — background (the theme's fog colour,
+    // which is what the background always snapped to) + the sun/hemi/ambient entries, verbatim from
+    // the theme data. The theme's intended look is unchanged; only who applies it changes.
+    skyPalette:   function (name) {
+      var t = THEMES[name];
+      if (!t) return null;
+      return {
+        background: t.fog.color,
+        sun:     { color: t.lights.sun.color, intensity: t.lights.sun.intensity },
+        hemi:    { color: t.lights.hemi.color, groundColor: t.lights.hemi.groundColor, intensity: t.lights.hemi.intensity },
+        ambient: { color: t.lights.ambient.color, intensity: t.lights.ambient.intensity }
+      };
+    },
     current:      function ()  { return _currentKey; },
     list:         function ()  {
       return Object.keys(THEMES).map(function (k) {

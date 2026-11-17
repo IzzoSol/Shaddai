@@ -22,6 +22,19 @@ window.__showGfxPaused = function(msg){ var build=function(){ var d=document.get
       '<div style="margin-top:18px;display:flex;gap:10px;justify-content:center"><a href="" style="padding:10px 18px;border:1px solid #27e0ff;color:#27e0ff;border-radius:8px;text-decoration:none">RETRY</a>'+
       '<a href="/" style="padding:10px 18px;background:#e8c45c;color:#050914;border-radius:8px;text-decoration:none;font-weight:700">SIMPLE MODE</a></div></div>';
     document.body.appendChild(d); }); })();</script>
+<script>/* STAGE 1 PRELOADS (LOADING_PIPELINE.md Part C, stage 1): start the two biggest ENTER-blocking
+  downloads at HTML parse instead of after ~1.35 MB of JS has fetched, parsed and run. EXACTLY TWO
+  preloads — the budget is the point: over-preloading dilutes priority and contends bandwidth, so do
+  not add more here. Generated from JS (not static <link> tags) so ?preload=0 can switch them off;
+  also skipped when the WebGL gate above already failed (window.__noWebGL — the realm will not boot)
+  and under ?waterways=1 (that variant fetches its terrain from /assets/terrain-ww/, so these two
+  files would be wasted bytes). height16.bin is preloaded as fetch (the real fetch in
+  world-terrain-v4.js then hits the warm entry); color.jpg as image. Where preload is unsupported
+  this is a no-op and the normal loads still happen. */
+(function(){ try{ if(window.__noWebGL || /[?&]preload=0(?:&|$|#)/.test(location.search) || /[?&]waterways=1\b/.test(location.search)) return;
+  var f=document.createElement('link'); f.rel='preload'; f.as='fetch'; f.crossOrigin='anonymous'; f.href='/assets/terrain/height16.bin'; document.head.appendChild(f);
+  var i=document.createElement('link'); i.rel='preload'; i.as='image'; i.href='/assets/terrain/color.jpg'; document.head.appendChild(i);
+}catch(e){} })();</script>
 <script src="/beta-api-shim.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
@@ -210,9 +223,15 @@ window.__INTRO_CINEMATIC = /[?&]intro=cinematic(?:&|$|#)/.test(location.search);
 <canvas id="c3d"></canvas>
 <div id="errBox" style="position:fixed;top:0;left:0;right:0;z-index:99999;background:rgba(120,0,0,.95);color:#fff;font:12px/1.5 monospace;padding:10px 14px;display:none;white-space:pre-wrap;max-height:50vh;overflow:auto">⚠ <b>WORLD ERROR</b> — tell this to Claude:<br><span id="errMsg"></span></div>
 <script>
-(function(){var show=function(t){/* GRAPHICS-PAUSED PROMOTION (2026-11-14, realm-polish): a WebGL/context failure written only into this banner is invisible — #errBox shares z-index 99999 with the loading screen, which paints over it, so the world sat at 0% forever. Promote it to the full-screen paused overlay (defined in the head gate script); the banner still records it below. */
+(function(){var _errSeen=Object.create(null),_errEls=Object.create(null);
+var show=function(t){/* GRAPHICS-PAUSED PROMOTION (2026-11-14, realm-polish): a WebGL/context failure written only into this banner is invisible — #errBox shares z-index 99999 with the loading screen, which paints over it, so the world sat at 0% forever. Promote it to the full-screen paused overlay (defined in the head gate script); the banner still records it below. */
 if(/webgl|error creating webgl context|context (lost|creation)/i.test(t||'') && window.__showGfxPaused){ try{ window.__showGfxPaused('The 3D world could not start: your browser or device does not support WebGL2, or its graphics context failed. Try reloading, or play the Classic 2D world instead.'); }catch(_){}}
-var b=document.getElementById('errBox'),m=document.getElementById('errMsg');if(b&&m){b.style.display='block';m.textContent+=(t+'\n');}};
+var b=document.getElementById('errBox'),m=document.getElementById('errMsg');if(b&&m){b.style.display='block';
+/* ERROR DEDUPE (2026-11-15, wave1 fix 2): at most ONE line per unique message per session — a per-frame crash (the applyBoneTransform "matrixWorld of undefined" flood in the 2026-11-15 recordings) stacked this banner dozens of times and buried every other error. Repeats only bump the visible (×N) counter on their single line. */
+var k=String(t),n=_errSeen[k]=(_errSeen[k]||0)+1;
+if(n===1){var s=document.createElement('span');s.textContent=k+'\n';m.appendChild(s);_errEls[k]=s;}
+else if(_errEls[k]){_errEls[k].textContent=k+'  (×'+n+')\n';}}};
+window.__errCounts=_errSeen;   // probe hook: unique error -> times seen this session
 window.__reportErr=show;   // let other code surface caught (swallowed) errors to the on-screen box
 window.addEventListener('error',function(e){show('JS: '+(e.message||(e.error&&e.error.message)||e)+'  @'+(e.filename||'').split('/').pop()+':'+(e.lineno||'?'));});
 window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.reason.message)||e.reason||'?')+'';if(/pointer ?lock/i.test(msg)){e.preventDefault();return;}if(/metamask|ethereum|web3|wallet|injected|extension|chrome-extension/i.test(msg)){e.preventDefault();return;}/* browser wallet extension noise — not a world bug */
@@ -339,6 +358,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 
 <!-- shared world layout + procedural modules (classic scripts: define window.build* before the module runs) -->
 <template id="boot-scripts">
+<script src="/world-saves.js?v=20261116a"></script>   <!-- G-1 save sync + G-13 prefs: FIRST so the cloud-save hydrate fetch starts before every consumer reads localStorage; ?saves=0 = off -->
 <script src="/world-loading-slides.js?v=20261004own"></script>
 <script src="/world-layout.js?v=20261024a"></script>
 <script src="/world-editor.js?v=20260926i"></script>
@@ -447,20 +467,38 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-academy-client.js?v=20261011a"></script>
 <script src="/world-live-feeds.js?v=20261023a"></script><script src="/world-city-screens.js?v=20261023b"></script><script src="/world-hud-clean.js?v=20261106a"></script><script src="/academy-code.js?v=20261105a"></script><script src="/world-navi.js?v=20261107c"></script><script src="/world-dashboard-link.js?v=20261106a"></script>
 <script src="/world-navi-chat.js?v=20261015a"></script>   <!-- Navi CHAT relay (/api/mp) + name sign-up; ?chat=0 = local only -->   <!-- NAVI: Y or ` opens the holographic command center (docs/NAVI.md) -->
+<script src="/world-presence.js?v=20261115a"></script>   <!-- G-6 presence: remote-player avatars fed by the chat sync's players list; ?presence=0 = off -->
 <script src="/world-lounge.js?v=1"></script>
 <script src="/portals/portals-registry.js?v=20260703d"></script>
 <script src="/portals/portal-plots.js?v=20260719fix"></script>
 <script src="/portals/portal-dome.js?v=20260703d"></script>
+<script src="/world-agent-gear.js?v=20261115a"></script>   <!-- ORPHAN WIRING: agent gear behind ?gear=1 / ?gear=preview -->
 </template>
 <script>/* BOOT BUNDLES (2026-10-24, docs/SPEED-BRIEF-20261024.md): the scripts in #boot-scripts above are minified + concatenated in this order into
    public/dist by `node tools/build-dist.cjs` (rerun after editing any of them). ?bundle=0 = load the original files one by one. */
-window.__BOOT_BUNDLES = ["/dist/boot-1.e73e7a60ec.js","/dist/boot-2.9d105bf0de.js","/dist/boot-3.771766db59.js"];
-(function(){ var useB = window.__BOOT_BUNDLES.length && !/[?&]bundle=0/.test(location.search), h = "";
-  if (useB) window.__BOOT_BUNDLES.forEach(function(s){ h += '<script src="' + s + '"><\/script>'; });
-  else h = document.getElementById("boot-scripts").innerHTML;
-  document.write(h); })();
+window.__BOOT_BUNDLES = ["/dist/boot-1.c124107971.js","/dist/boot-2.6d5aaf6b1f.js","/dist/boot-3.4cfe7b2c93.js"];
+(function(){
+  function inject(srcs){
+    srcs.forEach(function(s){ var el = document.createElement('script'); el.src = s; el.async = false; document.head.appendChild(el); });
+  }
+  if (/[?&]bundle=dw/.test(location.search)) {
+    // Legacy path (one release): the pre-stage-4 doc-write chain, verbatim.
+    var useB = window.__BOOT_BUNDLES.length && !/[?&]bundle=0/.test(location.search), h = "";
+    if (useB) window.__BOOT_BUNDLES.forEach(function(s){ h += '<script src="' + s + '"><\/script>'; });
+    else h = document.getElementById("boot-scripts").innerHTML;
+    document.write(h); return;
+  }
+  if (/[?&]bundle=0/.test(location.search)) {
+    // Original files one by one: clone the template's script elements in order.
+    // (innerHTML-inserted scripts never execute; clones with async=false do, in order.)
+    var nodes = document.getElementById("boot-scripts").content.querySelectorAll('script');
+    var srcs = []; nodes.forEach(function(n){ if (n.src) srcs.push(n.getAttribute('src')); });
+    inject(srcs); return;
+  }
+  inject(window.__BOOT_BUNDLES);
+})();
 </script>
-<script type="module" src="/world-main.js?v=7a7b283a08"></script>
+<script type="module" src="/world-main.js?v=7746521c66"></script>
 <!-- ════════ AGENT DISTRICTS ════════ -->
 <div id="district" class="dist"><div class="dist-card">
   <button class="dist-x" onclick="closeDistrict()">✕ EXIT</button>
@@ -719,7 +757,10 @@ window.__BOOT_BUNDLES = ["/dist/boot-1.e73e7a60ec.js","/dist/boot-2.9d105bf0de.j
 <!-- ════════ /GAME OVERLAY ════════ -->
 <script>
 // x402 SHAD-Credits HUD — shows balance, refreshed after each charge
-window.SHADDAI_USER = window.SHADDAI_USER || 'guest';
+// G-2 (one identity): a signed-in session wins — shd_userid is set by the
+// /api/world/redeem flow and is the same source every other module reads.
+// 'guest' is now only the fallback for a visitor with no session.
+window.SHADDAI_USER = window.SHADDAI_USER || (function () { try { return localStorage.getItem('shd_userid') || ''; } catch (e) { return ''; } })() || 'guest';
 window._x402refresh = function(){
   fetch('/api/x402/balance?user=' + encodeURIComponent(window.SHADDAI_USER))
     .then(r=>r.json()).then(d=>{ const el=document.getElementById('credits'); if(el&&d&&d.ok) el.textContent='⚡ '+d.balance+' SHAD'; }).catch(()=>{});
@@ -802,10 +843,36 @@ window._x402refresh();
   const cv = document.getElementById('nexusMap'), cx = cv.getContext('2d');
   const nx = (L.sector && L.sector('NEXUS')) ? L.sector('NEXUS').pos : [-130,225];
   function w2m(x,z){ return [ 140 + (x/half)*128, 140 + (z/half)*128 ]; }  // world → 280px map
+  // WAVE2 (issue #6): the map reads the same grid-city-v4.json the world is built from. Once it loads,
+  // buildings/plazas/rings are drawn and EVERYTHING (sectors, NEXUS ring, player) shares one metre scale
+  // (128 px = 1750 m: the 1600 m grid + margin). Before it loads (or if it fails), the legacy
+  // sectors-only drawing below runs unchanged.
+  let cityPlan = null;
+  fetch('/assets/world/grid-city-v4.json').then(r=>r.json()).then(p=>{ cityPlan = p; if(wrap.style.display!=='none') drawMap(); }).catch(()=>{});
+  const planK = 128/1750;  // px per metre on the city scale
+  function m2m(xm, ym){ return [ 140 + xm*planK, 140 - ym*planK ]; }  // plan metres (x east, y north) → map px (north up)
+  function w2mCity(x, z){ const U = (cityPlan && cityPlan.units_per_m) || (7/1.8); return m2m(x/U, -z/U); }  // world units → city-scale px
+  function drawCity(){
+    const ACC = { gold:'rgba(232,196,92,', emerald:'rgba(46,255,138,', teal:'rgba(46,198,218,' };
+    cx.strokeStyle='rgba(52,229,176,.35)'; cx.lineWidth=1;
+    [cityPlan.core_r_m||170].concat(cityPlan.rings_m||[], [cityPlan.grid_r_m||1600]).forEach(r=>{ cx.beginPath(); cx.arc(140,140,r*planK,0,7); cx.stroke(); });
+    cx.fillStyle='rgba(52,229,176,.10)';
+    (cityPlan.plazas||[]).forEach(pz=>{ const [mx,my]=m2m(pz.x_m,pz.y_m); cx.beginPath(); cx.arc(mx,my,Math.max(1.5,(pz.w_m||20)*planK/2),0,7); cx.fill(); });
+    (cityPlan.buildings||[]).forEach(b=>{ const [mx,my]=m2m(b.x_m,b.y_m); const w=Math.max(1.5,(b.w_m||15)*planK), d=Math.max(1.5,(b.d_m||15)*planK);
+      cx.fillStyle=(ACC[b.accent]||'rgba(150,165,190,')+'0.75)'; cx.fillRect(mx-w/2,my-d/2,w,d); });
+    const [pmx,pmy]=w2mCity(nx[0],nx[1]); cx.strokeStyle='rgba(52,229,176,.5)'; cx.setLineDash([4,4]);
+    cx.beginPath(); cx.arc(pmx,pmy,(34/((cityPlan && cityPlan.units_per_m)||(7/1.8)))*planK,0,7); cx.stroke(); cx.setLineDash([]);
+    SECTORS.forEach(s=>{ const [mx,my]=w2mCity(s.pos[0],s.pos[1]); const col='#'+((s.color||0x34e5b0).toString(16)).padStart(6,'0');
+      cx.fillStyle=col; cx.beginPath(); cx.arc(mx,my, s.code==='SHADDAI'?5:3, 0,7); cx.fill();
+      cx.fillStyle='#9fb6c8'; cx.font='8px monospace'; cx.fillText(s.code, mx+5, my+3); });
+    try{ const px=(window._playerPos&&window._playerPos.x)||(camera&&camera.position.x)||0, pz=(window._playerPos&&window._playerPos.z)||(camera&&camera.position.z)||0;
+      const [mx,my]=w2mCity(px,pz); cx.fillStyle='#ffcf4a'; cx.beginPath(); cx.moveTo(mx,my-6);cx.lineTo(mx+5,my+4);cx.lineTo(mx-5,my+4);cx.closePath(); cx.fill(); }catch(e){}
+  }
   function drawMap(){
     cx.clearRect(0,0,280,280);
     cx.strokeStyle='rgba(52,229,176,.12)'; cx.lineWidth=1;
     for(let i=0;i<=8;i++){ const p=i*35; cx.beginPath();cx.moveTo(p,0);cx.lineTo(p,280);cx.stroke(); cx.beginPath();cx.moveTo(0,p);cx.lineTo(280,p);cx.stroke(); }
+    if(cityPlan){ drawCity(); return; }
     const [pmx,pmy]=w2m(nx[0],nx[1]); cx.strokeStyle='rgba(52,229,176,.5)'; cx.setLineDash([4,4]);
     cx.beginPath(); cx.arc(pmx,pmy,(34/half)*128,0,7); cx.stroke(); cx.setLineDash([]);
     SECTORS.forEach(s=>{ const [mx,my]=w2m(s.pos[0],s.pos[1]); const col='#'+((s.color||0x34e5b0).toString(16)).padStart(6,'0');

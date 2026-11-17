@@ -49,6 +49,16 @@
       "label": "Free",
       "_mirror_of": "lib/tiers.js"
     },
+    "build": {
+      "monthlyCredits": 1500,
+      "label": "Build",
+      "_mirror_of": "lib/tiers.js"
+    },
+    "builder": {
+      "monthlyCredits": 2500,
+      "label": "Builder",
+      "_mirror_of": "lib/tiers.js"
+    },
     "pro": {
       "monthlyCredits": 5000,
       "label": "Pro",

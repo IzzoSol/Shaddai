@@ -36,17 +36,34 @@
   //    Bursting ~40 GLB requests at once overflowed small servers ('Failed to fetch') and fought the world
   //    build for bandwidth; a queue loads the same models reliably and smooths the intro. ──
   var Q = [], active = 0, MAX = 4;
+  function _pickJob() {   // LOADING STAGE 5: lowest priority class first (0 spawn-visible · 1 near · 2 far · 3 cosmetic); nearest-first within a class when job positions + a player position are known; FIFO otherwise. Retried jobs keep their prio (the error path re-pushes the same job object).
+    var best = 0;
+    for (var i = 1; i < Q.length; i++) {
+      var a = Q[i], b = Q[best];
+      if (a.prio < b.prio) { best = i; continue; }
+      if (a.prio === b.prio && a.pos && b.pos) {
+        var pp = window.__playerPos || window._playerPos;
+        if (pp) {
+          var az = (a.pos.z != null ? a.pos.z : a.pos.y) || 0, bz = (b.pos.z != null ? b.pos.z : b.pos.y) || 0, pz = (pp.z != null ? pp.z : pp.y) || 0;
+          var da = (a.pos.x - pp.x) * (a.pos.x - pp.x) + (az - pz) * (az - pz);
+          var db = (b.pos.x - pp.x) * (b.pos.x - pp.x) + (bz - pz) * (bz - pz);
+          if (da < db) best = i;
+        }
+      }
+    }
+    return Q.splice(best, 1)[0];
+  }
   function pump() {
     while (active < MAX && Q.length) {
-      var job = Q.shift(); active++;
+      var job = _pickJob(); active++;
       (function (j) {
         j.loader.load(j.url, function (g) { active--; try { j.ok(g); } catch (e) { console.warn('[loadQueue] handler error ' + j.url + ': ' + e.message); } pump(); },
           undefined, function (err) { active--; if (j.tries++ < 2) setTimeout(function () { Q.push(j); pump(); }, 600 * j.tries); else if (j.fail) j.fail(err); pump(); });
       })(job);
     }
   }
-  window.__queueLoad = function (loader, url, ok, fail) { Q.push({ loader: loader, url: url, ok: ok, fail: fail, tries: 0 }); pump(); };
-  var _qTotal = 0; var _origQL = window.__queueLoad; window.__queueLoad = function (l, u, ok, f) { _qTotal++; return _origQL(l, u, ok, f); };
+  window.__queueLoad = function (loader, url, ok, fail, prio, pos) { Q.push({ loader: loader, url: url, ok: ok, fail: fail, tries: 0, prio: (typeof prio === 'number' ? prio : 2), pos: pos || null }); pump(); };
+  var _qTotal = 0; var _origQL = window.__queueLoad; window.__queueLoad = function (l, u, ok, f, pr, ps) { _qTotal++; return _origQL(l, u, ok, f, pr, ps); };
   window.__loadQueueStats = function () { return { queued: Q.length, active: active, total: _qTotal }; };   // intro gate: wait for streaming models before the sky-dive
 
   if (!/[?&]edit=1\b/.test(location.search)) return;

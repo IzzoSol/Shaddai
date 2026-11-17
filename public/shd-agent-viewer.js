@@ -16,6 +16,12 @@
     Day: { exposure: 1.35, shadow: 1.4, bg: 'linear-gradient(180deg, #8fb4e8, #dfe9f7 75%)' }
   };
   var SWATCHES = ['', '#00e5a0', '#00e5ff', '#a78bfa', '#f0b429', '#fb923c', '#f43f5e', '#ffffff'];
+  /* FORGE REPAIR 2026-11-15: FORGE-<archetype> bodies view their real archetype
+     GLB/portrait instead of being silently re-pointed at SHADDAI. */
+  var ARCH = { VANGUARD: 1, GHOST: 1, ARTISAN: 1, ORACLE: 1, 'STREET-DEITY': 1, 'GAIA-LINK': 1, PSIONIC: 1, HARVESTER: 1 };
+  function forgeId(key) { var m = /^FORGE-([A-Z-]+)$/.exec(String(key || '')); return (m && ARCH[m[1]]) ? m[1].toLowerCase() : null; }
+  function bodySrc(key) { var f = forgeId(key); return f ? '/assets/forge-models/' + f + '-final.glb?v=4' : '/assets/agents/' + key + '.glb?v=14'; }
+  function posterSrc(key) { var f = forgeId(key); return f ? '/assets/forge-models/' + f + '-portrait.png' : '/assets/agents/' + key + '-portrait.png'; }
   var root = null, mv = null, cur = null, look = null, lastFocus = null, mvLoading = null;
 
   function h(tag, attrs, kids) {
@@ -77,13 +83,14 @@
 
   function open(agent) {
     if (!agent || !agent.name) return;
-    var key = String(agent.model || agent.name).toUpperCase(); if (!BODIES[key]) key = BODIES[String(agent.name).toUpperCase()] ? String(agent.name).toUpperCase() : 'SHADDAI';
-    cur = { name: agent.name, model: key, color: agent.color || BODIES[key].color, rank: agent.rank || BODIES[key].rank, forged: !!agent.forged };
+    var key = String(agent.model || agent.name).toUpperCase(); if (!BODIES[key] && !forgeId(key)) key = BODIES[String(agent.name).toUpperCase()] ? String(agent.name).toUpperCase() : 'SHADDAI';
+    var meta = BODIES[key] || { rank: 'Forge archetype body', color: '#00e5a0' };
+    cur = { name: agent.name, model: key, color: agent.color || meta.color, rank: agent.rank || meta.rank, forged: !!agent.forged };
     look = loadLook(cur.name); build(); lastFocus = document.activeElement;
     var stage = document.getElementById('avStage'), prog = document.getElementById('avProg'), note = document.getElementById('avNote'), panel = root.querySelector('.av-panel');
     stage.textContent = ''; note.textContent = 'Loading body…'; note.style.display = 'block'; prog.firstChild.style.width = '0%'; prog.style.display = 'block';
     root.style.display = 'flex'; document.body.style.overflow = 'hidden';
-    stage.appendChild(h('img', { class: 'av-poster', alt: '', src: '/assets/agents/' + key + '-portrait.png' }));
+    stage.appendChild(h('img', { class: 'av-poster', alt: '', src: posterSrc(key) }));
 
     var accentBtns = SWATCHES.map(function (c) { var b = h('button', { type: 'button', class: 'av-sw' + ((look.accent || '') === c ? ' on' : ''), 'aria-label': c ? 'Accent ' + c : 'Default accent', style: c ? 'background:' + c : '', title: c || 'Default', text: c ? '' : '○' }); b.addEventListener('click', function () { look.accent = c || null; accentBtns.forEach(function (x) { x.classList.toggle('on', x === b); }); applyAccent(); saveLook(); }); return b; });
     var angleBtns = group(Object.keys(ANGLES).map(function (a) { return pill(a, false, function () { look.spin = false; applySpin(); spinBtn.classList.remove('on'); applyAngle(a); saveLook(); }); }));
@@ -108,7 +115,7 @@
     applyAccent();
 
     ensureMV().then(function () {
-      mv = h('model-viewer', { src: '/assets/agents/' + key + '.glb?v=14', alt: cur.name + ' 3D body', 'camera-controls': '', 'touch-action': 'pan-y', 'interaction-prompt': 'none', 'shadow-softness': '0.9', 'environment-image': 'neutral',
+      mv = h('model-viewer', { src: bodySrc(key), alt: cur.name + ' 3D body', 'camera-controls': '', 'touch-action': 'pan-y', 'interaction-prompt': 'none', 'shadow-softness': '0.9', 'environment-image': 'neutral',
         'camera-orbit': ANGLES['¾'], 'min-camera-orbit': 'auto auto 40%', 'max-camera-orbit': 'auto auto 220%', 'interpolation-decay': '90', class: 'av-mv', 'disable-pan': '' });
       mv.addEventListener('progress', function (e) { var p = (e.detail && e.detail.totalProgress) || 0; prog.firstChild.style.width = Math.round(p * 100) + '%'; });
       mv.addEventListener('load', function () { prog.style.display = 'none'; note.style.display = 'none'; var po = stage.querySelector('.av-poster'); if (po) po.remove(); applyAccent(); applyLight(); });

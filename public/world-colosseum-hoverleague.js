@@ -130,6 +130,7 @@
       var shards = null;
       if (look.shards) {
         shards = new THREE.InstancedMesh(new THREE.OctahedronGeometry(0.22, 0).scale(0.45, 2.2, 0.45), new THREE.MeshBasicMaterial({ color: 0xB98CFF, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, toneMapped: false }), 18);
+        shards.frustumCulled = false;   // WAVE3 JOB 3: matrices are identity until the first tick, then pulse out to ~1.6r — r180 caches the instanced bounding sphere from the first render's matrices, so a culled sphere would stay a unit blob at the origin and the whole shard shell would vanish whenever the orb centre left the frustum. 18 instances / 1 draw: never cull (same call as crowd/hovercars/sky-traffic).
         shards.userData.dirs = []; for (var si = 0; si < 18; si++) { var v = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(); shards.userData.dirs.push({ v: v, s: Math.random() * 6.28 }); }
         g.add(shards);
       }

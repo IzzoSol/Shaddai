@@ -128,7 +128,9 @@
         var tot = len[n - 1];
         function at(d, out) { d = Math.max(0, Math.min(tot, d)); var k = 1; while (k < n - 1 && len[k] < d) k++; var t = (d - len[k - 1]) / ((len[k] - len[k - 1]) || 1); out.x = P[k - 1][0] + (P[k][0] - P[k - 1][0]) * t; out.z = P[k - 1][1] + (P[k][1] - P[k - 1][1]) * t; out.y = ys[k - 1] + (ys[k] - ys[k - 1]) * t; out.yaw = Math.atan2(P[k][0] - P[k - 1][0], P[k][1] - P[k - 1][1]); return out; }
         var st = { s: 0, dir: 1, wait: 0 }, tmp = {};
+        var spurMid = P[Math.floor(n / 2)], spurGateR = tot / 2 + 1600 * U, bgForce = typeof location !== 'undefined' && /[?&]bgloops=on\b/.test(location.search);   // WAVE4 C-3 gate geometry: spur midpoint + half the spur length + the realm's usual 1.6 km cull radius
         anim.push(function (dt) {
+          if (!bgForce) { var PP = root.__w3dDebug && root.__w3dDebug.playerPos; if (PP) { var gdx = PP.x - spurMid[0], gdz = PP.z - spurMid[1]; if (gdx * gdx + gdz * gdz > spurGateR * spurGateR) return; } }   // WAVE4 C-3: the shuttle cars are pure scenery (nothing reads their positions) — freeze them while the player is far from the spur; state resumes mid-route. Fail-open: no player position yet = run.
           if (st.wait > 0) { st.wait -= dt; } else { st.s += st.dir * 24 * U * dt; if (st.s > tot - 10 * U || st.s < 10 * U) { st.dir *= -1; st.wait = 8; st.s = Math.max(10 * U, Math.min(tot - 10 * U, st.s)); } }
           cars.forEach(function (c, k) { at(st.s - k * 17 * U * st.dir, tmp); c.position.set(tmp.x, tmp.y + 2.2 * U, tmp.z); c.rotation.y = tmp.yaw + Math.PI / 2; });
         });
