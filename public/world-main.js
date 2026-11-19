@@ -32,17 +32,28 @@ function cloneSkinned(src){
       if(bones.every(function(b){ return !!b; })) d.bind(new THREE.Skeleton(bones, s0.skeleton.boneInverses.map(function(m){ return m.clone(); })), d.bindMatrix.clone()); } }
   console.warn('[cloneSkinned] name re-link failed; re-linked by hierarchy position'); return c2;
 }
-// SKIN SANITY (2026-11-15, wave1 fix 1): one-time check for a freshly built skinned body/clone — every
-// SkinnedMesh must have a skeleton, no undefined bone slots, and no skinIndex component at or past the
-// bone count. A body that fails is near-correct at bind pose but explodes into shards once animation
-// rotates the mis-paired bones, and crashes raycasts in SkinnedMesh.applyBoneTransform ("matrixWorld of
-// undefined" — the red banner flood in the 2026-11-15 recordings). Interleaved attributes are read
-// per-component (never via .array, which is the whole shared vertex buffer). Runs once per body/clone.
-function _skinSanity(root){ let ok = true;
-  root.traverse(function(o){ if(!ok || !o.isSkinnedMesh) return; const sk = o.skeleton, si = o.geometry && o.geometry.attributes && o.geometry.attributes.skinIndex;
+// SKIN SANITY (2026-11-15, wave1 fix 1; completed to the Realm Completion Research manual's Fix 1
+// validator spec 2026-11-17, manual wave 1): one-time check for a freshly built skinned body/clone —
+// every SkinnedMesh must have a skeleton, no undefined bone slots, boneInverses paired 1:1 with bones,
+// skinIndex AND skinWeight present, and no skinIndex component at or past the bone count. On top of the
+// structural checks it samples the exact CPU path that throws in production — SkinnedMesh.applyBoneTransform
+// (r180 dereferences skeleton.bones[i].matrixWorld with NO undefined guard) — every 97th vertex, requiring
+// a finite result. A body that fails is near-correct at bind pose but explodes into shards once animation
+// rotates the mis-paired bones. Interleaved attributes are read per-component (never via .array, which is
+// the whole shared vertex buffer). Runs once per body/clone. Deliberate deviation from the manual's
+// listing: it ends in normalizeSkinWeights() (silently repairing weights); this gate REJECTS a bad body
+// instead of mutating shipped rig data — the established pattern in this codebase.
+function _skinSanity(root){ let ok = true, skinned = false;
+  root.traverse(function(o){ if(!ok || !o.isSkinnedMesh) return; skinned = true; const sk = o.skeleton, at = o.geometry && o.geometry.attributes, si = at && at.skinIndex, sw = at && at.skinWeight;
     if(!sk || !sk.bones || !sk.bones.length){ ok = false; return; }
+    if(!sk.boneInverses || sk.boneInverses.length !== sk.bones.length){ ok = false; return; }   // manual Fix 1: inverses mismatch
     for(let k = 0; k < sk.bones.length; k++){ if(!sk.bones[k]){ ok = false; return; } }
-    if(si){ const nb = sk.bones.length; for(let v = 0; v < si.count && ok; v++) for(let c = 0; c < si.itemSize; c++){ if(si.getComponent(v, c) >= nb){ ok = false; break; } } } });
+    if(!si || !sw){ ok = false; return; }   // manual Fix 1: missing skinIndex/skinWeight
+    const nb = sk.bones.length; for(let v = 0; v < si.count && ok; v++) for(let c = 0; c < si.itemSize; c++){ if(si.getComponent(v, c) >= nb){ ok = false; break; } } });
+  if(ok && skinned){ try{ root.updateMatrixWorld(true); const v = new THREE.Vector3();
+    root.traverse(function(o){ if(!ok || !o.isSkinnedMesh) return; const at = o.geometry.attributes, p = at.position;
+      for(let i = 0; i < p.count; i += 97){ const r = o.applyBoneTransform(i, v.fromBufferAttribute(p, i));
+        if(!r || !isFinite(r.x + r.y + r.z)){ ok = false; return; } } }); }catch(e){ ok = false; } }
   return ok; }
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { initRideables } from './world-rideables.js';   // rideable voyager vehicles (board with G)
@@ -4238,6 +4249,7 @@ window.setPlayerCharacter = function(code){
     // clone() is ~5ms vs. 200-500ms for a fresh parse.
     const m = cloneSkinned(g.scene);   // SkeletonUtils clone: rebinds the skeleton so rigged bodies actually render
     m.updateMatrixWorld(true);          // pose the cloned skeleton's matrices BEFORE measuring, else box is degenerate → mis-scaled/invisible
+    if(!_skinSanity(m)){ console.warn('[setPlayerCharacter] ' + code + ': skin sanity failed — body refused, hero fallback kept'); if(!playerAvatar.children.length) _loadHero(_defaultHeroFile()); return; }   // manual wave1 fix 1: the player/hero path runs the same validator as the council path — a bad clone is refused here instead of exploding on its first animated frame
     const box=_safeBox(m); const sz=new THREE.Vector3(); box.getSize(sz);
     m.scale.setScalar(PLAYER_BODY_HEIGHT/(sz.y||1));   // height-match the world's agents (was 3.6 → felt tiny)
     const b2=_safeBox(m); m.position.y=-b2.min.y;
@@ -5809,7 +5821,8 @@ window.__GLTFLoaderClass = window.__GLTFLoaderClass || GLTFLoader;   // for clas
       const hb = window.buildWorldHoverboard({ THREE, scene, loader: _acLoader, playerPos: own, colliders: function(){ return []; }, time: function(){ return clock.elapsedTime; },
         heightAt: function(x,z){ const h = window.__hoverLeague ? window.__hoverLeague.heightAtWorld(x,z) : NaN; return isFinite(h) ? h : 0; } });
       return Promise.resolve(_pcPreload(code)).then(function(gl){
-        const av = cloneSkinned(gl.scene); const box = _safeBox(av), sz = new THREE.Vector3(); box.getSize(sz); av.scale.multiplyScalar(AGENT_BODY_HEIGHT / (sz.y || 1));
+        const av = cloneSkinned(gl.scene); if(!_skinSanity(av)){ console.warn('[hoverleague] ' + code + ': skin sanity failed — bot rides board-only'); return { hover: hb, avatar: null, code: code }; }   // manual wave1 fix 1: validator gate on this clone path too (null-avatar fallback already exists)
+        const box = _safeBox(av), sz = new THREE.Vector3(); box.getSize(sz); av.scale.multiplyScalar(AGENT_BODY_HEIGHT / (sz.y || 1));
         av.traverse(function(c){ if(c.isMesh){ c.castShadow = true; c.frustumCulled = false; } }); scene.add(av); return { hover: hb, avatar: av, code: code };
       }).catch(function(){ return { hover: hb, avatar: null, code: code }; });
     } }); }catch(e){ console.warn('[hoverleague] init failed', e && e.message); } }, 1000); })();
